@@ -3,6 +3,7 @@ import "./styles/globals.css";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import HeaderAddButton from "@/app/components/HeaderAddButton";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "CarCheck - Fahrzeugverwaltung",
@@ -41,6 +42,7 @@ export default function RootLayout({
             </main>
           </div>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
