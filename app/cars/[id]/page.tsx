@@ -15,6 +15,9 @@ export default function CarDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingMileage, setIsUpdatingMileage] = useState(false);
+  const [showMileageInput, setShowMileageInput] = useState(false);
+  const [newMileage, setNewMileage] = useState('');
 
   useEffect(() => {
     async function fetchCar() {
@@ -59,6 +62,35 @@ export default function CarDetailPage() {
     }
   };
 
+  const handleMileageUpdate = async () => {
+    if (!newMileage || isNaN(parseInt(newMileage, 10))) {
+      alert('Bitte geben Sie einen gültigen Kilometerstand ein');
+      return;
+    }
+
+    setIsUpdatingMileage(true);
+    try {
+      const response = await fetch(`/api/cars/${params.id}/mileage`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mileage: parseInt(newMileage, 10) }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Aktualisieren');
+      }
+
+      const updatedCar = await response.json();
+      setCar(updatedCar);
+      setShowMileageInput(false);
+      setNewMileage('');
+    } catch (error) {
+      alert('Fehler beim Aktualisieren des Kilometerstands');
+    } finally {
+      setIsUpdatingMileage(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -91,9 +123,49 @@ export default function CarDetailPage() {
             <h1 className="text-3xl font-bold">
               {car.make} {car.model}
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Baujahr: {car.year} | Kilometerstand: {formatNumber(car.mileage)} km
-            </p>
+            <div className="flex items-center gap-3 mt-2">
+              <p className="text-muted-foreground">
+                Baujahr: {car.year} | Kilometerstand: {formatNumber(car.mileage)} km
+              </p>
+              {!showMileageInput ? (
+                <button
+                  onClick={() => {
+                    setNewMileage(car.mileage.toString());
+                    setShowMileageInput(true);
+                  }}
+                  className="text-xs rounded-lg bg-accent/20 px-2 py-1 text-accent font-medium hover:bg-accent/30 transition"
+                >
+                  Aktualisieren
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={newMileage}
+                    onChange={(e) => setNewMileage(e.target.value)}
+                    className="w-28 rounded-lg border border-border bg-input/60 px-2 py-1 text-sm text-foreground"
+                    placeholder="km"
+                    min="0"
+                  />
+                  <button
+                    onClick={handleMileageUpdate}
+                    disabled={isUpdatingMileage}
+                    className="text-xs rounded-lg bg-green-600 px-2 py-1 text-white font-medium hover:bg-green-700 transition disabled:opacity-50"
+                  >
+                    {isUpdatingMileage ? '...' : '✓'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMileageInput(false);
+                      setNewMileage('');
+                    }}
+                    className="text-xs rounded-lg bg-gray-500 px-2 py-1 text-white font-medium hover:bg-gray-600 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
             {car.licensePlate && (
               <p className="text-muted-foreground">Kennzeichen: {car.licensePlate}</p>
             )}

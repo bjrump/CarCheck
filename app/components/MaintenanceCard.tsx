@@ -32,11 +32,16 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
 
   const status = getMaintenanceStatus(date);
 
+  // For inspection, use year-based date for time progress
+  const statusByYear = type === 'inspection'
+    ? getMaintenanceStatus(car.inspection.nextInspectionDateByYear)
+    : status;
+
   const timeProgress = type === 'tire-change'
     ? calculateTimeProgress(lastDate, date)
     : type === 'tuv'
     ? calculateTimeProgress(car.tuv.lastAppointmentDate, car.tuv.nextAppointmentDate)
-    : calculateTimeProgress(car.inspection.lastInspectionDate, car.inspection.nextInspectionDate);
+    : calculateTimeProgress(car.inspection.lastInspectionDate, car.inspection.nextInspectionDateByYear);
 
   const kmProgress = type === 'inspection' && car.inspection.lastInspectionMileage !== null
     ? calculateKmProgress(car.inspection.lastInspectionMileage, car.mileage, car.inspection.intervalKm)
@@ -76,9 +81,12 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
             ? formatTimeElapsed(lastDate, date)
             : type === 'tuv'
             ? formatTimeElapsed(car.tuv.lastAppointmentDate, car.tuv.nextAppointmentDate)
-            : formatTimeElapsed(car.inspection.lastInspectionDate, car.inspection.nextInspectionDate)
+            : formatTimeElapsed(car.inspection.lastInspectionDate, car.inspection.nextInspectionDateByYear)
           }
-          color={status === 'overdue' ? 'danger' : status === 'upcoming' ? 'warning' : 'success'}
+          color={type === 'inspection'
+            ? (statusByYear === 'overdue' ? 'danger' : statusByYear === 'upcoming' ? 'warning' : 'success')
+            : (status === 'overdue' ? 'danger' : status === 'upcoming' ? 'warning' : 'success')
+          }
         />
         {kmProgress !== null && type === 'inspection' && car.inspection.lastInspectionMileage !== null && (
           <ProgressBar
