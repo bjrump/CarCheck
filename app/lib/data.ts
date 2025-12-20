@@ -5,8 +5,28 @@ import { calculateNextInspectionDateByYear, calculateNextInspectionDateByKm, get
 
 const dataDirectory = path.join(process.cwd(), 'data');
 const dataFilePath = path.join(dataDirectory, 'cars.json');
+const CARS_KEY = 'cars';
 
-// Ensure data directory exists
+// Check which Redis is configured
+type RedisType = 'upstash' | 'standard' | null;
+
+function getRedisType(): RedisType {
+  // Check for Upstash Redis (REST API)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return 'upstash';
+  }
+  // Check for standard Redis (TCP connection)
+  if (process.env.REDIS_URL) {
+    return 'standard';
+  }
+  return null;
+}
+
+function isRedisAvailable(): boolean {
+  return getRedisType() !== null;
+}
+
+// Ensure data directory exists (for file fallback)
 async function ensureDataDirectory() {
   try {
     await fs.access(dataDirectory);
@@ -111,8 +131,84 @@ function migrateCar(car: any): Car {
   return migratedCar as Car;
 }
 
-// Read all cars from JSON file
-export async function getCars(): Promise<Car[]> {
+// ===== REDIS STORAGE (Upstash oder Standard) =====
+// Initialize Redis clients (singleton pattern)
+let upstashRedisClient: any = null;
+let standardRedisClient: any = null;
+
+async function getUpstashRedisClient() {
+  if (!upstashRedisClient) {
+    const { Redis } = await import('@upstash/redis');
+    upstashRedisClient = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+  }
+  return upstashRedisClient;
+}
+
+async function getStandardRedisClient() {
+  if (!standardRedisClient) {
+    const { createClient } = await import('redis');
+    standardRedisClient = createClient({
+      url: process.env.REDIS_URL,
+    });
+    await standardRedisClient.connect();
+  }
+  return standardRedisClient;
+}
+
+async function getCarsFromRedis(): Promise<Car[]> {
+  try {
+    const redisType = getRedisType();
+    let data: string | null = null;
+
+    if (redisType === 'upstash') {
+      const redis = await getUpstashRedisClient();
+      data = await redis.get(CARS_KEY);
+    } else if (redisType === 'standard') {
+      const redis = await getStandardRedisClient();
+      data = await redis.get(CARS_KEY);
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    // Parse JSON string to array
+    const cars = typeof data === 'string' ? JSON.parse(data) : data;
+
+    if (!Array.isArray(cars)) {
+      return [];
+    }
+
+    return cars.map(migrateCar);
+  } catch (error) {
+    console.error('Error reading from Redis:', error);
+    throw error;
+  }
+}
+
+async function saveCarsToRedis(cars: Car[]): Promise<void> {
+  try {
+    const redisType = getRedisType();
+    const jsonData = JSON.stringify(cars);
+
+    if (redisType === 'upstash') {
+      const redis = await getUpstashRedisClient();
+      await redis.set(CARS_KEY, jsonData);
+    } else if (redisType === 'standard') {
+      const redis = await getStandardRedisClient();
+      await redis.set(CARS_KEY, jsonData);
+    }
+  } catch (error) {
+    console.error('Error saving to Redis:', error);
+    throw error;
+  }
+}
+
+// ===== FILE SYSTEM STORAGE (FALLBACK) =====
+async function getCarsFromFile(): Promise<Car[]> {
   try {
     await ensureDataDirectory();
     const fileContents = await fs.readFile(dataFilePath, 'utf8');
@@ -151,13 +247,12 @@ export async function getCars(): Promise<Car[]> {
     if (error.code === 'ENOENT' || error instanceof SyntaxError) {
       return [];
     }
-    console.error('Error reading cars:', error);
+    console.error('Error reading cars from file:', error);
     throw error;
   }
 }
 
-// Write cars to JSON file (atomic write)
-export async function saveCars(cars: Car[]): Promise<void> {
+async function saveCarsToFile(cars: Car[]): Promise<void> {
   await ensureDataDirectory();
   const tempFilePath = `${dataFilePath}.tmp`;
 
@@ -175,6 +270,37 @@ export async function saveCars(cars: Car[]): Promise<void> {
     }
     throw error;
   }
+}
+
+// ===== UNIFIED API =====
+// Read all cars (automatically uses Redis if available, otherwise file system)
+export async function getCars(): Promise<Car[]> {
+  if (isRedisAvailable()) {
+    try {
+      return await getCarsFromRedis();
+    } catch (error) {
+      // Fallback to file system if Redis fails
+      console.warn('Failed to read from Redis, falling back to file system:', error);
+      return await getCarsFromFile();
+    }
+  }
+
+  return await getCarsFromFile();
+}
+
+// Write cars (automatically uses Redis if available, otherwise file system)
+export async function saveCars(cars: Car[]): Promise<void> {
+  if (isRedisAvailable()) {
+    try {
+      return await saveCarsToRedis(cars);
+    } catch (error) {
+      // Fallback to file system if Redis fails
+      console.warn('Failed to save to Redis, falling back to file system:', error);
+      return await saveCarsToFile(cars);
+    }
+  }
+
+  return await saveCarsToFile(cars);
 }
 
 // Get a single car by ID
@@ -229,4 +355,3 @@ export async function deleteCar(id: string): Promise<boolean> {
   await saveCars(filteredCars);
   return true;
 }
-

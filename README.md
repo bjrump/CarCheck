@@ -44,12 +44,13 @@ Eine moderne Next.js-Anwendung zur umfassenden Verwaltung Ihrer Fahrzeuge mit T�
 
 ## Technologie-Stack
 
-- **Next.js 16** (App Router)
-- **React 19**
+- **Next.js 14** (App Router)
+- **React 18**
 - **TypeScript**
 - **Tailwind CSS**
 - **date-fns** für Datumsberechnungen
-- **JSON-basierte Datenspeicherung**
+- **Upstash Redis** für Produktion (optional)
+- **JSON-Datei** für lokale Entwicklung (Fallback)
 
 ## Installation
 
@@ -68,9 +69,42 @@ npm run dev
 http://localhost:3000
 ```
 
-## Datenstruktur
+## Datenspeicherung
 
-Die Daten werden in `data/cars.json` gespeichert. Diese Datei wird automatisch erstellt, wenn Sie das erste Fahrzeug hinzufügen.
+### Lokale Entwicklung
+Standardmäßig werden die Daten in `data/cars.json` gespeichert. Diese Datei wird automatisch erstellt, wenn Sie das erste Fahrzeug hinzufügen.
+
+### Produktion (Vercel) - Upstash Redis
+
+Die App verwendet **Upstash Redis** für die Cloud-Speicherung. Warum Redis?
+
+✅ **Einfach**: Key-Value Store - perfekt für JSON-Daten
+✅ **Schnell**: Optimiert für schnelle Lese-/Schreiboperationen
+✅ **Günstig**: Kostenloser Plan verfügbar
+✅ **Direkter Ersatz**: Ähnlich wie Vercel KV (das eingestellt wurde)
+✅ **Kein Overhead**: Keine komplexen Tabellen-Schemas nötig
+
+**Setup:**
+1. Gehen Sie zu Vercel Dashboard → Ihr Projekt → Integrations
+2. Fügen Sie die **"Upstash Redis"** Integration hinzu
+3. Die Umgebungsvariablen `UPSTASH_REDIS_REST_URL` und `UPSTASH_REDIS_REST_TOKEN` werden automatisch hinzugefügt
+
+**Migration bestehender Daten:**
+```bash
+# Installiere tsx (falls noch nicht vorhanden)
+npm install -D tsx
+
+# Setze Umgebungsvariablen (werden normalerweise automatisch von Vercel gesetzt)
+export UPSTASH_REDIS_REST_URL="your-redis-url"
+export UPSTASH_REDIS_REST_TOKEN="your-redis-token"
+
+# Führe Migration aus
+npx tsx scripts/migrate-to-redis.ts
+```
+
+**Hinweis**: Die App verwendet automatisch Redis, wenn die Umgebungsvariablen gesetzt sind. Andernfalls fällt sie auf die lokale JSON-Datei zurück.
+
+### Datenmodell
 
 ### Datenmodell
 
