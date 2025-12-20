@@ -1,5 +1,6 @@
 import { Car } from '@/app/lib/types';
 import { formatDate, formatNumber, getMaintenanceStatus, getStatusColorClass, getStatusText } from '@/app/lib/utils';
+import Link from 'next/link';
 
 interface CarCardProps {
   car: Car;
@@ -10,11 +11,8 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
   const tuvStatus = getMaintenanceStatus(car.tuv.nextAppointmentDate);
   const inspectionStatus = getMaintenanceStatus(car.inspection.nextInspectionDate);
 
-  return (
-    <div
-      onClick={() => onSelect?.(car)}
-      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
-    >
+  const content = (
+    <>
       <div className="flex justify-between items-start gap-4 mb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">
@@ -57,7 +55,27 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
           </p>
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <div
+        onClick={() => onSelect(car)}
+        className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/cars/${car.id}`}
+      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer block"
+    >
+      {content}
+    </Link>
   );
 }
 

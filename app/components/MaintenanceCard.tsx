@@ -20,11 +20,14 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
     date = tireChangeDate || null;
     lastDate = lastTireChangeDate || null;
     title = tireChangeType === 'winter-to-summer' ? 'Reifenwechsel (Winter → Sommer)' : 'Reifenwechsel (Sommer → Winter)';
+  } else if (type === 'tuv') {
+    date = car.tuv.nextAppointmentDate;
+    lastDate = car.tuv.lastAppointmentDate;
+    title = 'TÜV-Termin';
   } else {
-    const maintenance = type === 'tuv' ? car.tuv : car.inspection;
-    date = type === 'tuv' ? maintenance.nextAppointmentDate : maintenance.nextInspectionDate;
-    lastDate = type === 'tuv' ? maintenance.lastAppointmentDate : maintenance.lastInspectionDate;
-    title = type === 'tuv' ? 'TÜV-Termin' : 'Inspektion';
+    date = car.inspection.nextInspectionDate;
+    lastDate = car.inspection.lastInspectionDate;
+    title = 'Inspektion';
   }
 
   const status = getMaintenanceStatus(date);
