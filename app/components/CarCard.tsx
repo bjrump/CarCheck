@@ -7,11 +7,10 @@ import {
   getStatusColorClass,
   getStatusText,
 } from "@/app/lib/utils";
-import Link from "next/link";
 
 interface CarCardProps {
   car: Car;
-  onSelect?: (car: Car) => void;
+  onSelect: (car: Car) => void;
 }
 
 export default function CarCard({ car, onSelect }: CarCardProps) {
@@ -140,23 +139,17 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     </>
   );
 
-  if (onSelect) {
-    return (
-      <div
-        onClick={() => onSelect(car)}
-        className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
-      >
-        {content}
-      </div>
-    );
+  // Always use onSelect if provided, otherwise make it required
+  if (!onSelect) {
+    console.warn('CarCard requires onSelect prop');
   }
 
   return (
-    <Link
-      href={`/cars/${car.id}`}
-      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer block"
+    <div
+      onClick={() => onSelect?.(car)}
+      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
     >
       {content}
-    </Link>
+    </div>
   );
 }

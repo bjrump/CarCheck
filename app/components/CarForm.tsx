@@ -1,14 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Car, Insurance } from '@/app/lib/types';
 
 interface CarFormProps {
   car?: Car;
   onCreated?: () => void;
+  onUpdated?: (updatedCar: Car) => void;
+  onCancel?: () => void;
 }
 
-export default function CarForm({ car, onCreated }: CarFormProps) {
+export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarFormProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     make: car?.make || '',
@@ -59,8 +63,15 @@ export default function CarForm({ car, onCreated }: CarFormProps) {
         throw new Error(errorData.error || 'Fehler beim Speichern');
       }
 
-      if (onCreated) {
+      const savedCar = await response.json();
+
+      if (car && onUpdated) {
+        onUpdated(savedCar);
+      } else if (onCreated) {
         onCreated();
+      } else if (!car && savedCar.id) {
+        // If no callback provided and we're creating a new car, refresh the page
+        router.refresh();
       }
     } catch (error: any) {
       console.error('Fehler beim Speichern:', error);
@@ -222,7 +233,22 @@ export default function CarForm({ car, onCreated }: CarFormProps) {
           >
             {isLoading ? 'Speichern...' : 'Speichern'}
           </button>
-          {onCreated && (
+          {(car || onCancel) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (onCancel) {
+                  onCancel();
+                } else if (car && onUpdated) {
+                  // Fallback: if no onCancel, we can't cancel properly
+                }
+              }}
+              className="rounded-xl border border-border px-6 py-2 font-semibold text-muted-foreground transition hover:bg-muted"
+            >
+              Abbrechen
+            </button>
+          )}
+          {!car && onCreated && !onCancel && (
             <button
               type="button"
               onClick={onCreated}

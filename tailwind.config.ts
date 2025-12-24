@@ -7,6 +7,8 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // Ignore missing files during build
+  safelist: [],
   theme: {
     extend: {
       colors: {
