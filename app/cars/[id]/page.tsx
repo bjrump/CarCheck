@@ -6,6 +6,7 @@ import { Car } from '@/app/lib/types';
 import TUVSection from '@/app/components/TUVSection';
 import InspectionSection from '@/app/components/InspectionSection';
 import CarForm from '@/app/components/CarForm';
+import EventLogSection from '@/app/components/EventLogSection';
 import { formatDate, formatNumber } from '@/app/lib/utils';
 
 export default function CarDetailPage() {
@@ -215,6 +216,8 @@ export default function CarDetailPage() {
         <TUVSection car={car} onUpdate={setCar} />
         <InspectionSection car={car} onUpdate={setCar} />
       </div>
+
+      <EventLogSection car={car} />
     </div>
   );
 }
