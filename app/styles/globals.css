@@ -73,10 +73,12 @@
   color: var(--foreground);
 }
 
+/* Date picker dark mode support for WebKit browsers (Chrome, Safari, Edge) */
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
+/* Date picker dark mode support - uses native dark styling across all browsers */
 .dark input[type="date"] {
   color-scheme: dark;
 }
