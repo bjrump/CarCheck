@@ -19,6 +19,7 @@ export default function CarDetailPage() {
   const [isUpdatingMileage, setIsUpdatingMileage] = useState(false);
   const [showMileageInput, setShowMileageInput] = useState(false);
   const [newMileage, setNewMileage] = useState('');
+  const [showEventLog, setShowEventLog] = useState(false);
 
   useEffect(() => {
     async function fetchCar() {
@@ -182,6 +183,16 @@ export default function CarDetailPage() {
               Bearbeiten
             </button>
             <button
+              onClick={() => setShowEventLog(!showEventLog)}
+              className={`rounded-xl px-4 py-2 font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg ${
+                showEventLog
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+              }`}
+            >
+              {showEventLog ? 'Event-Log ausblenden' : 'Event-Log anzeigen'}
+            </button>
+            <button
               onClick={handleDelete}
               disabled={isDeleting}
               className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg disabled:opacity-50"
@@ -217,7 +228,7 @@ export default function CarDetailPage() {
         <InspectionSection car={car} onUpdate={setCar} />
       </div>
 
-      <EventLogSection car={car} />
+      {showEventLog && <EventLogSection car={car} />}
     </div>
   );
 }
