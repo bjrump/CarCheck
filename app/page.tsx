@@ -2,6 +2,7 @@
 
 import CarCard from "@/app/components/CarCard";
 import CarForm from "@/app/components/CarForm";
+import EventLogSection from "@/app/components/EventLogSection";
 import InspectionSection from "@/app/components/InspectionSection";
 import MaintenanceCard from "@/app/components/MaintenanceCard";
 import TireSection from "@/app/components/TireSection";
@@ -23,6 +24,8 @@ export default function Home() {
   const [isUpdatingMileage, setIsUpdatingMileage] = useState(false);
   const [showMileageInput, setShowMileageInput] = useState(false);
   const [newMileage, setNewMileage] = useState("");
+  const [isEditingCar, setIsEditingCar] = useState(false);
+  const [showEventLog, setShowEventLog] = useState(true);
 
   useEffect(() => {
     fetchCars();
@@ -55,6 +58,15 @@ export default function Home() {
   const handleCarUpdate = (updatedCar: Car) => {
     setCars(cars.map((c) => (c.id === updatedCar.id ? updatedCar : c)));
     setSelectedCar(updatedCar);
+  };
+
+  const handleCarUpdated = (updatedCar: Car) => {
+    handleCarUpdate(updatedCar);
+    setIsEditingCar(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingCar(false);
   };
 
   const handleCarDelete = async (carId: string) => {
@@ -311,6 +323,20 @@ export default function Home() {
     );
   }
 
+  if (isEditingCar && selectedCar) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        <button
+          onClick={handleCancelEdit}
+          className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 font-semibold text-muted-foreground transition hover:bg-muted"
+        >
+          ← Zurück zur Detailansicht
+        </button>
+        <CarForm car={selectedCar} onUpdated={handleCarUpdated} onCancel={handleCancelEdit} />
+      </div>
+    );
+  }
+
   if (selectedCar) {
     return (
       <div className="space-y-6">
@@ -321,12 +347,20 @@ export default function Home() {
           >
             ← Zurück zum Dashboard
           </button>
-          <button
-            onClick={() => handleCarDelete(selectedCar.id)}
-            className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
-          >
-            Fahrzeug löschen
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsEditingCar(true)}
+              className="rounded-xl bg-accent px-4 py-2 text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
+            >
+              ✏️ Bearbeiten
+            </button>
+            <button
+              onClick={() => handleCarDelete(selectedCar.id)}
+              className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
+            >
+              Fahrzeug löschen
+            </button>
+          </div>
         </div>
 
         <div className="glass rounded-2xl p-6">
@@ -391,7 +425,23 @@ export default function Home() {
                 <p className="text-muted-foreground">VIN: {selectedCar.vin}</p>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setIsEditingCar(true)}
+                className="rounded-xl bg-accent px-4 py-2 text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
+              >
+                ✏️ Bearbeiten
+              </button>
+              <button
+                onClick={() => setShowEventLog(!showEventLog)}
+                className={`rounded-xl px-4 py-2 font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg ${
+                  showEventLog
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                }`}
+              >
+                📋 {showEventLog ? 'Event-Log ausblenden' : 'Event-Log anzeigen'}
+              </button>
               <button
                 onClick={() => {
                   setSelectedCar(null);
@@ -445,6 +495,8 @@ export default function Home() {
         </div>
 
         <TireSection car={selectedCar} onUpdate={handleCarUpdate} />
+
+        {showEventLog && <EventLogSection car={selectedCar} />}
       </div>
     );
   }
