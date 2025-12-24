@@ -1,9 +1,11 @@
-import { getCarById, updateCar } from "@/app/lib/data";
+import { getCarById, updateCar, addCarEvent } from "@/app/lib/data";
 import { Inspection } from "@/app/lib/types";
 import {
   calculateNextInspectionDateByKm,
   calculateNextInspectionDateByYear,
   getEarliestDate,
+  formatDate,
+  formatNumber,
 } from "@/app/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -167,8 +169,46 @@ export async function PUT(
       updatedInspection.nextInspectionDateByKm
     );
 
+    // Add event log entry if inspection was updated
+    let eventLog = car.eventLog || [];
+    const inspectionChanged = 
+      updatedInspection.lastInspectionDate !== car.inspection.lastInspectionDate ||
+      updatedInspection.lastInspectionMileage !== car.inspection.lastInspectionMileage ||
+      updatedInspection.intervalYears !== car.inspection.intervalYears ||
+      updatedInspection.intervalKm !== car.inspection.intervalKm;
+
+    if (inspectionChanged) {
+      let description = 'Inspektion aktualisiert';
+      if (updatedInspection.lastInspectionDate) {
+        description = `Inspektion durchgeführt am ${formatDate(updatedInspection.lastInspectionDate)}`;
+        if (updatedInspection.lastInspectionMileage !== null) {
+          description += ` bei ${formatNumber(updatedInspection.lastInspectionMileage)} km`;
+        }
+        if (updatedInspection.nextInspectionDate) {
+          description += `. Nächste Inspektion: ${formatDate(updatedInspection.nextInspectionDate)}`;
+        }
+      } else {
+        description = 'Inspektions-Informationen aktualisiert';
+      }
+
+      const carWithEvent = addCarEvent(
+        car,
+        'inspection_update',
+        description,
+        {
+          lastInspectionDate: updatedInspection.lastInspectionDate,
+          lastInspectionMileage: updatedInspection.lastInspectionMileage,
+          nextInspectionDate: updatedInspection.nextInspectionDate,
+          intervalYears: updatedInspection.intervalYears,
+          intervalKm: updatedInspection.intervalKm,
+        }
+      );
+      eventLog = carWithEvent.eventLog;
+    }
+
     const updatedCar = await updateCar(resolvedParams.id, {
       inspection: updatedInspection,
+      eventLog,
     });
 
     return NextResponse.json(updatedCar);

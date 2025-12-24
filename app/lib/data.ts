@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { Car, Inspection } from './types';
+import { Car, Inspection, CarEvent, EventType } from './types';
 import { calculateNextInspectionDateByYear, calculateNextInspectionDateByKm, getEarliestDate } from './utils';
 
 const dataDirectory = path.join(process.cwd(), 'data');
@@ -70,6 +70,9 @@ function migrateCar(car: any): Car {
   }
   if (migratedCar.currentTireId === undefined) {
     migratedCar.currentTireId = null;
+  }
+  if (!migratedCar.eventLog) {
+    migratedCar.eventLog = [];
   }
 
   // Migrate from old oilChange format to inspection
@@ -182,7 +185,26 @@ async function getCarsFromRedis(): Promise<Car[]> {
       return [];
     }
 
-    return cars.map(migrateCar);
+    const migratedCars = cars.map(migrateCar);
+    
+    // Check if migration is needed and save back to Redis
+    const needsMigration = cars.some(c =>
+      (c.oilChange && !c.inspection) ||
+      (c.tuv && (c.tuv.intervalType || c.tuv.intervalValue)) ||
+      c.tires === undefined ||
+      c.tireChangeEvents === undefined ||
+      c.currentTireId === undefined ||
+      c.eventLog === undefined ||
+      (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
+    );
+    
+    const needsEventLogMigration = migratedCars.some(c => !c.eventLog || c.eventLog.length === 0);
+    
+    if (needsMigration || needsEventLogMigration) {
+      await saveCarsToRedis(migratedCars);
+    }
+    
+    return migratedCars;
   } catch (error) {
     console.error('Error reading from Redis:', error);
     throw error;
@@ -235,9 +257,14 @@ async function getCarsFromFile(): Promise<Car[]> {
       c.tires === undefined ||
       c.tireChangeEvents === undefined ||
       c.currentTireId === undefined ||
+      c.eventLog === undefined ||
       (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
     );
-    if (needsMigration) {
+    
+    // Always save if eventLog is missing (even if no other migration needed)
+    const needsEventLogMigration = migratedCars.some(c => !c.eventLog || c.eventLog.length === 0);
+    
+    if (needsMigration || needsEventLogMigration) {
       await saveCars(migratedCars);
     }
 
@@ -310,17 +337,44 @@ export async function getCarById(id: string): Promise<Car | null> {
 }
 
 // Create a new car
-export async function createCar(car: Omit<Car, 'id' | 'createdAt' | 'updatedAt'>): Promise<Car> {
+export async function createCar(car: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'eventLog'> & { eventLog?: CarEvent[] }): Promise<Car> {
   const cars = await getCars();
+  const now = new Date().toISOString();
   const newCar: Car = {
     ...car,
     id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
+    eventLog: car.eventLog || [],
   };
+  
+  // Add car_created event
+  newCar.eventLog.push({
+    id: crypto.randomUUID(),
+    type: 'car_created',
+    date: now,
+    description: `Fahrzeug ${car.make} ${car.model} wurde erstellt`,
+  });
+  
   cars.push(newCar);
   await saveCars(cars);
   return newCar;
+}
+
+// Helper function to add an event to a car
+export function addCarEvent(car: Car, type: EventType, description: string, metadata?: Record<string, any>): Car {
+  const event: CarEvent = {
+    id: crypto.randomUUID(),
+    type,
+    date: new Date().toISOString(),
+    description,
+    metadata,
+  };
+  
+  return {
+    ...car,
+    eventLog: [...(car.eventLog || []), event],
+  };
 }
 
 // Update an existing car

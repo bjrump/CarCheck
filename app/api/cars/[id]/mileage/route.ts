@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCarById, updateCar } from "@/app/lib/data";
+import { getCarById, updateCar, addCarEvent } from "@/app/lib/data";
 import {
   calculateNextInspectionDateByKm,
   calculateNextInspectionDateByYear,
   getEarliestDate,
 } from "@/app/lib/utils";
+import { formatNumber } from "@/app/lib/utils";
 
 // PUT /api/cars/[id]/mileage - Update car mileage and recalculate inspections
 export async function PUT(
@@ -55,6 +56,18 @@ export async function PUT(
         ),
       };
     }
+
+    // Add event log entry
+    const carWithEvent = addCarEvent(
+      car,
+      'mileage_update',
+      `Kilometerstand von ${formatNumber(car.mileage)} km auf ${formatNumber(newMileage)} km aktualisiert`,
+      {
+        oldMileage: car.mileage,
+        newMileage: newMileage,
+      }
+    );
+    updates.eventLog = carWithEvent.eventLog;
 
     const updatedCar = await updateCar(resolvedParams.id, updates);
 

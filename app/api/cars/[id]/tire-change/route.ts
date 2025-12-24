@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCarById, updateCar } from '@/app/lib/data';
+import { getCarById, updateCar, addCarEvent } from '@/app/lib/data';
 import { TireChangeEvent } from '@/app/lib/types';
+import { formatDate, formatNumber } from '@/app/lib/utils';
 
 // POST /api/cars/[id]/tire-change - Perform tire change
 export async function POST(
@@ -99,12 +100,29 @@ export async function POST(
       updatedEvents.push(mountEvent);
     }
 
+    // Add event log entry
+    const tireInfo = newTire ? `${newTire.brand || ''} ${newTire.model || ''} ${newTire.type || ''}`.trim() : 'Unbekannt';
+    const carWithEvent = addCarEvent(
+      car,
+      'tire_change',
+      `Reifenwechsel: ${tireInfo} montiert bei ${formatNumber(currentMileage)} km`,
+      {
+        tireId: tireId,
+        tireBrand: newTire.brand,
+        tireModel: newTire.model,
+        tireType: newTire.type,
+        carMileage: currentMileage,
+        previousTireId: car.currentTireId,
+      }
+    );
+
     // Update car
     const updatedCar = await updateCar(resolvedParams.id, {
       tires: updatedTires,
       tireChangeEvents: updatedEvents,
       currentTireId: tireId,
       mileage: currentMileage, // Update car mileage too
+      eventLog: carWithEvent.eventLog,
     });
 
     return NextResponse.json(updatedCar);

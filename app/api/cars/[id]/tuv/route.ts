@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCarById, updateCar } from '@/app/lib/data';
+import { getCarById, updateCar, addCarEvent } from '@/app/lib/data';
 import { TUV } from '@/app/lib/types';
-import { calculateNextTUVDate } from '@/app/lib/utils';
+import { calculateNextTUVDate, formatDate } from '@/app/lib/utils';
 
 // PUT /api/cars/[id]/tuv - Update TÜV information
 export async function PUT(
@@ -58,7 +58,27 @@ export async function PUT(
       updatedTUV.nextAppointmentDate = null;
     }
 
-    const updatedCar = await updateCar(resolvedParams.id, { tuv: updatedTUV });
+    // Add event log entry if TÜV was updated
+    let eventLog = car.eventLog || [];
+    if (updatedTUV.lastAppointmentDate !== car.tuv.lastAppointmentDate) {
+      const carWithEvent = addCarEvent(
+        car,
+        'tuv_update',
+        updatedTUV.lastAppointmentDate
+          ? `TÜV-Termin aktualisiert: Letzter Termin am ${formatDate(updatedTUV.lastAppointmentDate)}, nächster Termin am ${updatedTUV.nextAppointmentDate ? formatDate(updatedTUV.nextAppointmentDate) : 'unbekannt'}`
+          : 'TÜV-Termin zurückgesetzt',
+        {
+          lastAppointmentDate: updatedTUV.lastAppointmentDate,
+          nextAppointmentDate: updatedTUV.nextAppointmentDate,
+        }
+      );
+      eventLog = carWithEvent.eventLog;
+    }
+
+    const updatedCar = await updateCar(resolvedParams.id, { 
+      tuv: updatedTUV,
+      eventLog,
+    });
 
     return NextResponse.json(updatedCar);
   } catch (error) {

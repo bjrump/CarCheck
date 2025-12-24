@@ -41,6 +41,23 @@ export interface Insurance {
   expiryDate: string; // ISO date string
 }
 
+export type EventType = 
+  | 'mileage_update'
+  | 'tuv_update'
+  | 'inspection_update'
+  | 'tire_change'
+  | 'car_created'
+  | 'car_updated'
+  | 'insurance_update';
+
+export interface CarEvent {
+  id: string;
+  type: EventType;
+  date: string; // ISO date string
+  description: string; // Human-readable description
+  metadata?: Record<string, any>; // Additional data (e.g. old/new mileage, tire info, etc.)
+}
+
 export interface Car {
   id: string;
   make: string; // Marke
@@ -55,6 +72,7 @@ export interface Car {
   tires: Tire[];
   tireChangeEvents: TireChangeEvent[];
   currentTireId: string | null; // ID des aktuell montierten Reifens
+  eventLog: CarEvent[]; // Event-Log für alle Aktionen
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
