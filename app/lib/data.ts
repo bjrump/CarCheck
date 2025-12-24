@@ -185,7 +185,26 @@ async function getCarsFromRedis(): Promise<Car[]> {
       return [];
     }
 
-    return cars.map(migrateCar);
+    const migratedCars = cars.map(migrateCar);
+    
+    // Check if migration is needed and save back to Redis
+    const needsMigration = cars.some(c =>
+      (c.oilChange && !c.inspection) ||
+      (c.tuv && (c.tuv.intervalType || c.tuv.intervalValue)) ||
+      c.tires === undefined ||
+      c.tireChangeEvents === undefined ||
+      c.currentTireId === undefined ||
+      c.eventLog === undefined ||
+      (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
+    );
+    
+    const needsEventLogMigration = migratedCars.some(c => !c.eventLog || c.eventLog.length === 0);
+    
+    if (needsMigration || needsEventLogMigration) {
+      await saveCarsToRedis(migratedCars);
+    }
+    
+    return migratedCars;
   } catch (error) {
     console.error('Error reading from Redis:', error);
     throw error;
@@ -241,7 +260,11 @@ async function getCarsFromFile(): Promise<Car[]> {
       c.eventLog === undefined ||
       (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
     );
-    if (needsMigration) {
+    
+    // Always save if eventLog is missing (even if no other migration needed)
+    const needsEventLogMigration = migratedCars.some(c => !c.eventLog || c.eventLog.length === 0);
+    
+    if (needsMigration || needsEventLogMigration) {
       await saveCars(migratedCars);
     }
 

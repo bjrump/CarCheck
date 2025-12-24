@@ -120,7 +120,11 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>Keine Events gefunden</p>
+            <p className="text-sm">
+              {filterType === 'all' 
+                ? 'Noch keine Events vorhanden. Events werden automatisch erstellt, wenn Sie Aktionen am Fahrzeug durchführen.'
+                : 'Keine Events dieses Typs gefunden'}
+            </p>
           </div>
         ) : (
           filteredAndSortedEvents.map((event) => (
