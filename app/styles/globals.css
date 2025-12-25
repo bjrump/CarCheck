@@ -73,7 +73,7 @@
   color: var(--foreground);
 }
 
-/* Dark mode styling for text inputs, number inputs, and textareas */
+/* Dark mode styling for all input types and textareas */
 .dark input[type="text"],
 .dark input[type="number"],
 .dark input[type="email"],
@@ -81,6 +81,11 @@
 .dark input[type="search"],
 .dark input[type="tel"],
 .dark input[type="url"],
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"],
 .dark textarea {
   background-color: var(--input);
   color: var(--foreground);
@@ -99,11 +104,12 @@
   filter: invert(1);
 }
 
-/* Date picker dark mode support - uses native dark styling across all browsers */
-.dark input[type="date"] {
+/* Date picker and time-related inputs - uses native dark styling across all browsers */
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"] {
   color-scheme: dark;
-  background-color: var(--input);
-  color: var(--foreground);
-  border-color: var(--border);
 }
 
