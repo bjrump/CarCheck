@@ -23,12 +23,12 @@
   --card: #0f172a;
   --card-foreground: #e5e7eb;
   --border: #1f2937;
-  --input: #111827;
+  --input: #1a1f35;
   --ring: #3b82f6;
-  --muted: #111827;
+  --muted: #1a1f35;
   --muted-foreground: #94a3b8;
   --accent: #3b82f6;
-  --accent-foreground: #e5e7eb;
+  --accent-foreground: #f8fafc;
   --grid: radial-gradient(circle at 1px 1px, rgba(226, 232, 240, 0.05) 1px, transparent 0);
 }
 
@@ -64,5 +64,52 @@
     background-color: var(--card);
     background-color: color-mix(in srgb, var(--card) 90%, transparent);
   }
+}
+
+/* Dark mode improvements for form elements */
+.dark select,
+.dark select option {
+  background-color: var(--input);
+  color: var(--foreground);
+}
+
+/* Dark mode styling for all input types and textareas */
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"],
+.dark textarea {
+  background-color: var(--input);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+/* Placeholder text in dark mode */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+/* Date picker dark mode support for WebKit browsers (Chrome, Safari, Edge) */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Date picker and time-related inputs - uses native dark styling across all browsers */
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"] {
+  color-scheme: dark;
 }
 
