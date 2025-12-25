@@ -73,6 +73,27 @@
   color: var(--foreground);
 }
 
+/* Dark mode styling for text inputs, number inputs, and textareas */
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark textarea {
+  background-color: var(--input);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+/* Placeholder text in dark mode */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
 /* Date picker dark mode support for WebKit browsers (Chrome, Safari, Edge) */
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
@@ -81,5 +102,8 @@
 /* Date picker dark mode support - uses native dark styling across all browsers */
 .dark input[type="date"] {
   color-scheme: dark;
+  background-color: var(--input);
+  color: var(--foreground);
+  border-color: var(--border);
 }
 
