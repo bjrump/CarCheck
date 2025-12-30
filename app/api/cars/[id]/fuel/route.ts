@@ -1,9 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getCarById, updateCar, addCarEvent } from '@/app/lib/data';
-import { FuelEntry } from '@/app/lib/types';
-import { formatNumber } from '@/app/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { getCarById, updateCar, addCarEvent } from "@/app/lib/data";
+import { FuelEntry } from "@/app/lib/types";
+import { formatNumber } from "@/app/lib/utils";
+import {
+  calculateNextInspectionDateByKm,
+  getEarliestDate,
+} from "@/app/lib/utils";
 
-// POST /api/cars/[id]/fuel - Add fuel entry
+// GET /api/cars/[id]/fuel - Get all fuel entries for a car
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
+  try {
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const car = await getCarById(resolvedParams.id);
+
+    if (!car) {
+      return NextResponse.json(
+        { error: "Fahrzeug nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(car.fuelEntries || []);
+  } catch (error) {
+    console.error("Fehler beim Laden der Tankeinträge:", error);
+    return NextResponse.json(
+      { error: "Fehler beim Laden der Tankeinträge" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/cars/[id]/fuel - Create a new fuel entry
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -14,31 +44,32 @@ export async function POST(
 
     if (!car) {
       return NextResponse.json(
-        { error: 'Fahrzeug nicht gefunden' },
+        { error: "Fahrzeug nicht gefunden" },
         { status: 404 }
       );
     }
 
     const body = await request.json();
-    
+
     // Validate required fields
-    if (!body.date || body.mileage === undefined) {
+    if (!body.date || body.mileage === undefined || body.liters === undefined) {
       return NextResponse.json(
-        { error: 'Datum und Kilometerstand sind erforderlich' },
+        { error: "Datum, Kilometerstand und Liter sind erforderlich" },
         { status: 400 }
       );
     }
 
     const mileage = parseInt(body.mileage, 10);
-    
-    if (isNaN(mileage) || mileage < 0) {
+    const liters = parseFloat(body.liters);
+
+    if (isNaN(mileage) || mileage < 0 || isNaN(liters) || liters <= 0) {
       return NextResponse.json(
-        { error: 'Ungültiger Kilometerstand' },
+        { error: "Ungültiger Kilometerstand oder Liter" },
         { status: 400 }
       );
     }
 
-    // Chronological validation
+    // Chronological validation - ensure mileage consistency with date order
     const newEntryDate = new Date(body.date);
     const newEntryTime = newEntryDate.getTime();
     
@@ -48,6 +79,7 @@ export async function POST(
       dateTime: new Date(e.date).getTime()
     })).sort((a, b) => a.dateTime - b.dateTime);
 
+    // Check against chronologically previous entry
     const prevEntry = entriesWithParsedDates.filter(e => e.dateTime < newEntryTime).pop();
     if (prevEntry && mileage < prevEntry.entry.mileage) {
       return NextResponse.json(
@@ -56,6 +88,7 @@ export async function POST(
       );
     }
 
+    // Check against chronologically next entry
     const nextEntry = entriesWithParsedDates.find(e => e.dateTime > newEntryTime);
     if (nextEntry && mileage > nextEntry.entry.mileage) {
       return NextResponse.json(
@@ -64,32 +97,69 @@ export async function POST(
       );
     }
 
-    // Helper to parse optional numeric field
-    const parseOptionalNumber = (value: any): number | undefined => {
-      return value !== undefined && value !== null && value !== '' ? parseFloat(value) : undefined;
-    };
+    // Calculate kmDriven and consumption based on chronologically previous entry
+    const sortedEntries = [...(car.fuelEntries || [])].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const lastEntry = sortedEntries[sortedEntries.length - 1];
+
+    let kmDriven: number | undefined;
+    let consumption: number | undefined;
+
+    if (lastEntry) {
+      kmDriven = mileage - lastEntry.mileage;
+      if (kmDriven > 0 && liters > 0) {
+        consumption = (liters / kmDriven) * 100; // L/100km
+      }
+    }
 
     // Create new fuel entry
-    const newEntry: FuelEntry = {
+    const newFuelEntry: FuelEntry = {
       id: crypto.randomUUID(),
-      date: new Date(body.date).toISOString(),
-      mileage: mileage,
-      liters: parseOptionalNumber(body.liters),
-      pricePerLiter: parseOptionalNumber(body.pricePerLiter),
-      totalCost: parseOptionalNumber(body.totalCost),
-      fuelType: body.fuelType ?? undefined,
-      notes: body.notes ?? undefined,
+      date: body.date,
+      mileage,
+      liters,
+      kmDriven,
+      consumption,
+      pricePerLiter: body.pricePerLiter ? parseFloat(body.pricePerLiter) : undefined,
+      totalCost: body.totalCost ? parseFloat(body.totalCost) : undefined,
+      notes: body.notes || undefined,
     };
 
-    const updatedFuelEntries = [...(car.fuelEntries || []), newEntry];
+    // Update car with new fuel entry and mileage
+    const updatedFuelEntries = [...(car.fuelEntries || []), newFuelEntry];
+    
+    const updates: any = {
+      fuelEntries: updatedFuelEntries,
+      mileage: Math.max(mileage, car.mileage), // Update car mileage to the highest value
+    };
+
+    // Recalculate inspection dates based on new mileage
+    if (car.inspection.lastInspectionDate && car.inspection.lastInspectionMileage !== null) {
+      const nextInspectionDateByKm = calculateNextInspectionDateByKm(
+        car.inspection.lastInspectionDate,
+        car.inspection.lastInspectionMileage,
+        updates.mileage,
+        car.inspection.intervalKm
+      );
+
+      updates.inspection = {
+        ...car.inspection,
+        nextInspectionDateByKm,
+        nextInspectionDate: getEarliestDate(
+          car.inspection.nextInspectionDateByYear,
+          nextInspectionDateByKm
+        ),
+      };
+    }
 
     // Add event log entry
-    let description = `Tankeintrag hinzugefügt bei ${formatNumber(mileage)} km`;
-    if (newEntry.liters !== undefined) {
-      description += `, ${newEntry.liters.toFixed(2)} Liter`;
+    let description = `Tankeintrag: ${formatNumber(liters)} Liter getankt bei ${formatNumber(mileage)} km`;
+    if (kmDriven !== undefined) {
+      description += ` (${formatNumber(kmDriven)} km gefahren)`;
     }
-    if (newEntry.totalCost !== undefined) {
-      description += `, ${newEntry.totalCost.toFixed(2)} €`;
+    if (consumption !== undefined) {
+      description += `, Verbrauch: ${consumption.toFixed(2)} L/100km`;
     }
 
     const carWithEvent = addCarEvent(
@@ -97,24 +167,25 @@ export async function POST(
       'fuel_entry',
       description,
       {
-        fuelEntryId: newEntry.id,
+        fuelEntryId: newFuelEntry.id,
         mileage: mileage,
-        liters: newEntry.liters,
-        totalCost: newEntry.totalCost,
+        liters: liters,
+        kmDriven: kmDriven,
+        consumption: consumption,
       }
     );
+    updates.eventLog = carWithEvent.eventLog;
 
-    // Update car with new fuel entry
-    const updatedCar = await updateCar(resolvedParams.id, {
-      fuelEntries: updatedFuelEntries,
-      eventLog: carWithEvent.eventLog,
-    });
+    const updatedCar = await updateCar(resolvedParams.id, updates);
 
-    return NextResponse.json(updatedCar);
+    return NextResponse.json(updatedCar, { status: 201 });
   } catch (error) {
-    console.error('Fehler beim Hinzufügen des Tankeintrags:', error);
+    console.error("Fehler beim Erstellen des Tankeintrags:", error);
     return NextResponse.json(
-      { error: 'Fehler beim Hinzufügen des Tankeintrags' },
+      {
+        error: "Fehler beim Erstellen des Tankeintrags",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

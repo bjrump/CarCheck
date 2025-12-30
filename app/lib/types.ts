@@ -22,10 +22,11 @@ export interface FuelEntry {
   id: string;
   date: string; // ISO date string
   mileage: number; // Kilometerstand beim Tanken
-  liters?: number; // Getankte Liter (optional)
+  liters: number; // Getankte Liter
+  kmDriven?: number; // Gefahrene KM seit letztem Tanken (berechnet)
+  consumption?: number; // Verbrauch in L/100km (berechnet)
   pricePerLiter?: number; // Preis pro Liter (optional)
   totalCost?: number; // Gesamtkosten (optional)
-  fuelType?: string; // Kraftstofftyp (optional)
   notes?: string; // Notizen (optional)
 }
 
@@ -84,7 +85,7 @@ export interface Car {
   tires: Tire[];
   tireChangeEvents: TireChangeEvent[];
   currentTireId: string | null; // ID des aktuell montierten Reifens
-  fuelEntries?: FuelEntry[]; // Tankeinträge
+  fuelEntries: FuelEntry[]; // Tankeinträge
   eventLog: CarEvent[]; // Event-Log für alle Aktionen
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
