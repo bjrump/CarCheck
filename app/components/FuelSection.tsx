@@ -11,6 +11,7 @@ interface FuelSectionProps {
 
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<FuelEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -29,7 +30,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       return;
     }
 
-    if (!formData.mileage || parseInt(formData.mileage, 10) < car.mileage) {
+    if (!editingEntry && (!formData.mileage || parseInt(formData.mileage, 10) < car.mileage)) {
       alert(
         `Der Kilometerstand muss mindestens ${formatNumber(car.mileage)} km betragen`
       );
@@ -38,10 +39,12 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
 
     setIsSaving(true);
     try {
+      const isEditing = !!editingEntry;
       const response = await fetch(`/api/cars/${car.id}/fuel`, {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: editingEntry?.id,
           date: formData.date,
           mileage: parseInt(formData.mileage, 10),
           liters: parseFloat(formData.liters),
@@ -63,6 +66,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       const updatedCar = await response.json();
       onUpdate(updatedCar);
       setIsAdding(false);
+      setEditingEntry(null);
       setFormData({
         date: new Date().toISOString().split("T")[0],
         mileage: updatedCar.mileage.toString(),
@@ -78,6 +82,32 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEdit = (entry: FuelEntry) => {
+    setEditingEntry(entry);
+    setIsAdding(true);
+    setFormData({
+      date: entry.date,
+      mileage: entry.mileage.toString(),
+      liters: entry.liters.toString(),
+      pricePerLiter: entry.pricePerLiter?.toString() || "",
+      totalCost: entry.totalCost?.toString() || "",
+      notes: entry.notes || "",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsAdding(false);
+    setEditingEntry(null);
+    setFormData({
+      date: new Date().toISOString().split("T")[0],
+      mileage: car.mileage.toString(),
+      liters: "",
+      pricePerLiter: "",
+      totalCost: "",
+      notes: "",
+    });
   };
 
   // Sort fuel entries by date (newest first)
@@ -106,6 +136,9 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
 
       {isAdding && (
         <form onSubmit={handleSubmit} className="mb-6 space-y-4">
+          <h3 className="text-lg font-semibold mb-2">
+            {editingEntry ? "Tankeintrag bearbeiten" : "Neuer Tankeintrag"}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">
@@ -206,7 +239,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
             </button>
             <button
               type="button"
-              onClick={() => setIsAdding(false)}
+              onClick={handleCancelEdit}
               className="rounded-xl border border-border px-4 py-2 font-semibold text-muted-foreground transition hover:bg-muted"
             >
               Abbrechen
@@ -222,7 +255,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       ) : (
         <div className="space-y-3">
           {sortedEntries.map((entry) => (
-            <FuelEntryCard key={entry.id} entry={entry} />
+            <FuelEntryCard key={entry.id} entry={entry} onEdit={handleEdit} />
           ))}
         </div>
       )}
@@ -230,7 +263,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   );
 }
 
-function FuelEntryCard({ entry }: { entry: FuelEntry }) {
+function FuelEntryCard({ entry, onEdit }: { entry: FuelEntry; onEdit: (entry: FuelEntry) => void }) {
   return (
     <div className="border border-border rounded-xl p-4 hover:bg-muted/30 transition">
       <div className="flex justify-between items-start mb-2">
@@ -240,15 +273,27 @@ function FuelEntryCard({ entry }: { entry: FuelEntry }) {
             KM-Stand: {formatNumber(entry.mileage)} km
           </p>
         </div>
-        <div className="text-right">
-          <p className="font-semibold text-accent">
-            {formatNumber(entry.liters)} Liter
-          </p>
-          {entry.totalCost && (
-            <p className="text-sm text-muted-foreground">
-              {entry.totalCost.toFixed(2)} €
+        <div className="flex items-start gap-3">
+          <div className="text-right">
+            <p className="font-semibold text-accent">
+              {formatNumber(entry.liters)} Liter
             </p>
-          )}
+            {entry.totalCost && (
+              <p className="text-sm text-muted-foreground">
+                {entry.totalCost.toFixed(2)} €
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => onEdit(entry)}
+            className="p-2 rounded-lg hover:bg-muted transition text-muted-foreground hover:text-foreground"
+            title="Bearbeiten"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+              <path d="m15 5 4 4"/>
+            </svg>
+          </button>
         </div>
       </div>
 
