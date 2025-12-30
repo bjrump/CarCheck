@@ -3,6 +3,8 @@
 import CarCard from "@/app/components/CarCard";
 import CarForm from "@/app/components/CarForm";
 import EventLogSection from "@/app/components/EventLogSection";
+import FuelAnalytics from "@/app/components/FuelAnalytics";
+import FuelSection from "@/app/components/FuelSection";
 import InspectionSection from "@/app/components/InspectionSection";
 import MaintenanceCard from "@/app/components/MaintenanceCard";
 import TireSection from "@/app/components/TireSection";
@@ -495,6 +497,12 @@ export default function Home() {
         </div>
 
         <TireSection car={selectedCar} onUpdate={handleCarUpdate} />
+
+        <FuelSection car={selectedCar} onUpdate={handleCarUpdate} />
+
+        {selectedCar.fuelEntries && selectedCar.fuelEntries.length > 0 && (
+          <FuelAnalytics fuelEntries={selectedCar.fuelEntries} />
+        )}
 
         {showEventLog && <EventLogSection car={selectedCar} />}
       </div>

@@ -41,6 +41,18 @@ export interface Insurance {
   expiryDate: string; // ISO date string
 }
 
+export interface FuelEntry {
+  id: string;
+  date: string; // ISO date string
+  mileage: number; // Kilometerstand beim Tanken
+  liters: number; // Getankte Liter
+  kmDriven?: number; // Gefahrene KM seit letztem Tanken (berechnet)
+  consumption?: number; // Verbrauch in L/100km (berechnet)
+  pricePerLiter?: number; // Preis pro Liter (optional)
+  totalCost?: number; // Gesamtkosten (optional)
+  notes?: string; // Notizen (optional)
+}
+
 export type EventType = 
   | 'mileage_update'
   | 'tuv_update'
@@ -48,7 +60,8 @@ export type EventType =
   | 'tire_change'
   | 'car_created'
   | 'car_updated'
-  | 'insurance_update';
+  | 'insurance_update'
+  | 'fuel_entry';
 
 export interface CarEvent {
   id: string;
@@ -72,6 +85,7 @@ export interface Car {
   tires: Tire[];
   tireChangeEvents: TireChangeEvent[];
   currentTireId: string | null; // ID des aktuell montierten Reifens
+  fuelEntries: FuelEntry[]; // Tankeinträge
   eventLog: CarEvent[]; // Event-Log für alle Aktionen
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string

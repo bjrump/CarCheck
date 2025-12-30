@@ -74,6 +74,9 @@ function migrateCar(car: any): Car {
   if (!migratedCar.eventLog) {
     migratedCar.eventLog = [];
   }
+  if (!migratedCar.fuelEntries) {
+    migratedCar.fuelEntries = [];
+  }
 
   // Migrate from old oilChange format to inspection
   if (!migratedCar.inspection && migratedCar.oilChange) {
@@ -195,6 +198,7 @@ async function getCarsFromRedis(): Promise<Car[]> {
       c.tireChangeEvents === undefined ||
       c.currentTireId === undefined ||
       c.eventLog === undefined ||
+      c.fuelEntries === undefined ||
       (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
     );
     
@@ -258,6 +262,7 @@ async function getCarsFromFile(): Promise<Car[]> {
       c.tireChangeEvents === undefined ||
       c.currentTireId === undefined ||
       c.eventLog === undefined ||
+      c.fuelEntries === undefined ||
       (c.tires && Array.isArray(c.tires) && c.tires.some((t: any) => t.initialMileage !== undefined))
     );
     
