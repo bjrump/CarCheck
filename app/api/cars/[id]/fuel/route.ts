@@ -64,16 +64,21 @@ export async function POST(
       );
     }
 
+    // Helper to parse optional numeric field
+    const parseOptionalNumber = (value: any): number | undefined => {
+      return value !== undefined && value !== null && value !== '' ? parseFloat(value) : undefined;
+    };
+
     // Create new fuel entry
     const newEntry: FuelEntry = {
       id: crypto.randomUUID(),
       date: new Date(body.date).toISOString(),
       mileage: mileage,
-      liters: body.liters !== undefined && body.liters !== null && body.liters !== '' ? parseFloat(body.liters) : undefined,
-      pricePerLiter: body.pricePerLiter !== undefined && body.pricePerLiter !== null && body.pricePerLiter !== '' ? parseFloat(body.pricePerLiter) : undefined,
-      totalCost: body.totalCost !== undefined && body.totalCost !== null && body.totalCost !== '' ? parseFloat(body.totalCost) : undefined,
-      fuelType: body.fuelType || undefined,
-      notes: body.notes || undefined,
+      liters: parseOptionalNumber(body.liters),
+      pricePerLiter: parseOptionalNumber(body.pricePerLiter),
+      totalCost: parseOptionalNumber(body.totalCost),
+      fuelType: body.fuelType ?? undefined,
+      notes: body.notes ?? undefined,
     };
 
     const updatedFuelEntries = [...(car.fuelEntries || []), newEntry];
