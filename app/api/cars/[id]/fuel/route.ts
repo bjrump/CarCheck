@@ -40,20 +40,24 @@ export async function POST(
 
     // Chronological validation
     const newEntryDate = new Date(body.date);
-    const sortedEntriesForValidation = [...(car.fuelEntries || [])].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const newEntryTime = newEntryDate.getTime();
+    
+    // Parse dates once and sort
+    const entriesWithParsedDates = (car.fuelEntries || []).map(e => ({
+      entry: e,
+      dateTime: new Date(e.date).getTime()
+    })).sort((a, b) => a.dateTime - b.dateTime);
 
-    const prevEntry = sortedEntriesForValidation.filter(e => new Date(e.date) < newEntryDate).pop();
-    if (prevEntry && mileage < prevEntry.mileage) {
+    const prevEntry = entriesWithParsedDates.filter(e => e.dateTime < newEntryTime).pop();
+    if (prevEntry && mileage < prevEntry.entry.mileage) {
       return NextResponse.json(
         { error: 'Der Kilometerstand kann nicht geringer sein als der eines früheren Eintrags.' },
         { status: 400 }
       );
     }
 
-    const nextEntry = sortedEntriesForValidation.find(e => new Date(e.date) > newEntryDate);
-    if (nextEntry && mileage > nextEntry.mileage) {
+    const nextEntry = entriesWithParsedDates.find(e => e.dateTime > newEntryTime);
+    if (nextEntry && mileage > nextEntry.entry.mileage) {
       return NextResponse.json(
         { error: 'Der Kilometerstand kann nicht höher sein als der eines späteren Eintrags.' },
         { status: 400 }
@@ -65,9 +69,9 @@ export async function POST(
       id: crypto.randomUUID(),
       date: new Date(body.date).toISOString(),
       mileage: mileage,
-      liters: body.liters ? parseFloat(body.liters) : undefined,
-      pricePerLiter: body.pricePerLiter ? parseFloat(body.pricePerLiter) : undefined,
-      totalCost: body.totalCost ? parseFloat(body.totalCost) : undefined,
+      liters: body.liters !== undefined && body.liters !== null && body.liters !== '' ? parseFloat(body.liters) : undefined,
+      pricePerLiter: body.pricePerLiter !== undefined && body.pricePerLiter !== null && body.pricePerLiter !== '' ? parseFloat(body.pricePerLiter) : undefined,
+      totalCost: body.totalCost !== undefined && body.totalCost !== null && body.totalCost !== '' ? parseFloat(body.totalCost) : undefined,
       fuelType: body.fuelType || undefined,
       notes: body.notes || undefined,
     };
@@ -76,10 +80,10 @@ export async function POST(
 
     // Add event log entry
     let description = `Tankeintrag hinzugefügt bei ${formatNumber(mileage)} km`;
-    if (newEntry.liters) {
+    if (newEntry.liters !== undefined) {
       description += `, ${newEntry.liters.toFixed(2)} Liter`;
     }
-    if (newEntry.totalCost) {
+    if (newEntry.totalCost !== undefined) {
       description += `, ${newEntry.totalCost.toFixed(2)} €`;
     }
 
