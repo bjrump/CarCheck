@@ -120,6 +120,22 @@ export async function POST(
       }
     }
 
+    // Calculate price per liter or total cost if one is missing
+    let pricePerLiter: number | undefined = body.pricePerLiter
+      ? parseFloat(body.pricePerLiter)
+      : undefined;
+    let totalCost: number | undefined = body.totalCost
+      ? parseFloat(body.totalCost)
+      : undefined;
+
+    if (liters > 0) {
+      if (pricePerLiter && !totalCost) {
+        totalCost = pricePerLiter * liters;
+      } else if (totalCost && !pricePerLiter) {
+        pricePerLiter = totalCost / liters;
+      }
+    }
+
     // Create new fuel entry
     const newFuelEntry: FuelEntry = {
       id: crypto.randomUUID(),
@@ -128,10 +144,8 @@ export async function POST(
       liters,
       kmDriven,
       consumption,
-      pricePerLiter: body.pricePerLiter
-        ? parseFloat(body.pricePerLiter)
-        : undefined,
-      totalCost: body.totalCost ? parseFloat(body.totalCost) : undefined,
+      pricePerLiter,
+      totalCost,
       notes: body.notes || undefined,
     };
 
@@ -322,6 +336,22 @@ export async function PUT(
       }
     }
 
+    // Calculate price per liter or total cost if one is missing
+    let pricePerLiter: number | undefined = body.pricePerLiter
+      ? parseFloat(body.pricePerLiter)
+      : undefined;
+    let totalCost: number | undefined = body.totalCost
+      ? parseFloat(body.totalCost)
+      : undefined;
+
+    if (liters > 0) {
+      if (pricePerLiter && !totalCost) {
+        totalCost = pricePerLiter * liters;
+      } else if (totalCost && !pricePerLiter) {
+        pricePerLiter = totalCost / liters;
+      }
+    }
+
     // Update the fuel entry
     const updatedFuelEntry: FuelEntry = {
       id: body.id,
@@ -330,10 +360,8 @@ export async function PUT(
       liters,
       kmDriven,
       consumption,
-      pricePerLiter: body.pricePerLiter
-        ? parseFloat(body.pricePerLiter)
-        : undefined,
-      totalCost: body.totalCost ? parseFloat(body.totalCost) : undefined,
+      pricePerLiter,
+      totalCost,
       notes: body.notes || undefined,
     };
 

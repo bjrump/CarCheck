@@ -117,6 +117,57 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     });
   };
 
+  // Auto-calculate price per liter or total cost
+  const handleLitersChange = (value: string) => {
+    const newFormData = { ...formData, liters: value };
+    const liters = parseFloat(value);
+
+    if (liters > 0) {
+      // If totalCost is set, calculate pricePerLiter
+      const totalCost = parseFloat(formData.totalCost);
+      if (totalCost > 0) {
+        newFormData.pricePerLiter = (totalCost / liters).toFixed(3);
+      }
+      // If pricePerLiter is set, calculate totalCost
+      const pricePerLiter = parseFloat(formData.pricePerLiter);
+      if (pricePerLiter > 0 && !totalCost) {
+        newFormData.totalCost = (pricePerLiter * liters).toFixed(2);
+      }
+    }
+
+    setFormData(newFormData);
+  };
+
+  const handlePricePerLiterChange = (value: string) => {
+    const newFormData = { ...formData, pricePerLiter: value };
+    const pricePerLiter = parseFloat(value);
+    const liters = parseFloat(formData.liters);
+
+    if (pricePerLiter > 0 && liters > 0) {
+      newFormData.totalCost = (pricePerLiter * liters).toFixed(2);
+    } else if (!value) {
+      // If pricePerLiter is cleared, also clear totalCost
+      newFormData.totalCost = "";
+    }
+
+    setFormData(newFormData);
+  };
+
+  const handleTotalCostChange = (value: string) => {
+    const newFormData = { ...formData, totalCost: value };
+    const totalCost = parseFloat(value);
+    const liters = parseFloat(formData.liters);
+
+    if (totalCost > 0 && liters > 0) {
+      newFormData.pricePerLiter = (totalCost / liters).toFixed(3);
+    } else if (!value) {
+      // If totalCost is cleared, also clear pricePerLiter
+      newFormData.pricePerLiter = "";
+    }
+
+    setFormData(newFormData);
+  };
+
   // Sort fuel entries by date (newest first)
   const sortedEntries = [...(car.fuelEntries || [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -184,9 +235,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
                 type="number"
                 step="0.01"
                 value={formData.liters}
-                onChange={(e) =>
-                  setFormData({ ...formData, liters: e.target.value })
-                }
+                onChange={(e) => handleLitersChange(e.target.value)}
                 className="w-full rounded-lg border border-border bg-input/60 px-3 py-2 text-sm text-foreground"
                 min="0.01"
                 required
@@ -200,9 +249,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
                 type="number"
                 step="0.001"
                 value={formData.pricePerLiter}
-                onChange={(e) =>
-                  setFormData({ ...formData, pricePerLiter: e.target.value })
-                }
+                onChange={(e) => handlePricePerLiterChange(e.target.value)}
                 className="w-full rounded-lg border border-border bg-input/60 px-3 py-2 text-sm text-foreground"
                 min="0"
               />
@@ -215,9 +262,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
                 type="number"
                 step="0.01"
                 value={formData.totalCost}
-                onChange={(e) =>
-                  setFormData({ ...formData, totalCost: e.target.value })
-                }
+                onChange={(e) => handleTotalCostChange(e.target.value)}
                 className="w-full rounded-lg border border-border bg-input/60 px-3 py-2 text-sm text-foreground"
                 min="0"
               />
