@@ -500,7 +500,7 @@ export default function Home() {
 
         <FuelSection car={selectedCar} onUpdate={handleCarUpdate} />
 
-        {selectedCar.fuelEntries && selectedCar.fuelEntries.length > 0 && (
+        {selectedCar.fuelEntries && selectedCar.fuelEntries.length > 1 && (
           <FuelAnalytics fuelEntries={selectedCar.fuelEntries} />
         )}
 
