@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       tires: [],
       tireChangeEvents: [],
       currentTireId: null,
+      fuelEntries: [],
     });
 
     return NextResponse.json(newCar, { status: 201 });
