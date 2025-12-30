@@ -97,17 +97,12 @@ export async function POST(
       );
     }
 
-    // Calculate kmDriven and consumption based on chronologically most recent entry
-    const sortedEntries = [...(car.fuelEntries || [])].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    const mostRecentEntry = sortedEntries[sortedEntries.length - 1];
-
+    // Calculate kmDriven and consumption based on chronologically previous entry
     let kmDriven: number | undefined;
     let consumption: number | undefined;
 
-    if (mostRecentEntry) {
-      kmDriven = mileage - mostRecentEntry.mileage;
+    if (prevEntry) {
+      kmDriven = mileage - prevEntry.entry.mileage;
       if (kmDriven > 0 && liters > 0) {
         consumption = (liters / kmDriven) * 100; // L/100km
       }
@@ -127,7 +122,20 @@ export async function POST(
     };
 
     // Update car with new fuel entry and mileage
-    const updatedFuelEntries = [...(car.fuelEntries || []), newFuelEntry];
+    const updatedFuelEntries = [...(car.fuelEntries || []), newFuelEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // Update nextEntry's kmDriven and consumption if it exists
+    if (nextEntry) {
+      const nextEntryToUpdate = updatedFuelEntries.find(e => e.id === nextEntry.entry.id);
+      if (nextEntryToUpdate) {
+        nextEntryToUpdate.kmDriven = nextEntryToUpdate.mileage - newFuelEntry.mileage;
+        if (nextEntryToUpdate.kmDriven > 0 && nextEntryToUpdate.liters > 0) {
+          nextEntryToUpdate.consumption = (nextEntryToUpdate.liters / nextEntryToUpdate.kmDriven) * 100;
+        } else {
+          nextEntryToUpdate.consumption = undefined;
+        }
+      }
+    }
     
     const updates: any = {
       fuelEntries: updatedFuelEntries,
