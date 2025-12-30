@@ -109,8 +109,7 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 
 ### Voraussetzungen
 
-- Node.js 20.x oder höher
-- npm oder yarn
+- [Bun](https://bun.sh/) 1.0 oder höher (beinhaltet bereits einen schnellen JavaScript-Runtime)
 
 ### Schritte
 
@@ -122,16 +121,12 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 
 2. **Abhängigkeiten installieren**
    ```bash
-   npm install
-   # oder
-   yarn install
+   bun install
    ```
 
 3. **Entwicklungsserver starten**
    ```bash
-   npm run dev
-   # oder
-   yarn dev
+   bun dev
    ```
 
 4. **Im Browser öffnen**
@@ -179,14 +174,14 @@ Die App verwendet **Upstash Redis** für die Cloud-Speicherung in der Produktion
 2. **Migration bestehender Daten**
    ```bash
    # Installiere tsx (falls noch nicht vorhanden)
-   npm install -D tsx
+   bun add -D tsx
 
    # Setze Umgebungsvariablen
    export UPSTASH_REDIS_REST_URL="your-redis-url"
    export UPSTASH_REDIS_REST_TOKEN="your-redis-token"
 
    # Führe Migration aus
-   npx tsx scripts/migrate-to-redis.ts
+   bun run scripts/migrate-to-redis.ts
    ```
 
 > **💡 Hinweis**: Die App verwendet automatisch Redis, wenn die Umgebungsvariablen gesetzt sind. Andernfalls fällt sie auf die lokale JSON-Datei zurück.
@@ -347,10 +342,10 @@ CarCheck/
 
 ```bash
 # Production-Build erstellen
-npm run build
+bun run build
 
 # Production-Server starten
-npm start
+bun start
 ```
 
 ### Deployment auf Vercel
@@ -358,7 +353,7 @@ npm start
 1. **Repository mit Vercel verbinden**
    ```bash
    # Vercel CLI installieren
-   npm i -g vercel
+   bun add -g vercel
 
    # Projekt deployen
    vercel
@@ -409,14 +404,14 @@ npm start
 **Lösung:**
 ```bash
 # Node Modules neu installieren
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules bun.lockb
+bun install
 
 # Cache leeren
 rm -rf .next
 
 # Neu bauen
-npm run build
+bun run build
 ```
 
 ---
