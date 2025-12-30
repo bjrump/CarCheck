@@ -93,15 +93,15 @@
 
 CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwicklererfahrung:
 
-| Technologie | Version | Beschreibung |
-|------------|---------|--------------|
-| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js) | 16.0 | React Framework mit App Router |
-| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react) | 19.0 | UI-Bibliothek |
-| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript) | 5.5 | Typsichere Entwicklung |
-| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 3.4 | Utility-First CSS Framework |
-| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 3.6 | Datumsberechnungen |
-| ![Upstash Redis](https://img.shields.io/badge/-Upstash_Redis-00E9A3?style=flat-square) | 1.34 | Cloud-Datenspeicherung (optional) |
-| ![Vercel Analytics](https://img.shields.io/badge/-Vercel_Analytics-black?style=flat-square) | 1.6 | Analytics-Integration |
+| Technologie                                                                                        | Version | Beschreibung                      |
+| -------------------------------------------------------------------------------------------------- | ------- | --------------------------------- |
+| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js)             | 16.0    | React Framework mit App Router    |
+| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react)                  | 19.0    | UI-Bibliothek                     |
+| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript)   | 5.5     | Typsichere Entwicklung            |
+| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 3.4     | Utility-First CSS Framework       |
+| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square)                      | 3.6     | Datumsberechnungen                |
+| ![Upstash Redis](https://img.shields.io/badge/-Upstash_Redis-00E9A3?style=flat-square)             | 1.34    | Cloud-Datenspeicherung (optional) |
+| ![Vercel Analytics](https://img.shields.io/badge/-Vercel_Analytics-black?style=flat-square)        | 1.6     | Analytics-Integration             |
 
 ---
 
@@ -114,17 +114,20 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 ### Schritte
 
 1. **Repository klonen**
+
    ```bash
    git clone https://github.com/bjrump/CarCheck.git
    cd CarCheck
    ```
 
 2. **Abhängigkeiten installieren**
+
    ```bash
    bun install
    ```
 
 3. **Entwicklungsserver starten**
+
    ```bash
    bun dev
    ```
@@ -154,17 +157,18 @@ Die App verwendet **Upstash Redis** für die Cloud-Speicherung in der Produktion
 
 #### Warum Redis?
 
-| Vorteil | Beschreibung |
-|---------|--------------|
-| 🎯 **Einfach** | Key-Value Store - perfekt für JSON-Daten |
-| ⚡ **Schnell** | Optimiert für schnelle Lese-/Schreiboperationen |
-| 💰 **Günstig** | Kostenloser Plan verfügbar |
-| 🔄 **Direkter Ersatz** | Ähnlich wie Vercel KV (das eingestellt wurde) |
-| 🚀 **Kein Overhead** | Keine komplexen Tabellen-Schemas nötig |
+| Vorteil                | Beschreibung                                    |
+| ---------------------- | ----------------------------------------------- |
+| 🎯 **Einfach**         | Key-Value Store - perfekt für JSON-Daten        |
+| ⚡ **Schnell**         | Optimiert für schnelle Lese-/Schreiboperationen |
+| 💰 **Günstig**         | Kostenloser Plan verfügbar                      |
+| 🔄 **Direkter Ersatz** | Ähnlich wie Vercel KV (das eingestellt wurde)   |
+| 🚀 **Kein Overhead**   | Keine komplexen Tabellen-Schemas nötig          |
 
 #### Setup-Anleitung
 
 1. **Integration hinzufügen**
+
    - Gehen Sie zu Vercel Dashboard → Ihr Projekt → Integrations
    - Fügen Sie die **"Upstash Redis"** Integration hinzu
    - Die Umgebungsvariablen werden automatisch hinzugefügt:
@@ -172,6 +176,7 @@ Die App verwendet **Upstash Redis** für die Cloud-Speicherung in der Produktion
      - `UPSTASH_REDIS_REST_TOKEN`
 
 2. **Migration bestehender Daten**
+
    ```bash
    # Installiere tsx (falls noch nicht vorhanden)
    bun add -D tsx
@@ -351,6 +356,7 @@ bun start
 ### Deployment auf Vercel
 
 1. **Repository mit Vercel verbinden**
+
    ```bash
    # Vercel CLI installieren
    bun add -g vercel
@@ -360,6 +366,7 @@ bun start
    ```
 
 2. **Umgebungsvariablen konfigurieren** (optional)
+
    - `UPSTASH_REDIS_REST_URL` - Redis URL
    - `UPSTASH_REDIS_REST_TOKEN` - Redis Token
 
@@ -374,6 +381,7 @@ bun start
 ### Problem: Daten werden nicht gespeichert
 
 **Lösung:**
+
 - Stellen Sie sicher, dass das `data`-Verzeichnis existiert und beschreibbar ist
 - Überprüfen Sie die Browser-Console auf Fehler
 - Bei Redis: Überprüfen Sie die Umgebungsvariablen
@@ -381,6 +389,7 @@ bun start
 ### Problem: TÜV/Inspektion wird nicht berechnet
 
 **Lösung:**
+
 - Stellen Sie sicher, dass Sie einen letzten Termin eingegeben haben
 - Überprüfen Sie das Datumsformat (YYYY-MM-DD)
 - Aktualisieren Sie die Seite (F5)
@@ -388,6 +397,7 @@ bun start
 ### Problem: Reifenwechsel funktioniert nicht
 
 **Lösung:**
+
 - Stellen Sie sicher, dass mindestens 2 Reifensätze vorhanden sind
 - Der aktuelle Kilometerstand muss höher sein als beim letzten Wechsel
 - Überprüfen Sie, ob der Reifensatz nicht archiviert ist
@@ -395,6 +405,7 @@ bun start
 ### Problem: Dark Mode funktioniert nicht
 
 **Lösung:**
+
 - Leeren Sie den Browser-Cache
 - Überprüfen Sie die Browser-Console auf Fehler
 - Das Theme wird im LocalStorage gespeichert (`theme`)
@@ -402,6 +413,7 @@ bun start
 ### Problem: Build-Fehler
 
 **Lösung:**
+
 ```bash
 # Node Modules neu installieren
 rm -rf node_modules bun.lockb
@@ -460,4 +472,3 @@ Dieses Projekt ist privat und nicht für die öffentliche Nutzung lizenziert.
 [⬆ Nach oben](#-carcheck---fahrzeugverwaltung)
 
 </div>
-
