@@ -304,7 +304,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
               <div className="max-h-96 overflow-y-auto space-y-2">
                 {dailyDistribution.map((day, index) => (
                   <div
-                    key={index}
+                    key={day.date}
                     className="flex justify-between items-center text-sm border-b border-border pb-2"
                   >
                     <span className="text-muted-foreground">
