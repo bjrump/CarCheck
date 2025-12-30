@@ -122,7 +122,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
 
       // Distribute km equally across days
       const kmPerDay = currentEntry.kmDriven / daysBetween;
-      const consumptionPerDay = currentEntry.consumption;
+      const consumptionRate = currentEntry.consumption;
 
       // Generate daily entries
       for (let day = 0; day < daysBetween; day++) {
@@ -132,7 +132,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
         dailyData.push({
           date: currentDate.toISOString().split("T")[0],
           km: kmPerDay,
-          consumption: consumptionPerDay,
+          consumption: consumptionRate,
         });
       }
     }
