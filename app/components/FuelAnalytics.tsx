@@ -237,7 +237,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
               <h3 className="font-semibold mb-3">Gefahrene KM pro Monat</h3>
               <div className="space-y-2">
                 {monthlyData.map((month, index) => (
-                  <div key={index} className="space-y-1">
+                  <div key={month.month} className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
                         {month.month}
