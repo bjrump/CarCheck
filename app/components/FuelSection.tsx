@@ -30,9 +30,14 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       return;
     }
 
-    if (!editingEntry && (!formData.mileage || parseInt(formData.mileage, 10) < car.mileage)) {
+    if (
+      !editingEntry &&
+      (!formData.mileage || parseInt(formData.mileage, 10) < car.mileage)
+    ) {
       alert(
-        `Der Kilometerstand muss mindestens ${formatNumber(car.mileage)} km betragen`
+        `Der Kilometerstand muss mindestens ${formatNumber(
+          car.mileage
+        )} km betragen`
       );
       return;
     }
@@ -77,7 +82,9 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       });
     } catch (error) {
       alert(
-        error instanceof Error ? error.message : "Fehler beim Speichern des Tankeintrags"
+        error instanceof Error
+          ? error.message
+          : "Fehler beim Speichern des Tankeintrags"
       );
     } finally {
       setIsSaving(false);
@@ -263,7 +270,13 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   );
 }
 
-function FuelEntryCard({ entry, onEdit }: { entry: FuelEntry; onEdit: (entry: FuelEntry) => void }) {
+function FuelEntryCard({
+  entry,
+  onEdit,
+}: {
+  entry: FuelEntry;
+  onEdit: (entry: FuelEntry) => void;
+}) {
   return (
     <div className="border border-border rounded-xl p-4 hover:bg-muted/30 transition">
       <div className="flex justify-between items-start mb-2">
@@ -289,9 +302,19 @@ function FuelEntryCard({ entry, onEdit }: { entry: FuelEntry; onEdit: (entry: Fu
             className="p-2 rounded-lg hover:bg-muted transition text-muted-foreground hover:text-foreground"
             title="Bearbeiten"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-              <path d="m15 5 4 4"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              <path d="m15 5 4 4" />
             </svg>
           </button>
         </div>
