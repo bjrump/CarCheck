@@ -69,25 +69,45 @@ export async function POST(
       );
     }
 
-    // Validate that the new mileage is not less than the current car mileage
-    if (mileage < car.mileage) {
+    // Chronological validation - ensure mileage consistency with date order
+    const newEntryDate = new Date(body.date);
+    const newEntryTime = newEntryDate.getTime();
+    
+    // Parse dates once and sort
+    const entriesWithParsedDates = (car.fuelEntries || []).map(e => ({
+      entry: e,
+      dateTime: new Date(e.date).getTime()
+    })).sort((a, b) => a.dateTime - b.dateTime);
+
+    // Check against chronologically previous entry
+    const prevEntry = entriesWithParsedDates.filter(e => e.dateTime < newEntryTime).pop();
+    if (prevEntry && mileage < prevEntry.entry.mileage) {
       return NextResponse.json(
-        { error: "Der Kilometerstand kann nicht geringer sein als der aktuelle Kilometerstand des Fahrzeugs" },
+        { error: 'Der Kilometerstand kann nicht geringer sein als der eines früheren Eintrags.' },
         { status: 400 }
       );
     }
 
-    // Calculate kmDriven and consumption based on previous entry
+    // Check against chronologically next entry
+    const nextEntry = entriesWithParsedDates.find(e => e.dateTime > newEntryTime);
+    if (nextEntry && mileage > nextEntry.entry.mileage) {
+      return NextResponse.json(
+        { error: 'Der Kilometerstand kann nicht höher sein als der eines späteren Eintrags.' },
+        { status: 400 }
+      );
+    }
+
+    // Calculate kmDriven and consumption based on chronologically most recent entry
     const sortedEntries = [...(car.fuelEntries || [])].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-    const lastEntry = sortedEntries[sortedEntries.length - 1];
+    const mostRecentEntry = sortedEntries[sortedEntries.length - 1];
 
     let kmDriven: number | undefined;
     let consumption: number | undefined;
 
-    if (lastEntry) {
-      kmDriven = mileage - lastEntry.mileage;
+    if (mostRecentEntry) {
+      kmDriven = mileage - mostRecentEntry.mileage;
       if (kmDriven > 0 && liters > 0) {
         consumption = (liters / kmDriven) * 100; // L/100km
       }
@@ -111,7 +131,7 @@ export async function POST(
     
     const updates: any = {
       fuelEntries: updatedFuelEntries,
-      mileage: mileage, // Update car mileage to the fuel entry mileage
+      mileage: Math.max(mileage, car.mileage), // Update car mileage to the highest value
     };
 
     // Recalculate inspection dates based on new mileage
@@ -119,7 +139,7 @@ export async function POST(
       const nextInspectionDateByKm = calculateNextInspectionDateByKm(
         car.inspection.lastInspectionDate,
         car.inspection.lastInspectionMileage,
-        mileage,
+        updates.mileage,
         car.inspection.intervalKm
       );
 

@@ -18,6 +18,18 @@ export interface TireChangeEvent {
   changeType: 'mount' | 'unmount'; // Montiert oder abmontiert
 }
 
+export interface FuelEntry {
+  id: string;
+  date: string; // ISO date string
+  mileage: number; // Kilometerstand beim Tanken
+  liters: number; // Getankte Liter
+  kmDriven?: number; // Gefahrene KM seit letztem Tanken (berechnet)
+  consumption?: number; // Verbrauch in L/100km (berechnet)
+  pricePerLiter?: number; // Preis pro Liter (optional)
+  totalCost?: number; // Gesamtkosten (optional)
+  notes?: string; // Notizen (optional)
+}
+
 export interface TUV {
   lastAppointmentDate: string | null; // ISO date string
   nextAppointmentDate: string | null; // ISO date string - automatisch 2 Jahre nach letztem Termin
@@ -39,18 +51,6 @@ export interface Insurance {
   provider: string;
   policyNumber: string;
   expiryDate: string; // ISO date string
-}
-
-export interface FuelEntry {
-  id: string;
-  date: string; // ISO date string
-  mileage: number; // Kilometerstand beim Tanken
-  liters: number; // Getankte Liter
-  kmDriven?: number; // Gefahrene KM seit letztem Tanken (berechnet)
-  consumption?: number; // Verbrauch in L/100km (berechnet)
-  pricePerLiter?: number; // Preis pro Liter (optional)
-  totalCost?: number; // Gesamtkosten (optional)
-  notes?: string; // Notizen (optional)
 }
 
 export type EventType = 
