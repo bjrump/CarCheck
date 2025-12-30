@@ -97,17 +97,17 @@ export async function POST(
       );
     }
 
-    // Calculate kmDriven and consumption based on chronologically previous entry
+    // Calculate kmDriven and consumption based on chronologically most recent entry
     const sortedEntries = [...(car.fuelEntries || [])].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-    const lastEntry = sortedEntries[sortedEntries.length - 1];
+    const mostRecentEntry = sortedEntries[sortedEntries.length - 1];
 
     let kmDriven: number | undefined;
     let consumption: number | undefined;
 
-    if (lastEntry) {
-      kmDriven = mileage - lastEntry.mileage;
+    if (mostRecentEntry) {
+      kmDriven = mileage - mostRecentEntry.mileage;
       if (kmDriven > 0 && liters > 0) {
         consumption = (liters / kmDriven) * 100; // L/100km
       }
