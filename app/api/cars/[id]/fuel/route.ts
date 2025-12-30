@@ -122,7 +122,7 @@ export async function POST(
     };
 
     // Update car with new fuel entry and mileage
-    const updatedFuelEntries = [...(car.fuelEntries || []), newFuelEntry];
+    const updatedFuelEntries = [...(car.fuelEntries || []), newFuelEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     // Update nextEntry's kmDriven and consumption if it exists
     if (nextEntry) {
