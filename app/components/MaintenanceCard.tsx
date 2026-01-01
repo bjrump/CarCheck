@@ -50,12 +50,12 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
   return (
     <div
       onClick={() => onSelect(car)}
-      className={`glass rounded-2xl p-4 border-2 ${getStatusColorClass(status)} hover:-translate-y-1 transition duration-200 cursor-pointer`}
+      className="glass relative overflow-hidden rounded-2xl p-5 border border-border/70 hover:-translate-y-1 transition duration-200 cursor-pointer"
     >
       <div className="flex justify-between items-start gap-4 mb-3">
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
-          <p className="text-sm text-foreground mt-1 font-semibold">
+          <p className="inline-flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{title}</p>
+          <p className="text-sm text-foreground mt-2 font-semibold">
             {car.make} {car.model}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -67,13 +67,13 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
             </p>
           )}
         </div>
-        <span className={`px-3 py-1 rounded text-sm font-semibold border ${getStatusColorClass(status)} shrink-0`}>
+        <span className={`px-3 py-1 rounded-md text-sm font-semibold border ${getStatusColorClass(status)} shrink-0`}>
           {getStatusText(status)}
         </span>
       </div>
 
       {/* Progress Bars */}
-      <div className="space-y-2 mt-3 pt-3 border-t border-border/50">
+      <div className="space-y-2 mt-3 pt-3 border-t border-border">
         <ProgressBar
           progress={timeProgress}
           label="Zeit"
@@ -100,4 +100,3 @@ export default function MaintenanceCard({ car, type, onSelect, tireChangeType, t
     </div>
   );
 }
-

@@ -46,28 +46,28 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
 
   const content = (
     <>
-      <div className="flex justify-between items-start gap-4 mb-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            {car.year}
-          </p>
-          <h2 className="text-xl font-semibold text-foreground">
+      <div className="flex justify-between items-start gap-4 mb-5 border-b border-border/60 pb-4">
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Baujahr {car.year}
+          </span>
+          <h2 className="text-2xl font-semibold text-foreground">
             {car.make} {car.model}
           </h2>
           {car.licensePlate && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground">
               Kennzeichen: {car.licensePlate}
             </p>
           )}
         </div>
-        <span className="text-3xl font-bold text-accent">
+        <div className="rounded-lg bg-foreground px-3 py-2 text-sm font-semibold text-background shadow-[0_10px_24px_rgba(0,0,0,0.16)]">
           {formatNumber(car.mileage)} km
-        </span>
+        </div>
       </div>
 
       <div className="space-y-2 mt-4">
         {/* TÜV */}
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
+        <div className="rounded-xl border border-border/60 bg-muted/60 px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h3 className="text-xs font-semibold text-muted-foreground w-20">
@@ -78,7 +78,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
               </span>
             </div>
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold border ${getStatusColorClass(
                 tuvStatus
               )}`}
             >
@@ -88,7 +88,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
         </div>
 
         {/* Inspektion */}
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
+        <div className="rounded-xl border border-border/60 bg-muted/60 px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h3 className="text-xs font-semibold text-muted-foreground w-20">
@@ -99,7 +99,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
               </span>
             </div>
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold border ${getStatusColorClass(
                 inspectionStatus
               )}`}
             >
@@ -109,7 +109,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
         </div>
 
         {/* Reifen */}
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
+        <div className="rounded-xl border border-border/60 bg-muted/60 px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h3 className="text-xs font-semibold text-muted-foreground w-20">
@@ -126,7 +126,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
             </div>
             {currentTire?.type !== "all-season" && nextTireChange && (
               <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
+                className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold border ${getStatusColorClass(
                   tireStatus
                 )}`}
               >
@@ -147,7 +147,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
   return (
     <div
       onClick={() => onSelect?.(car)}
-      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
+      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer border border-border/70"
     >
       {content}
     </div>
