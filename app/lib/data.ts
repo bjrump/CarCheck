@@ -306,12 +306,15 @@ async function saveCarsToFile(cars: Car[]): Promise<void> {
 
 // ===== UNIFIED API =====
 // Read all cars (automatically uses Redis if available, otherwise file system)
+// WARNING: Fallback strategy can lead to data inconsistency if Redis intermittently fails.
+// In production, consider using ONLY Redis OR ONLY File storage, not both with fallback.
 export async function getCars(): Promise<Car[]> {
   if (isRedisAvailable()) {
     try {
       return await getCarsFromRedis();
     } catch (error) {
       // Fallback to file system if Redis fails
+      // NOTE: This can cause inconsistency - file data may be stale if Redis was working before
       console.warn('Failed to read from Redis, falling back to file system:', error);
       return await getCarsFromFile();
     }
@@ -321,12 +324,15 @@ export async function getCars(): Promise<Car[]> {
 }
 
 // Write cars (automatically uses Redis if available, otherwise file system)
+// WARNING: Fallback strategy can lead to data inconsistency if Redis intermittently fails.
+// In production, consider using ONLY Redis OR ONLY File storage, not both with fallback.
 export async function saveCars(cars: Car[]): Promise<void> {
   if (isRedisAvailable()) {
     try {
       return await saveCarsToRedis(cars);
     } catch (error) {
       // Fallback to file system if Redis fails
+      // NOTE: This creates divergence - Redis and File will have different data
       console.warn('Failed to save to Redis, falling back to file system:', error);
       return await saveCarsToFile(cars);
     }

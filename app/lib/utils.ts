@@ -10,18 +10,33 @@ import {
 import { de } from "date-fns/locale";
 import { Car } from "./types";
 
+// Constants
+const UPCOMING_THRESHOLD_DAYS = 30; // Days before an appointment is considered "upcoming"
+
+// Helper function to parse date (handles both YYYY-MM-DD and ISO formats)
+export function parseDate(date: string | null): Date | null {
+  if (!date) return null;
+  try {
+    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // Parse YYYY-MM-DD manually to avoid timezone issues
+      const dateParts = date.split("-");
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+      const day = parseInt(dateParts[2], 10);
+      return new Date(year, month, day, 0, 0, 0, 0);
+    }
+    return parseISO(date);
+  } catch {
+    return null;
+  }
+}
+
 // Format date to German format (DD.MM.YYYY)
 export function formatDate(date: string | null): string {
   if (!date) return "-";
+  const dateObj = parseDate(date);
+  if (!dateObj) return "-";
   try {
-    // Handle both YYYY-MM-DD and ISO string formats
-    let dateObj: Date;
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Handle YYYY-MM-DD format (treat as local date)
-      dateObj = new Date(date + "T00:00:00");
-    } else {
-      dateObj = parseISO(date);
-    }
     return format(dateObj, "dd.MM.yyyy", { locale: de });
   } catch {
     return "-";
@@ -39,14 +54,8 @@ export function calculateNextTUVDate(lastDate: string | null): string | null {
   if (!lastDate) return null;
 
   try {
-    // Normalize date format - handle both YYYY-MM-DD and ISO strings
-    let lastDateObj: Date;
-    if (lastDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Handle YYYY-MM-DD format (treat as local date, not UTC)
-      lastDateObj = new Date(lastDate + "T00:00:00");
-    } else {
-      lastDateObj = parseISO(lastDate);
-    }
+    const lastDateObj = parseDate(lastDate);
+    if (!lastDateObj) return null;
 
     const nextDate = addYears(lastDateObj, 2);
     return nextDate.toISOString();
@@ -64,19 +73,8 @@ export function calculateNextInspectionDateByYear(
   if (!lastDate) return null;
 
   try {
-    // Normalize date format - handle both YYYY-MM-DD and ISO strings
-    let lastDateObj: Date;
-    if (lastDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Handle YYYY-MM-DD format (treat as local date, not UTC)
-      // Parse manually to avoid timezone issues
-      const dateParts = lastDate.split("-");
-      const year = parseInt(dateParts[0], 10);
-      const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
-      const day = parseInt(dateParts[2], 10);
-      lastDateObj = new Date(year, month, day, 0, 0, 0, 0);
-    } else {
-      lastDateObj = parseISO(lastDate);
-    }
+    const lastDateObj = parseDate(lastDate);
+    if (!lastDateObj) return null;
 
     // Ensure intervalYears is a valid number and at least 1
     const yearsToAdd =
@@ -110,13 +108,8 @@ export function calculateNextInspectionDateByKm(
   }
 
   try {
-    // Parse last inspection date
-    let lastDateObj: Date;
-    if (lastDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      lastDateObj = new Date(lastDate + "T00:00:00");
-    } else {
-      lastDateObj = parseISO(lastDate);
-    }
+    const lastDateObj = parseDate(lastDate);
+    if (!lastDateObj) return null;
 
     const today = new Date();
 
@@ -191,7 +184,7 @@ export function getMaintenanceStatus(date: string | null): MaintenanceStatus {
     const daysUntil = differenceInDays(targetDate, today);
 
     if (daysUntil < 0) return "overdue";
-    if (daysUntil <= 30) return "upcoming";
+    if (daysUntil <= UPCOMING_THRESHOLD_DAYS) return "upcoming";
     return "current";
   } catch {
     return "none";
@@ -223,19 +216,6 @@ export function getStatusText(status: MaintenanceStatus): string {
       return "Aktuell";
     default:
       return "Keine Daten";
-  }
-}
-
-// Helper function to parse date (handles both YYYY-MM-DD and ISO formats)
-function parseDate(date: string | null): Date | null {
-  if (!date) return null;
-  try {
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return new Date(date + "T00:00:00");
-    }
-    return parseISO(date);
-  } catch {
-    return null;
   }
 }
 
