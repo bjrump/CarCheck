@@ -455,3 +455,138 @@ export async function PUT(
     );
   }
 }
+
+// DELETE /api/cars/[id]/fuel - Delete a fuel entry
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
+  try {
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const car = await getCarById(resolvedParams.id);
+
+    if (!car) {
+      return NextResponse.json(
+        { error: "Fahrzeug nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    // Get fuel entry ID from URL search params
+    const { searchParams } = new URL(request.url);
+    const fuelEntryId = searchParams.get("id");
+
+    if (!fuelEntryId) {
+      return NextResponse.json(
+        { error: "Tankeintrag-ID ist erforderlich" },
+        { status: 400 }
+      );
+    }
+
+    const entryIndex = car.fuelEntries?.findIndex((e) => e.id === fuelEntryId);
+    if (entryIndex === undefined || entryIndex === -1) {
+      return NextResponse.json(
+        { error: "Tankeintrag nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    // Remove the fuel entry
+    const deletedEntry = car.fuelEntries[entryIndex];
+    const updatedFuelEntries = car.fuelEntries.filter(
+      (e) => e.id !== fuelEntryId
+    );
+
+    // Recalculate kmDriven and consumption for entries after the deleted one
+    const sortedEntries = updatedFuelEntries.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Find the entry that comes after the deleted entry chronologically
+    const deletedEntryDate = new Date(deletedEntry.date).getTime();
+    const nextEntry = sortedEntries.find(
+      (e) => new Date(e.date).getTime() > deletedEntryDate
+    );
+
+    if (nextEntry) {
+      // Find previous entry before the next entry
+      const nextEntryDate = new Date(nextEntry.date).getTime();
+      const prevEntry = sortedEntries
+        .filter((e) => new Date(e.date).getTime() < nextEntryDate)
+        .pop();
+
+      if (prevEntry) {
+        nextEntry.kmDriven = nextEntry.mileage - prevEntry.mileage;
+        if (nextEntry.kmDriven > 0 && nextEntry.liters > 0) {
+          nextEntry.consumption = (nextEntry.liters / nextEntry.kmDriven) * 100;
+        } else {
+          nextEntry.consumption = undefined;
+        }
+      } else {
+        // No previous entry, clear kmDriven and consumption
+        nextEntry.kmDriven = undefined;
+        nextEntry.consumption = undefined;
+      }
+    }
+
+    const updates: any = {
+      fuelEntries: sortedEntries,
+    };
+
+    // Recalculate car mileage - use highest from remaining fuel entries or current mileage
+    if (sortedEntries.length > 0) {
+      const maxFuelMileage = Math.max(...sortedEntries.map((e) => e.mileage));
+      updates.mileage = Math.max(maxFuelMileage, car.mileage);
+    }
+
+    // Recalculate inspection dates based on new mileage
+    if (
+      car.inspection.lastInspectionDate &&
+      car.inspection.lastInspectionMileage !== null &&
+      updates.mileage
+    ) {
+      const nextInspectionDateByKm = calculateNextInspectionDateByKm(
+        car.inspection.lastInspectionDate,
+        car.inspection.lastInspectionMileage,
+        updates.mileage,
+        car.inspection.intervalKm
+      );
+
+      updates.inspection = {
+        ...car.inspection,
+        nextInspectionDateByKm,
+        nextInspectionDate: getEarliestDate(
+          car.inspection.nextInspectionDateByYear,
+          nextInspectionDateByKm
+        ),
+      };
+    }
+
+    // Add event log entry
+    const description = `Tankeintrag gelöscht: ${formatNumber(
+      deletedEntry.liters
+    )} Liter bei ${formatNumber(deletedEntry.mileage)} km`;
+
+    const carWithEvent = addCarEvent(car, "fuel_entry", description, {
+      fuelEntryId: deletedEntry.id,
+      deleted: true,
+      mileage: deletedEntry.mileage,
+      liters: deletedEntry.liters,
+    });
+    updates.eventLog = carWithEvent.eventLog;
+
+    const updatedCar = await updateCar(resolvedParams.id, updates);
+
+    return NextResponse.json(updatedCar);
+  } catch (error) {
+    console.error("Fehler beim Löschen des Tankeintrags:", error);
+    return NextResponse.json(
+      {
+        error: "Fehler beim Löschen des Tankeintrags",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
+

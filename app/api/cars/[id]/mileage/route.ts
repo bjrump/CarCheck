@@ -33,6 +33,25 @@ export async function PUT(
       );
     }
 
+    // Validate that new mileage is not less than current mileage
+    if (newMileage < car.mileage) {
+      return NextResponse.json(
+        { error: `Der neue Kilometerstand (${formatNumber(newMileage)} km) kann nicht niedriger sein als der aktuelle Kilometerstand (${formatNumber(car.mileage)} km)` },
+        { status: 400 }
+      );
+    }
+
+    // Validate against fuel entries - mileage should not be lower than any existing fuel entry
+    if (car.fuelEntries && car.fuelEntries.length > 0) {
+      const maxFuelMileage = Math.max(...car.fuelEntries.map(e => e.mileage));
+      if (newMileage < maxFuelMileage) {
+        return NextResponse.json(
+          { error: `Der neue Kilometerstand (${formatNumber(newMileage)} km) kann nicht niedriger sein als der höchste Tankeintrag (${formatNumber(maxFuelMileage)} km)` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update mileage
     const updates: any = {
       mileage: newMileage,

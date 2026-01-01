@@ -307,7 +307,13 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       ) : (
         <div className="space-y-3">
           {sortedEntries.map((entry) => (
-            <FuelEntryCard key={entry.id} entry={entry} onEdit={handleEdit} />
+            <FuelEntryCard
+              key={entry.id}
+              entry={entry}
+              carId={car.id}
+              onEdit={handleEdit}
+              onUpdate={onUpdate}
+            />
           ))}
         </div>
       )}
@@ -317,11 +323,52 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
 
 function FuelEntryCard({
   entry,
+  carId,
   onEdit,
+  onUpdate,
 }: {
   entry: FuelEntry;
+  carId: string;
   onEdit: (entry: FuelEntry) => void;
+  onUpdate: (updatedCar: Car) => void;
 }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        `Möchten Sie den Tankeintrag vom ${formatDate(
+          entry.date
+        )} wirklich löschen?`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/cars/${carId}/fuel?id=${entry.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Fehler beim Löschen");
+      }
+
+      const updatedCar = await response.json();
+      onUpdate(updatedCar);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Fehler beim Löschen des Tankeintrags"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="border border-border rounded-xl p-4 hover:bg-muted/30 transition">
       <div className="flex justify-between items-start mb-2">
@@ -360,6 +407,30 @@ function FuelEntryCard({
             >
               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
               <path d="m15 5 4 4" />
+            </svg>
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="p-2 rounded-lg hover:bg-red-100 transition text-muted-foreground hover:text-red-600 disabled:opacity-50"
+            title="Löschen"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
           </button>
         </div>
