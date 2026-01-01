@@ -510,173 +510,202 @@ export default function Home() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left side - 2/3 width: Cars and maintenance lists */}
-      <div className="lg:col-span-2 space-y-8">
-        {cars.length === 0 ? (
-          <div className="glass rounded-2xl text-center py-12">
-            <p className="text-lg mb-4 text-muted-foreground">
-              Keine Fahrzeuge vorhanden
+    <div className="space-y-6">
+      <div className="glass rounded-2xl border border-border/70 p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Werkstattansicht
+          </p>
+          <h2 className="text-2xl font-semibold">
+            Klarer Überblick ohne KI-Effekte
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Termine, Reifenwechsel und Verbrauch in einem reduzierten Layout.
+          </p>
+        </div>
+        {nextAppointment && (
+          <div className="rounded-xl border border-border/70 bg-muted px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Nächster Termin
             </p>
-            <button
-              onClick={() => setIsAddingCar(true)}
-              className="rounded-xl bg-accent px-6 py-2 text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
-            >
-              Erstes Fahrzeug hinzufügen
-            </button>
+            <p className="text-lg font-semibold">{formatDate(nextAppointment.date)}</p>
+            <p className="text-sm text-muted-foreground">
+              {nextAppointment.car.make} {nextAppointment.car.model}
+            </p>
           </div>
-        ) : (
-          <>
-            <div>
-              <div className="mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Garage
-                  </p>
-                  <h2 className="text-2xl font-semibold">
-                    Meine Fahrzeuge ({cars.length})
-                  </h2>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {cars.map((car) => (
-                  <CarCard key={car.id} car={car} onSelect={setSelectedCar} />
-                ))}
-              </div>
-            </div>
-
-            {upcomingTUV.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      TÜV
-                    </p>
-                    <h2 className="text-2xl font-semibold">
-                      Bevorstehende TÜV-Termine
-                    </h2>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {upcomingTUV.map((car) => (
-                    <MaintenanceCard
-                      key={car.id}
-                      car={car}
-                      type="tuv"
-                      onSelect={setSelectedCar}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {upcomingInspections.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Inspektion
-                    </p>
-                    <h2 className="text-2xl font-semibold">
-                      Bevorstehende Inspektionen
-                    </h2>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {upcomingInspections.map((car) => (
-                    <MaintenanceCard
-                      key={car.id}
-                      car={car}
-                      type="inspection"
-                      onSelect={setSelectedCar}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {upcomingTireChanges.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Reifenwechsel
-                    </p>
-                    <h2 className="text-2xl font-semibold">
-                      Bevorstehende Reifenwechsel
-                    </h2>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {upcomingTireChanges.map((tireChange) => (
-                    <MaintenanceCard
-                      key={tireChange.car.id}
-                      car={tireChange.car}
-                      type="tire-change"
-                      onSelect={setSelectedCar}
-                      tireChangeType={tireChange.type}
-                      tireChangeDate={tireChange.date}
-                      lastTireChangeDate={tireChange.lastChangeDate}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
         )}
       </div>
 
-      {/* Right side - 1/3 width: Statistics */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-4 space-y-4">
-          <StatCard
-            label="Fahrzeuge"
-            value={cars.length}
-            hint="in deiner Garage"
-          />
-          <StatCard
-            label="Anstehend"
-            value={upcomingSoon}
-            hint="fällig in den nächsten 30 Tagen"
-          />
-          <StatCard
-            label="Überfällig"
-            value={overdue}
-            hint="bitte zeitnah planen"
-          />
-
-          {/* Next appointments in 30 days */}
-          <div className="glass rounded-2xl p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Nächste Termine
-            </p>
-            <p className="text-sm text-muted-foreground mb-2">
-              in den nächsten 30 Tagen
-            </p>
-            {appointmentsIn30Days.length > 0 ? (
-              <div className="space-y-2 mt-3">
-                {appointmentsIn30Days.map((apt, index) => {
-                  const typeLabel =
-                    apt.type === "tuv"
-                      ? "TÜV"
-                      : apt.type === "inspection"
-                      ? "Inspektion"
-                      : "Reifenwechsel";
-                  return (
-                    <div key={index} className="text-sm">
-                      <p className="font-medium">{formatDate(apt.date)}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {apt.car.make} {apt.car.model} ({typeLabel})
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground mt-2">
-                Keine Termine
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left side - 2/3 width: Cars and maintenance lists */}
+        <div className="lg:col-span-2 space-y-8">
+          {cars.length === 0 ? (
+            <div className="glass rounded-2xl border border-border/70 text-center py-12">
+              <p className="text-lg mb-4 text-muted-foreground">
+                Keine Fahrzeuge vorhanden
               </p>
-            )}
+              <button
+                onClick={() => setIsAddingCar(true)}
+                className="rounded-xl bg-foreground px-6 py-2 text-background font-semibold shadow-[0_16px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-[1px]"
+              >
+                Erstes Fahrzeug hinzufügen
+              </button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Garage
+                      </p>
+                      <h2 className="text-2xl font-semibold">
+                        Meine Fahrzeuge ({cars.length})
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {cars.map((car) => (
+                    <CarCard key={car.id} car={car} onSelect={setSelectedCar} />
+                  ))}
+                </div>
+              </div>
+
+              {upcomingTUV.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        TÜV
+                      </p>
+                      <h2 className="text-2xl font-semibold">
+                        Bevorstehende TÜV-Termine
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {upcomingTUV.map((car) => (
+                      <MaintenanceCard
+                        key={car.id}
+                        car={car}
+                        type="tuv"
+                        onSelect={setSelectedCar}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {upcomingInspections.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Inspektion
+                      </p>
+                      <h2 className="text-2xl font-semibold">
+                        Bevorstehende Inspektionen
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {upcomingInspections.map((car) => (
+                      <MaintenanceCard
+                        key={car.id}
+                        car={car}
+                        type="inspection"
+                        onSelect={setSelectedCar}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {upcomingTireChanges.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Reifenwechsel
+                      </p>
+                      <h2 className="text-2xl font-semibold">
+                        Bevorstehende Reifenwechsel
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {upcomingTireChanges.map((tireChange) => (
+                      <MaintenanceCard
+                        key={tireChange.car.id}
+                        car={tireChange.car}
+                        type="tire-change"
+                        onSelect={setSelectedCar}
+                        tireChangeType={tireChange.type}
+                        tireChangeDate={tireChange.date}
+                        lastTireChangeDate={tireChange.lastChangeDate}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Right side - 1/3 width: Statistics */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-4 space-y-4">
+            <StatCard
+              label="Fahrzeuge"
+              value={cars.length}
+              hint="in deiner Garage"
+            />
+            <StatCard
+              label="Anstehend"
+              value={upcomingSoon}
+              hint="fällig in den nächsten 30 Tagen"
+            />
+            <StatCard
+              label="Überfällig"
+              value={overdue}
+              hint="bitte zeitnah planen"
+            />
+
+            {/* Next appointments in 30 days */}
+            <div className="glass rounded-2xl border border-border/70 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                Nächste Termine
+              </p>
+              <p className="text-sm text-muted-foreground mb-2">
+                in den nächsten 30 Tagen
+              </p>
+              {appointmentsIn30Days.length > 0 ? (
+                <div className="space-y-2 mt-3">
+                  {appointmentsIn30Days.map((apt, index) => {
+                    const typeLabel =
+                      apt.type === "tuv"
+                        ? "TÜV"
+                        : apt.type === "inspection"
+                        ? "Inspektion"
+                        : "Reifenwechsel";
+                    return (
+                      <div key={index} className="text-sm">
+                        <p className="font-medium">{formatDate(apt.date)}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {apt.car.make} {apt.car.model} ({typeLabel})
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Keine Termine
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -692,14 +721,15 @@ function StatCard({
   label: string;
   value: string | number;
   hint?: string;
-}) {
+  }) {
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass relative overflow-hidden rounded-2xl border border-border/70 p-5">
+      <div className="absolute inset-y-0 left-0 w-1 bg-accent" />
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </p>
-      <p className="text-3xl font-bold mt-1">{value}</p>
-      {hint && <p className="text-sm text-muted-foreground mt-1">{hint}</p>}
+      <p className="text-3xl font-bold mt-2">{value}</p>
+      {hint && <p className="text-sm text-muted-foreground mt-2">{hint}</p>}
     </div>
   );
 }

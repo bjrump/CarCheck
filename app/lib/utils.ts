@@ -195,13 +195,13 @@ export function getMaintenanceStatus(date: string | null): MaintenanceStatus {
 export function getStatusColorClass(status: MaintenanceStatus): string {
   switch (status) {
     case "overdue":
-      return "bg-red-100 text-red-800 border-red-300";
+      return "bg-red-50 text-red-900 border-red-200";
     case "upcoming":
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      return "bg-amber-50 text-amber-900 border-amber-200";
     case "current":
-      return "bg-green-100 text-green-800 border-green-300";
+      return "bg-emerald-50 text-emerald-900 border-emerald-200";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-300";
+      return "bg-stone-100 text-stone-700 border-stone-200";
   }
 }
 

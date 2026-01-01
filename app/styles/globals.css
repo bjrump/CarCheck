@@ -3,33 +3,59 @@
 @tailwind utilities;
 
 :root {
-  --background: #f6f7fb;
-  --foreground: #0f172a;
+  --background: #f4f1ea;
+  --foreground: #0c0f16;
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #60a5fa;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #2563eb;
-  --accent-foreground: #f8fafc;
-  --grid: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
+  --card-foreground: #0c0f16;
+  --border: #d8d0c1;
+  --input: #e7dece;
+  --ring: #b45309;
+  --muted: #efe7da;
+  --muted-foreground: #5c554a;
+  --accent: #c75d11;
+  --accent-foreground: #fffaf3;
+  --grid: repeating-linear-gradient(
+      0deg,
+      rgba(12, 15, 22, 0.04),
+      rgba(12, 15, 22, 0.04) 1px,
+      transparent 1px,
+      transparent 26px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(12, 15, 22, 0.04),
+      rgba(12, 15, 22, 0.04) 1px,
+      transparent 1px,
+      transparent 26px
+    );
 }
 
 .dark {
-  --background: #0b1224;
-  --foreground: #e5e7eb;
-  --card: #0f172a;
-  --card-foreground: #e5e7eb;
-  --border: #1f2937;
-  --input: #1a1f35;
-  --ring: #3b82f6;
-  --muted: #1a1f35;
-  --muted-foreground: #94a3b8;
-  --accent: #3b82f6;
-  --accent-foreground: #f8fafc;
-  --grid: radial-gradient(circle at 1px 1px, rgba(226, 232, 240, 0.05) 1px, transparent 0);
+  --background: #0d1219;
+  --foreground: #e8edf5;
+  --card: #0f1621;
+  --card-foreground: #e8edf5;
+  --border: #1f2733;
+  --input: #16202d;
+  --ring: #f39b4a;
+  --muted: #141b25;
+  --muted-foreground: #b9c1cd;
+  --accent: #f07c1e;
+  --accent-foreground: #0f1621;
+  --grid: repeating-linear-gradient(
+      0deg,
+      rgba(232, 237, 245, 0.04),
+      rgba(232, 237, 245, 0.04) 1px,
+      transparent 1px,
+      transparent 26px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(232, 237, 245, 0.04),
+      rgba(232, 237, 245, 0.04) 1px,
+      transparent 1px,
+      transparent 26px
+    );
 }
 
 @layer base {
@@ -40,16 +66,15 @@
   body {
     color: var(--foreground);
     background-color: var(--background);
-    background-image:
-      radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.08), transparent 25%),
-      radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 20%),
-      var(--grid);
-    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-image: var(--grid);
+    background-size: 26px 26px, 26px 26px;
+    background-attachment: fixed;
+    font-family: 'Inter', 'Space Grotesk', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
   }
 
   ::selection {
-    background: rgba(37, 99, 235, 0.2);
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
     color: var(--foreground);
   }
 }
@@ -60,9 +85,13 @@
   }
 
   .glass {
-    @apply backdrop-blur-xl border border-border shadow-soft;
-    background-color: var(--card);
-    background-color: color-mix(in srgb, var(--card) 90%, transparent);
+    @apply border;
+    background-color: color-mix(in srgb, var(--card) 94%, transparent);
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
+    box-shadow:
+      0 20px 45px rgba(0, 0, 0, 0.08),
+      0 2px 12px rgba(0, 0, 0, 0.04);
+    position: relative;
   }
 }
 
@@ -112,4 +141,3 @@
 .dark input[type="week"] {
   color-scheme: dark;
 }
-
