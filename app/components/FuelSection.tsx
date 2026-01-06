@@ -3,6 +3,9 @@
 import { Car, FuelEntry } from "@/app/lib/types";
 import { formatDate, formatNumber } from "@/app/lib/utils";
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface FuelSectionProps {
   car: Car;
@@ -21,6 +24,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     totalCost: "",
     notes: "",
   });
+
+  const updateCar = useMutation(api.cars.update);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,37 +49,56 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
 
     setIsSaving(true);
     try {
-      const isEditing = !!editingEntry;
-      const response = await fetch(`/api/cars/${car.id}/fuel`, {
-        method: isEditing ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingEntry?.id,
-          date: formData.date,
-          mileage: parseInt(formData.mileage, 10),
-          liters: parseFloat(formData.liters),
-          pricePerLiter: formData.pricePerLiter
-            ? parseFloat(formData.pricePerLiter)
-            : undefined,
-          totalCost: formData.totalCost
-            ? parseFloat(formData.totalCost)
-            : undefined,
-          notes: formData.notes || undefined,
-        }),
-      });
+      const existingEntries = car.fuelEntries || [];
+      const newMileage = parseInt(formData.mileage, 10);
+      
+      const sortedEntries = [...existingEntries].sort(
+        (a, b) => a.mileage - b.mileage
+      );
+      const previousEntry = sortedEntries
+        .filter((e) => e.mileage < newMileage && e.id !== editingEntry?.id)
+        .pop();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Fehler beim Speichern");
+      const kmDriven = previousEntry ? newMileage - previousEntry.mileage : undefined;
+      const liters = parseFloat(formData.liters);
+      const consumption = kmDriven && kmDriven > 0 ? (liters / kmDriven) * 100 : undefined;
+
+      const newEntry: FuelEntry = {
+        id: editingEntry?.id || crypto.randomUUID(),
+        date: formData.date,
+        mileage: newMileage,
+        liters,
+        kmDriven,
+        consumption,
+        pricePerLiter: formData.pricePerLiter ? parseFloat(formData.pricePerLiter) : undefined,
+        totalCost: formData.totalCost ? parseFloat(formData.totalCost) : undefined,
+        notes: formData.notes || undefined,
+      };
+
+      let updatedEntries: FuelEntry[];
+      if (editingEntry) {
+        updatedEntries = existingEntries.map((e) =>
+          e.id === editingEntry.id ? newEntry : e
+        );
+      } else {
+        updatedEntries = [...existingEntries, newEntry];
       }
 
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
+      const updatedCar = await updateCar({
+        id: car._id as Id<"cars">,
+        mileage: Math.max(car.mileage, newMileage),
+        fuelEntries: updatedEntries,
+      });
+
+      if (updatedCar) {
+        onUpdate(updatedCar as Car);
+      }
+      
       setIsAdding(false);
       setEditingEntry(null);
       setFormData({
         date: new Date().toISOString().split("T")[0],
-        mileage: updatedCar.mileage.toString(),
+        mileage: Math.max(car.mileage, newMileage).toString(),
         liters: "",
         pricePerLiter: "",
         totalCost: "",
@@ -117,18 +141,35 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     });
   };
 
-  // Auto-calculate price per liter or total cost
+  const handleDelete = async (entryId: string) => {
+    if (!confirm("Möchten Sie diesen Tankeintrag wirklich löschen?")) {
+      return;
+    }
+
+    try {
+      const updatedEntries = (car.fuelEntries || []).filter((e) => e.id !== entryId);
+      const updatedCar = await updateCar({
+        id: car._id as Id<"cars">,
+        fuelEntries: updatedEntries,
+      });
+
+      if (updatedCar) {
+        onUpdate(updatedCar as Car);
+      }
+    } catch (error) {
+      alert("Fehler beim Löschen des Tankeintrags");
+    }
+  };
+
   const handleLitersChange = (value: string) => {
     const newFormData = { ...formData, liters: value };
     const liters = parseFloat(value);
 
     if (liters > 0) {
-      // If totalCost is set, calculate pricePerLiter
       const totalCost = parseFloat(formData.totalCost);
       if (totalCost > 0) {
         newFormData.pricePerLiter = (totalCost / liters).toFixed(3);
       }
-      // If pricePerLiter is set, calculate totalCost
       const pricePerLiter = parseFloat(formData.pricePerLiter);
       if (pricePerLiter > 0 && !totalCost) {
         newFormData.totalCost = (pricePerLiter * liters).toFixed(2);
@@ -146,7 +187,6 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     if (pricePerLiter > 0 && liters > 0) {
       newFormData.totalCost = (pricePerLiter * liters).toFixed(2);
     } else if (!value) {
-      // If pricePerLiter is cleared, also clear totalCost
       newFormData.totalCost = "";
     }
 
@@ -161,14 +201,12 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     if (totalCost > 0 && liters > 0) {
       newFormData.pricePerLiter = (totalCost / liters).toFixed(3);
     } else if (!value) {
-      // If totalCost is cleared, also clear pricePerLiter
       newFormData.pricePerLiter = "";
     }
 
     setFormData(newFormData);
   };
 
-  // Sort fuel entries by date (newest first)
   const sortedEntries = [...(car.fuelEntries || [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -310,9 +348,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
             <FuelEntryCard
               key={entry.id}
               entry={entry}
-              carId={car.id}
               onEdit={handleEdit}
-              onUpdate={onUpdate}
+              onDelete={handleDelete}
             />
           ))}
         </div>
@@ -323,50 +360,19 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
 
 function FuelEntryCard({
   entry,
-  carId,
   onEdit,
-  onUpdate,
+  onDelete,
 }: {
   entry: FuelEntry;
-  carId: string;
   onEdit: (entry: FuelEntry) => void;
-  onUpdate: (updatedCar: Car) => void;
+  onDelete: (entryId: string) => void;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        `Möchten Sie den Tankeintrag vom ${formatDate(
-          entry.date
-        )} wirklich löschen?`
-      )
-    ) {
-      return;
-    }
-
+  const handleDeleteClick = async () => {
     setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/cars/${carId}/fuel?id=${entry.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Fehler beim Löschen");
-      }
-
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
-    } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Fehler beim Löschen des Tankeintrags"
-      );
-    } finally {
-      setIsDeleting(false);
-    }
+    await onDelete(entry.id);
+    setIsDeleting(false);
   };
 
   return (
@@ -410,7 +416,7 @@ function FuelEntryCard({
             </svg>
           </button>
           <button
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={isDeleting}
             className="p-2 rounded-lg hover:bg-red-100 transition text-muted-foreground hover:text-red-600 disabled:opacity-50"
             title="Löschen"

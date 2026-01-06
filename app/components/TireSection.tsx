@@ -74,10 +74,14 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
 
       const updatedTires = [...(car.tires || []), newTire];
 
-      await updateCar({
+      const updatedCar = await updateCar({
         id: car._id as Id<"cars">,
         tires: updatedTires,
       });
+
+      if (updatedCar && onUpdate) {
+        onUpdate(updatedCar as Car);
+      }
 
       setIsAdding(false);
       setFormData({
@@ -145,13 +149,17 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         changeType: 'mount',
       });
 
-      await updateCar({
+      const updatedCar = await updateCar({
         id: car._id as Id<"cars">,
         mileage: carMileage,
         tires: tires,
         tireChangeEvents: events,
         currentTireId: tireId,
       });
+
+      if (updatedCar && onUpdate) {
+        onUpdate(updatedCar as Car);
+      }
 
       setIsChanging(false);
     } catch (error) {
@@ -179,10 +187,14 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         return tire;
       });
 
-      await updateCar({
+      const updatedCar = await updateCar({
         id: car._id as Id<"cars">,
         tires: updatedTires,
       });
+
+      if (updatedCar && onUpdate) {
+        onUpdate(updatedCar as Car);
+      }
     } catch (error) {
       alert('Fehler beim Archivieren der Reifen');
     }

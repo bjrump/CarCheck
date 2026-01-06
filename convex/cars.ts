@@ -160,6 +160,41 @@ export const update = mutation({
       )
     ),
     currentTireId: v.optional(v.union(v.string(), v.null())),
+    fuelEntries: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          date: v.string(),
+          mileage: v.number(),
+          liters: v.number(),
+          kmDriven: v.optional(v.number()),
+          consumption: v.optional(v.number()),
+          pricePerLiter: v.optional(v.number()),
+          totalCost: v.optional(v.number()),
+          notes: v.optional(v.string()),
+        })
+      )
+    ),
+    eventLog: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          type: v.union(
+            v.literal("mileage_update"),
+            v.literal("tuv_update"),
+            v.literal("inspection_update"),
+            v.literal("tire_change"),
+            v.literal("car_created"),
+            v.literal("car_updated"),
+            v.literal("insurance_update"),
+            v.literal("fuel_entry")
+          ),
+          date: v.string(),
+          description: v.string(),
+          metadata: v.optional(v.any()),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

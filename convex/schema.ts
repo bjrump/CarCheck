@@ -48,6 +48,37 @@ const insuranceValidator = v.object({
   expiryDate: v.string(),
 });
 
+const fuelEntryValidator = v.object({
+  id: v.string(),
+  date: v.string(),
+  mileage: v.number(),
+  liters: v.number(),
+  kmDriven: v.optional(v.number()),
+  consumption: v.optional(v.number()),
+  pricePerLiter: v.optional(v.number()),
+  totalCost: v.optional(v.number()),
+  notes: v.optional(v.string()),
+});
+
+const eventTypeValidator = v.union(
+  v.literal("mileage_update"),
+  v.literal("tuv_update"),
+  v.literal("inspection_update"),
+  v.literal("tire_change"),
+  v.literal("car_created"),
+  v.literal("car_updated"),
+  v.literal("insurance_update"),
+  v.literal("fuel_entry")
+);
+
+const carEventValidator = v.object({
+  id: v.string(),
+  type: eventTypeValidator,
+  date: v.string(),
+  description: v.string(),
+  metadata: v.optional(v.any()),
+});
+
 export default defineSchema({
   cars: defineTable({
     userId: v.string(),
@@ -63,5 +94,7 @@ export default defineSchema({
     tires: v.array(tireValidator),
     tireChangeEvents: v.array(tireChangeEventValidator),
     currentTireId: v.union(v.string(), v.null()),
+    fuelEntries: v.optional(v.array(fuelEntryValidator)),
+    eventLog: v.optional(v.array(carEventValidator)),
   }).index("by_user", ["userId"]),
 });
