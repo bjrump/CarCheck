@@ -12,9 +12,15 @@ import {
   getMaintenanceStatus,
   getStatusColorClass,
   getStatusText,
+  calculateNextInspectionDateByYear,
+  calculateNextInspectionDateByKm,
+  getEarliestDate,
 } from "@/app/lib/utils";
 import { useState } from "react";
 import ProgressBar from "./ProgressBar";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface InspectionSectionProps {
   car: Car;
@@ -28,6 +34,7 @@ export default function InspectionSection({
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Inspection>(car.inspection);
   const [isLoading, setIsLoading] = useState(false);
+  const updateCar = useMutation(api.cars.update);
 
   const status = getMaintenanceStatus(car.inspection.nextInspectionDate);
   const statusByYear = getMaintenanceStatus(
@@ -39,23 +46,60 @@ export default function InspectionSection({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/cars/${car.id}/inspection`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Unbekannter Fehler" }));
-        throw new Error(
-          errorData.error || errorData.details || "Fehler beim Aktualisieren"
-        );
+      let lastInspectionDate = formData.lastInspectionDate;
+      if (
+        lastInspectionDate &&
+        lastInspectionDate.match(/^\d{4}-\d{2}-\d{2}$/)
+      ) {
+        const dateParts = lastInspectionDate.split("-");
+        const year = parseInt(dateParts[0], 10);
+        const month = parseInt(dateParts[1], 10) - 1;
+        const day = parseInt(dateParts[2], 10);
+        const localDate = new Date(year, month, day, 0, 0, 0, 0);
+        lastInspectionDate = localDate.toISOString();
       }
 
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
+      const nextInspectionDateByYear = lastInspectionDate
+        ? calculateNextInspectionDateByYear(
+            lastInspectionDate,
+            formData.intervalYears
+          )
+        : null;
+
+      const nextInspectionDateByKm =
+        lastInspectionDate && formData.lastInspectionMileage !== null
+          ? calculateNextInspectionDateByKm(
+              lastInspectionDate,
+              formData.lastInspectionMileage,
+              car.mileage,
+              formData.intervalKm
+            )
+          : null;
+
+      const nextInspectionDate = getEarliestDate(
+        nextInspectionDateByYear,
+        nextInspectionDateByKm
+      );
+
+      const updatedInspection: Inspection = {
+        lastInspectionDate,
+        lastInspectionMileage: formData.lastInspectionMileage,
+        nextInspectionDateByYear,
+        nextInspectionDateByKm,
+        nextInspectionDate,
+        intervalYears: formData.intervalYears,
+        intervalKm: formData.intervalKm,
+        completed: formData.completed,
+      };
+
+      const result = await updateCar({
+        id: car._id as Id<"cars">,
+        inspection: updatedInspection,
+      });
+
+      if (result) {
+        onUpdate(result as Car);
+      }
       setIsEditing(false);
     } catch (error) {
       const errorMessage =
@@ -92,7 +136,7 @@ export default function InspectionSection({
             </label>
             <input
               type="date"
-              value={formData.lastInspectionDate || ""}
+              value={formData.lastInspectionDate?.split("T")[0] || ""}
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -265,7 +309,6 @@ export default function InspectionSection({
           </span>
         </div>
 
-        {/* Progress Bars */}
         <div className="mt-4 pt-4 border-t border-border space-y-4">
           <ProgressBar
             progress={calculateTimeProgress(

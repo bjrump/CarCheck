@@ -10,13 +10,13 @@
     "migrate:eventlog": "tsx scripts/migrate-eventlog.ts"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.6.1",
-    "@upstash/redis": "^1.34.0",
+    "@clerk/localizations": "^3.32.1",
+    "@clerk/nextjs": "^6.36.5",
+    "convex": "^1.31.2",
     "date-fns": "^3.6.0",
     "next": "^16.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "redis": "^4.7.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",

@@ -16,49 +16,28 @@ import {
   formatNumber,
   getMaintenanceStatus,
 } from "@/app/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function Home() {
-  const [cars, setCars] = useState<Car[]>([]);
+  const carsData = useQuery(api.cars.list);
+  const cars = (carsData ?? []) as Car[];
+  const deleteCar = useMutation(api.cars.remove);
+  const updateCar = useMutation(api.cars.update);
+  
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isAddingCar, setIsAddingCar] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingMileage, setIsUpdatingMileage] = useState(false);
   const [showMileageInput, setShowMileageInput] = useState(false);
   const [newMileage, setNewMileage] = useState("");
   const [isEditingCar, setIsEditingCar] = useState(false);
   const [showEventLog, setShowEventLog] = useState(true);
 
-  useEffect(() => {
-    fetchCars();
-
-    // Listen for addCar event from header button
-    const handleAddCarEvent = () => {
-      setIsAddingCar(true);
-    };
-    window.addEventListener("addCar", handleAddCarEvent);
-
-    return () => {
-      window.removeEventListener("addCar", handleAddCarEvent);
-    };
-  }, []);
-
-  const fetchCars = async () => {
-    try {
-      const response = await fetch("/api/cars");
-      if (response.ok) {
-        const data = await response.json();
-        setCars(data);
-      }
-    } catch (error) {
-      console.error("Fehler beim Laden der Fahrzeuge:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = carsData === undefined;
 
   const handleCarUpdate = (updatedCar: Car) => {
-    setCars(cars.map((c) => (c.id === updatedCar.id ? updatedCar : c)));
     setSelectedCar(updatedCar);
   };
 
@@ -81,15 +60,9 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`/api/cars/${carId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setCars(cars.filter((c) => c.id !== carId));
-        if (selectedCar?.id === carId) {
-          setSelectedCar(null);
-        }
+      await deleteCar({ id: carId as Id<"cars"> });
+      if (selectedCar?._id === carId) {
+        setSelectedCar(null);
       }
     } catch (error) {
       alert("Fehler beim Löschen des Fahrzeugs");
@@ -98,7 +71,6 @@ export default function Home() {
 
   const handleCarCreated = () => {
     setIsAddingCar(false);
-    fetchCars();
   };
 
   const handleMileageUpdate = async () => {
@@ -109,18 +81,13 @@ export default function Home() {
 
     setIsUpdatingMileage(true);
     try {
-      const response = await fetch(`/api/cars/${selectedCar.id}/mileage`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mileage: parseInt(newMileage, 10) }),
+      const updated = await updateCar({
+        id: selectedCar._id as Id<"cars">,
+        mileage: parseInt(newMileage, 10),
       });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Aktualisieren");
+      if (updated) {
+        handleCarUpdate(updated as Car);
       }
-
-      const updatedCar = await response.json();
-      handleCarUpdate(updatedCar);
       setShowMileageInput(false);
       setNewMileage("");
     } catch (error) {
@@ -130,7 +97,6 @@ export default function Home() {
     }
   };
 
-  // Get upcoming maintenance items
   const upcomingTUV = cars
     .filter((car) => car.tuv.nextAppointmentDate)
     .sort((a, b) => {
@@ -154,7 +120,6 @@ export default function Home() {
     })
     .slice(0, 5);
 
-  // Get upcoming tire changes
   const upcomingTireChanges = cars
     .map((car) => {
       const currentTire = car.currentTireId
@@ -163,7 +128,6 @@ export default function Home() {
       const tireChange = calculateNextTireChangeDate(currentTire?.type || null);
       if (!tireChange) return null;
 
-      // Find last tire change date - use the most recent mount event for the current tire
       let lastChangeDate: string | null = null;
 
       if (car.currentTireId && car.tireChangeEvents) {
@@ -178,7 +142,6 @@ export default function Home() {
         if (lastMountEvent) {
           lastChangeDate = lastMountEvent.date;
         } else {
-          // Fallback: use the most recent mount event of any tire
           const anyMountEvent = car.tireChangeEvents
             .filter((e) => e.changeType === "mount")
             .sort(
@@ -207,7 +170,6 @@ export default function Home() {
     })
     .slice(0, 5);
 
-  // Find the next appointment (earliest of TÜV, Inspection, or Tire Change across all cars)
   const allAppointments = cars
     .flatMap((car) => {
       const appointments: Array<{
@@ -239,7 +201,6 @@ export default function Home() {
       return appointments;
     })
     .sort((a, b) => {
-      // Handle date parsing - support both YYYY-MM-DD and ISO formats
       const dateA = a.date.match(/^\d{4}-\d{2}-\d{2}$/)
         ? new Date(a.date + "T00:00:00").getTime()
         : new Date(a.date).getTime();
@@ -249,9 +210,6 @@ export default function Home() {
       return dateA - dateB;
     });
 
-  const nextAppointment = allAppointments[0];
-
-  // Get appointments in next 30 days
   const appointmentsIn30Days = allAppointments
     .filter((apt) => {
       if (!apt.date) return false;
@@ -357,7 +315,7 @@ export default function Home() {
               ✏️ Bearbeiten
             </button>
             <button
-              onClick={() => handleCarDelete(selectedCar.id)}
+              onClick={() => handleCarDelete(selectedCar._id)}
               className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
             >
               Fahrzeug löschen
@@ -454,7 +412,7 @@ export default function Home() {
                 Schließen
               </button>
               <button
-                onClick={() => handleCarDelete(selectedCar.id)}
+                onClick={() => handleCarDelete(selectedCar._id)}
                 className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg"
               >
                 Löschen
@@ -511,7 +469,6 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left side - 2/3 width: Cars and maintenance lists */}
       <div className="lg:col-span-2 space-y-8">
         {cars.length === 0 ? (
           <div className="glass rounded-2xl text-center py-12">
@@ -540,7 +497,7 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {cars.map((car) => (
-                  <CarCard key={car.id} car={car} onSelect={setSelectedCar} />
+                  <CarCard key={car._id} car={car} onSelect={setSelectedCar} />
                 ))}
               </div>
             </div>
@@ -560,7 +517,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {upcomingTUV.map((car) => (
                     <MaintenanceCard
-                      key={car.id}
+                      key={car._id}
                       car={car}
                       type="tuv"
                       onSelect={setSelectedCar}
@@ -585,7 +542,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {upcomingInspections.map((car) => (
                     <MaintenanceCard
-                      key={car.id}
+                      key={car._id}
                       car={car}
                       type="inspection"
                       onSelect={setSelectedCar}
@@ -610,7 +567,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {upcomingTireChanges.map((tireChange) => (
                     <MaintenanceCard
-                      key={tireChange.car.id}
+                      key={tireChange.car._id}
                       car={tireChange.car}
                       type="tire-change"
                       onSelect={setSelectedCar}
@@ -626,7 +583,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Right side - 1/3 width: Statistics */}
       <div className="lg:col-span-1">
         <div className="sticky top-4 space-y-4">
           <StatCard
@@ -645,7 +601,6 @@ export default function Home() {
             hint="bitte zeitnah planen"
           />
 
-          {/* Next appointments in 30 days */}
           <div className="glass rounded-2xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
               Nächste Termine

@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Car, Insurance } from '@/app/lib/types';
+import { useState } from "react";
+import { Car, Insurance } from "@/app/lib/types";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface CarFormProps {
   car?: Car;
@@ -12,18 +13,18 @@ interface CarFormProps {
 }
 
 export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarFormProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const createCar = useMutation(api.cars.create);
   const [formData, setFormData] = useState({
-    make: car?.make || '',
-    model: car?.model || '',
+    make: car?.make || "",
+    model: car?.model || "",
     year: car?.year || new Date().getFullYear(),
-    vin: car?.vin || '',
-    licensePlate: car?.licensePlate || '',
+    vin: car?.vin || "",
+    licensePlate: car?.licensePlate || "",
     mileage: car?.mileage || 0,
-    insuranceProvider: car?.insurance?.provider || '',
-    insurancePolicyNumber: car?.insurance?.policyNumber || '',
-    insuranceExpiryDate: car?.insurance?.expiryDate || '',
+    insuranceProvider: car?.insurance?.provider || "",
+    insurancePolicyNumber: car?.insurance?.policyNumber || "",
+    insuranceExpiryDate: car?.insurance?.expiryDate || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,15 +32,18 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
     setIsLoading(true);
 
     try {
-      const insurance: Insurance | null = formData.insuranceProvider && formData.insurancePolicyNumber && formData.insuranceExpiryDate
-        ? {
-            provider: formData.insuranceProvider,
-            policyNumber: formData.insurancePolicyNumber,
-            expiryDate: formData.insuranceExpiryDate,
-          }
-        : null;
+      const insurance: Insurance | null =
+        formData.insuranceProvider &&
+        formData.insurancePolicyNumber &&
+        formData.insuranceExpiryDate
+          ? {
+              provider: formData.insuranceProvider,
+              policyNumber: formData.insurancePolicyNumber,
+              expiryDate: formData.insuranceExpiryDate,
+            }
+          : null;
 
-      const carData = {
+      await createCar({
         make: formData.make,
         model: formData.model,
         year: parseInt(formData.year.toString()),
@@ -47,35 +51,17 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
         licensePlate: formData.licensePlate || undefined,
         mileage: parseInt(formData.mileage.toString()),
         insurance,
-      };
-
-      const url = car ? `/api/cars/${car.id}` : '/api/cars';
-      const method = car ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(carData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
-        throw new Error(errorData.error || 'Fehler beim Speichern');
-      }
-
-      const savedCar = await response.json();
-
-      if (car && onUpdated) {
-        onUpdated(savedCar);
-      } else if (onCreated) {
+      if (onCreated) {
         onCreated();
-      } else if (!car && savedCar.id) {
-        // If no callback provided and we're creating a new car, refresh the page
-        router.refresh();
       }
-    } catch (error: any) {
-      console.error('Fehler beim Speichern:', error);
-      alert(`Fehler beim Speichern des Fahrzeugs: ${error.message || 'Unbekannter Fehler'}`);
+    } catch (error: unknown) {
+      console.error("Fehler beim Speichern:", error);
+      const message =
+        error instanceof Error ? error.message : "Unbekannter Fehler";
+      alert(`Fehler beim Speichern des Fahrzeugs: ${message}`);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -88,7 +74,7 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             Fahrzeug
           </p>
           <h2 className="text-2xl font-bold">
-        {car ? 'Fahrzeug bearbeiten' : 'Neues Fahrzeug hinzufügen'}
+            {car ? "Fahrzeug bearbeiten" : "Neues Fahrzeug hinzufügen"}
           </h2>
         </div>
         <span className="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
@@ -105,7 +91,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="text"
               value={formData.make}
-              onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, make: e.target.value })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               required
               placeholder="z.B. BMW"
@@ -119,7 +107,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="text"
               value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, model: e.target.value })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               required
               placeholder="z.B. 320d"
@@ -133,7 +123,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="number"
               value={formData.year}
-              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, year: parseInt(e.target.value) })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               required
               min="1900"
@@ -148,7 +140,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="number"
               value={formData.mileage}
-              onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, mileage: parseInt(e.target.value) })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               required
               min="0"
@@ -162,7 +156,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="text"
               value={formData.vin}
-              onChange={(e) => setFormData({ ...formData, vin: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, vin: e.target.value })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               placeholder="Optional"
             />
@@ -175,7 +171,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             <input
               type="text"
               value={formData.licensePlate}
-              onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, licensePlate: e.target.value })
+              }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               placeholder="Optional"
             />
@@ -183,7 +181,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
         </div>
 
         <div className="border-t border-border pt-4 mt-4">
-          <h3 className="text-lg font-semibold mb-4 text-foreground">Versicherung (optional)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-foreground">
+            Versicherung (optional)
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">
@@ -192,7 +192,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
               <input
                 type="text"
                 value={formData.insuranceProvider}
-                onChange={(e) => setFormData({ ...formData, insuranceProvider: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, insuranceProvider: e.target.value })
+                }
                 className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
                 placeholder="z.B. Allianz"
               />
@@ -205,7 +207,12 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
               <input
                 type="text"
                 value={formData.insurancePolicyNumber}
-                onChange={(e) => setFormData({ ...formData, insurancePolicyNumber: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    insurancePolicyNumber: e.target.value,
+                  })
+                }
                 className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
                 placeholder="Optional"
               />
@@ -218,7 +225,12 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
               <input
                 type="date"
                 value={formData.insuranceExpiryDate}
-                onChange={(e) => setFormData({ ...formData, insuranceExpiryDate: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    insuranceExpiryDate: e.target.value,
+                  })
+                }
                 className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -231,7 +243,7 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
             disabled={isLoading}
             className="rounded-xl bg-accent px-6 py-2 text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg disabled:opacity-50"
           >
-            {isLoading ? 'Speichern...' : 'Speichern'}
+            {isLoading ? "Speichern..." : "Speichern"}
           </button>
           {(car || onCancel) && (
             <button
@@ -239,8 +251,6 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
               onClick={() => {
                 if (onCancel) {
                   onCancel();
-                } else if (car && onUpdated) {
-                  // Fallback: if no onCancel, we can't cancel properly
                 }
               }}
               className="rounded-xl border border-border px-6 py-2 font-semibold text-muted-foreground transition hover:bg-muted"
@@ -262,4 +272,3 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
     </form>
   );
 }
-

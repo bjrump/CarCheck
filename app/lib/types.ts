@@ -1,21 +1,21 @@
-export type TireType = 'summer' | 'winter' | 'all-season';
+export type TireType = "summer" | "winter" | "all-season";
 
 export interface Tire {
   id: string;
   type: TireType;
   brand?: string;
   model?: string;
-  currentMileage: number; // Aktueller KM-Stand der Reifen (gefahrene Kilometer)
-  archived: boolean; // Archiviert (nicht wieder aktivierbar)
+  currentMileage: number;
+  archived: boolean;
 }
 
 export interface TireChangeEvent {
   id: string;
-  date: string; // ISO date string
-  carMileage: number; // Auto-KM-Stand beim Wechsel
-  tireId: string; // ID des montierten/abmontierten Reifens
-  tireMileage: number; // Reifen-KM-Stand beim Wechsel
-  changeType: 'mount' | 'unmount'; // Montiert oder abmontiert
+  date: string;
+  carMileage: number;
+  tireId: string;
+  tireMileage: number;
+  changeType: "mount" | "unmount";
 }
 
 export interface FuelEntry {
@@ -31,26 +31,26 @@ export interface FuelEntry {
 }
 
 export interface TUV {
-  lastAppointmentDate: string | null; // ISO date string
-  nextAppointmentDate: string | null; // ISO date string - automatisch 2 Jahre nach letztem Termin
+  lastAppointmentDate: string | null;
+  nextAppointmentDate: string | null;
   completed: boolean;
 }
 
 export interface Inspection {
-  lastInspectionDate: string | null; // ISO date string
+  lastInspectionDate: string | null;
   lastInspectionMileage: number | null;
-  nextInspectionDateByYear: string | null; // ISO date string - basierend auf Jahren
-  nextInspectionDateByKm: string | null; // ISO date string - basierend auf KM
-  nextInspectionDate: string | null; // ISO date string - das frühere Datum
-  intervalYears: number; // z.B. 1 Jahr
-  intervalKm: number; // z.B. 15000 km
+  nextInspectionDateByYear: string | null;
+  nextInspectionDateByKm: string | null;
+  nextInspectionDate: string | null;
+  intervalYears: number;
+  intervalKm: number;
   completed: boolean;
 }
 
 export interface Insurance {
   provider: string;
   policyNumber: string;
-  expiryDate: string; // ISO date string
+  expiryDate: string;
 }
 
 export type EventType = 
@@ -68,26 +68,25 @@ export interface CarEvent {
   type: EventType;
   date: string; // ISO date string
   description: string; // Human-readable description
-  metadata?: Record<string, any>; // Additional data (e.g. old/new mileage, tire info, etc.)
+  metadata?: Record<string, unknown>; // Additional data (e.g. old/new mileage, tire info, etc.)
 }
 
 export interface Car {
-  id: string;
-  make: string; // Marke
-  model: string; // Modell
+  _id: string;
+  _creationTime: number;
+  userId: string;
+  make: string;
+  model: string;
   year: number;
   vin?: string;
-  licensePlate?: string; // Kennzeichen
-  mileage: number; // Kilometerstand
+  licensePlate?: string;
+  mileage: number;
   insurance: Insurance | null;
   tuv: TUV;
   inspection: Inspection;
   tires: Tire[];
   tireChangeEvents: TireChangeEvent[];
-  currentTireId: string | null; // ID des aktuell montierten Reifens
-  fuelEntries: FuelEntry[]; // Tankeinträge
-  eventLog: CarEvent[]; // Event-Log für alle Aktionen
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  currentTireId: string | null;
+  fuelEntries?: FuelEntry[];
+  eventLog?: CarEvent[];
 }
-

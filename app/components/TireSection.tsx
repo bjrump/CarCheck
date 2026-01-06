@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { Car, Tire, TireType, TireChangeEvent } from '@/app/lib/types';
 import { formatDate, formatNumber } from '@/app/lib/utils';
 
 interface TireSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function TireSection({ car, onUpdate }: TireSectionProps) {
@@ -18,6 +21,8 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
     archived: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  
+  const updateCar = useMutation(api.cars.update);
 
   const activeTires = (car.tires || []).filter(t => !t.archived);
   const archivedTires = (car.tires || []).filter(t => t.archived);
@@ -58,23 +63,22 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/cars/${car.id}/tires`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: formData.type,
-          brand: formData.brand,
-          model: formData.model,
-          currentMileage: parseInt(formData.currentMileage?.toString() || '0'),
-        }),
+      const newTire: Tire = {
+        id: crypto.randomUUID(),
+        type: formData.type || 'summer',
+        brand: formData.brand,
+        model: formData.model,
+        currentMileage: parseInt(formData.currentMileage?.toString() || '0'),
+        archived: false,
+      };
+
+      const updatedTires = [...(car.tires || []), newTire];
+
+      await updateCar({
+        id: car._id as Id<"cars">,
+        tires: updatedTires,
       });
 
-      if (!response.ok) {
-        throw new Error('Fehler beim Hinzufügen');
-      }
-
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
       setIsAdding(false);
       setFormData({
         type: 'summer',
@@ -91,22 +95,64 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
   const handleTireChange = async (tireId: string, carMileage: number, changeDate: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/cars/${car.id}/tire-change`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tireId,
-          carMileage: parseInt(carMileage.toString()),
-          changeDate: changeDate,
-        }),
-      });
+      const events: TireChangeEvent[] = [...(car.tireChangeEvents || [])];
+      const tires = [...(car.tires || [])];
 
-      if (!response.ok) {
-        throw new Error('Fehler beim Reifenwechsel');
+      // Wenn es bereits einen montierten Reifen gibt, demontieren
+      if (car.currentTireId) {
+        const currentTireIndex = tires.findIndex(t => t.id === car.currentTireId);
+        if (currentTireIndex >= 0) {
+          // Berechne aktuelle Kilometer des demontierten Reifens
+          const lastMountEvent = events
+            .filter(e => e.tireId === car.currentTireId && e.changeType === 'mount')
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+          const tireMileageAtUnmount = lastMountEvent
+            ? lastMountEvent.tireMileage + (carMileage - lastMountEvent.carMileage)
+            : tires[currentTireIndex].currentMileage;
+
+          // Aktualisiere die Kilometer des demontierten Reifens
+          tires[currentTireIndex] = {
+            ...tires[currentTireIndex],
+            currentMileage: tireMileageAtUnmount,
+          };
+
+          // Unmount-Event erstellen
+          events.push({
+            id: crypto.randomUUID(),
+            date: changeDate,
+            carMileage: carMileage,
+            tireId: car.currentTireId,
+            tireMileage: tireMileageAtUnmount,
+            changeType: 'unmount',
+          });
+        }
       }
 
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
+      // Finde den zu montierenden Reifen
+      const newTireIndex = tires.findIndex(t => t.id === tireId);
+      if (newTireIndex < 0) {
+        throw new Error('Reifen nicht gefunden');
+      }
+
+      // Mount-Event erstellen
+      events.push({
+        id: crypto.randomUUID(),
+        date: changeDate,
+        carMileage: carMileage,
+        tireId: tireId,
+        tireMileage: tires[newTireIndex].currentMileage,
+        changeType: 'mount',
+      });
+
+      await updateCar({
+        id: car._id as Id<"cars">,
+        mileage: carMileage,
+        tires: tires,
+        tireChangeEvents: events,
+        currentTireId: tireId,
+      });
+
       setIsChanging(false);
     } catch (error) {
       alert('Fehler beim Reifenwechsel');
@@ -133,18 +179,10 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         return tire;
       });
 
-      const response = await fetch(`/api/cars/${car.id}/tires`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tires: updatedTires }),
+      await updateCar({
+        id: car._id as Id<"cars">,
+        tires: updatedTires,
       });
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Archivieren');
-      }
-
-      const updatedCar = await response.json();
-      onUpdate(updatedCar);
     } catch (error) {
       alert('Fehler beim Archivieren der Reifen');
     }
@@ -481,7 +519,7 @@ function TireCard({ tire, actualMileage, isCurrent, isArchived = false, onArchiv
             </span>
             {isCurrent && (
               <span className="px-2 py-1 rounded text-xs font-semibold bg-green-600 text-white shadow-soft">
-                ✓ MONTIERT
+                MONTIERT
               </span>
             )}
             {isArchived && (
@@ -688,4 +726,3 @@ function TireHistory({ events, tires, getTireTypeLabel }: TireHistoryProps) {
     </div>
   );
 }
-

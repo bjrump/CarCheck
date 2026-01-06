@@ -19,7 +19,6 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     car.inspection.nextInspectionDate
   );
 
-  // Get current tire and next tire change
   const currentTire = car.currentTireId
     ? car.tires?.find((t) => t.id === car.currentTireId)
     : null;
@@ -66,7 +65,6 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
       </div>
 
       <div className="space-y-2 mt-4">
-        {/* TÜV */}
         <div className="rounded-xl bg-muted/60 px-3 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -87,7 +85,6 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
           </div>
         </div>
 
-        {/* Inspektion */}
         <div className="rounded-xl bg-muted/60 px-3 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -108,7 +105,6 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
           </div>
         </div>
 
-        {/* Reifen */}
         <div className="rounded-xl bg-muted/60 px-3 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -139,14 +135,9 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     </>
   );
 
-  // Always use onSelect if provided, otherwise make it required
-  if (!onSelect) {
-    console.warn('CarCard requires onSelect prop');
-  }
-
   return (
     <div
-      onClick={() => onSelect?.(car)}
+      onClick={() => onSelect(car)}
       className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
     >
       {content}
