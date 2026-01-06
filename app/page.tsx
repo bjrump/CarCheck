@@ -118,7 +118,7 @@ function Dashboard() {
   const deleteCar = useMutation(api.cars.remove);
   const updateCar = useMutation(api.cars.update);
   
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [isAddingCar, setIsAddingCar] = useState(false);
   const [isUpdatingMileage, setIsUpdatingMileage] = useState(false);
   const [showMileageInput, setShowMileageInput] = useState(false);
@@ -127,13 +127,14 @@ function Dashboard() {
   const [showEventLog, setShowEventLog] = useState(true);
 
   const isLoading = carsData === undefined;
-
-  const handleCarUpdate = (updatedCar: Car) => {
-    setSelectedCar(updatedCar);
+  
+  const selectedCar = selectedCarId ? cars.find(c => c._id === selectedCarId) ?? null : null;
+  
+  const setSelectedCar = (car: Car | null) => {
+    setSelectedCarId(car?._id ?? null);
   };
 
-  const handleCarUpdated = (updatedCar: Car) => {
-    handleCarUpdate(updatedCar);
+  const handleCarUpdated = () => {
     setIsEditingCar(false);
   };
 
@@ -176,9 +177,6 @@ function Dashboard() {
         id: selectedCar._id as Id<"cars">,
         mileage: parseInt(newMileage, 10),
       });
-      if (updated) {
-        handleCarUpdate(updated as Car);
-      }
       setShowMileageInput(false);
       setNewMileage("");
     } catch (error) {
@@ -541,13 +539,13 @@ function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TUVSection car={selectedCar} onUpdate={handleCarUpdate} />
-          <InspectionSection car={selectedCar} onUpdate={handleCarUpdate} />
+          <TUVSection car={selectedCar} onUpdate={() => {}} />
+          <InspectionSection car={selectedCar} onUpdate={() => {}} />
         </div>
 
-        <TireSection car={selectedCar} onUpdate={handleCarUpdate} />
+        <TireSection car={selectedCar} onUpdate={() => {}} />
 
-        <FuelSection car={selectedCar} onUpdate={handleCarUpdate} />
+        <FuelSection car={selectedCar} onUpdate={() => {}} />
 
         {selectedCar.fuelEntries && selectedCar.fuelEntries.length > 1 && (
           <FuelAnalytics fuelEntries={selectedCar.fuelEntries} />
