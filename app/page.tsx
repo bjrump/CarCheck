@@ -20,8 +20,99 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 
-export default function Home() {
+function LandingPage() {
+  const features = [
+    {
+      icon: "🚗",
+      title: "Fahrzeugverwaltung",
+      description: "Verwalten Sie alle Ihre Fahrzeuge an einem Ort mit detaillierten Informationen zu Marke, Modell, Kilometerstand und mehr.",
+    },
+    {
+      icon: "🔧",
+      title: "TÜV-Termine",
+      description: "Behalten Sie Ihre TÜV-Termine im Blick. Automatische Berechnung des nächsten Termins und Erinnerungen bei Fälligkeit.",
+    },
+    {
+      icon: "🔍",
+      title: "Inspektionen",
+      description: "Verwalten Sie Inspektionsintervalle nach Zeit und Kilometerstand. Die App berechnet automatisch den nächsten Termin.",
+    },
+    {
+      icon: "🛞",
+      title: "Reifenverwaltung",
+      description: "Organisieren Sie Ihre Sommer- und Winterreifen. Vollständige Historie aller Reifenwechsel mit Kilometertracking.",
+    },
+    {
+      icon: "⛽",
+      title: "Tankbuch",
+      description: "Erfassen Sie Ihre Tankstopps und analysieren Sie Ihren Kraftstoffverbrauch mit detaillierten Statistiken.",
+    },
+    {
+      icon: "📊",
+      title: "Dashboard",
+      description: "Übersichtliches Dashboard mit allen anstehenden Terminen, Statistiken und Erinnerungen auf einen Blick.",
+    },
+  ];
+
+  return (
+    <div className="space-y-16">
+      <div className="text-center space-y-6 py-12">
+        <h1 className="text-4xl md:text-5xl font-bold">
+          Ihre Fahrzeuge.{" "}
+          <span className="text-accent">Perfekt organisiert.</span>
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          CarCheck ist Ihre zentrale Anlaufstelle für die Verwaltung aller Fahrzeugdaten - 
+          von TÜV-Terminen über Inspektionen bis hin zur Reifenverwaltung.
+        </p>
+        <div className="flex justify-center gap-4 pt-4">
+          <SignInButton mode="modal">
+            <button className="rounded-xl bg-accent px-8 py-3 text-lg text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg">
+              Jetzt anmelden
+            </button>
+          </SignInButton>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Kostenlos registrieren und sofort loslegen
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Funktionen
+          </p>
+          <h2 className="text-2xl font-semibold">Was CarCheck kann</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <div key={index} className="glass rounded-2xl p-6 space-y-3">
+              <div className="text-4xl">{feature.icon}</div>
+              <h3 className="text-lg font-semibold">{feature.title}</h3>
+              <p className="text-muted-foreground text-sm">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass rounded-2xl p-8 text-center space-y-4">
+        <h2 className="text-2xl font-bold">Bereit loszulegen?</h2>
+        <p className="text-muted-foreground max-w-lg mx-auto">
+          Melden Sie sich jetzt an, um Ihre Fahrzeuge zu verwalten und nie wieder einen wichtigen Termin zu verpassen.
+        </p>
+        <SignInButton mode="modal">
+          <button className="rounded-xl bg-accent px-8 py-3 text-accent-foreground font-semibold shadow-soft transition hover:-translate-y-[1px] hover:shadow-lg">
+            Kostenlos starten
+          </button>
+        </SignInButton>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard() {
   const carsData = useQuery(api.cars.list);
   const cars = (carsData ?? []) as Car[];
   const deleteCar = useMutation(api.cars.remove);
@@ -656,5 +747,18 @@ function StatCard({
       <p className="text-3xl font-bold mt-1">{value}</p>
       {hint && <p className="text-sm text-muted-foreground mt-1">{hint}</p>}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <SignedOut>
+        <LandingPage />
+      </SignedOut>
+      <SignedIn>
+        <Dashboard />
+      </SignedIn>
+    </>
   );
 }
