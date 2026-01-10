@@ -8,11 +8,13 @@
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Convex](https://img.shields.io/badge/Convex-1.31-FF6B6B?style=for-the-badge)](https://convex.dev/)
+[![Clerk](https://img.shields.io/badge/Clerk-6.36-6C47FF?style=for-the-badge)](https://clerk.com/)
 [![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
 
-**CarCheck** ist eine moderne Next.js-Anwendung zur umfassenden Verwaltung Ihrer Fahrzeuge mit TÜV-Terminen, Inspektionen, Reifenverwaltung und Versicherungsinformationen. Verwalten Sie alle wichtigen Fahrzeugdaten an einem Ort – übersichtlich, intuitiv und modern.
+**CarCheck** ist eine moderne Next.js-Anwendung zur umfassenden Verwaltung Ihrer Fahrzeuge mit TÜV-Terminen, Inspektionen, Reifenverwaltung und Tankprotokoll. Verwalten Sie alle wichtigen Fahrzeugdaten an einem Ort – übersichtlich, intuitiv und modern.
 
-[Features](#-features) • [Installation](#-installation) • [Verwendung](#-verwendung) • [Technologie](#-technologie-stack)
+[Features](#-features) • [Installation](#-installation) • [Verwendung](#-verwendung) • [Technologie](#️-technologie-stack)
 
 </div>
 
@@ -21,12 +23,6 @@
 ## 📑 Inhaltsverzeichnis
 
 - [✨ Features](#-features)
-  - [🚙 Fahrzeugverwaltung](#-fahrzeugverwaltung)
-  - [🔧 TÜV-Verwaltung](#-tüv-verwaltung)
-  - [🔍 Inspektions-Verwaltung](#-inspektions-verwaltung)
-  - [🛞 Reifenverwaltung](#-reifenverwaltung)
-  - [📊 Dashboard](#-dashboard)
-  - [🎨 Benutzeroberfläche](#-benutzeroberfläche)
 - [🛠️ Technologie-Stack](#️-technologie-stack)
 - [🚀 Installation](#-installation)
 - [💾 Datenspeicherung](#-datenspeicherung)
@@ -34,7 +30,6 @@
 - [🏗️ Projektstruktur](#️-projektstruktur)
 - [🔧 Build für Produktion](#-build-für-produktion)
 - [🐛 Fehlerbehebung](#-fehlerbehebung)
-- [🤝 Beitragen](#-beitragen)
 - [📄 Lizenz](#-lizenz)
 
 ---
@@ -47,6 +42,7 @@
 - 📝 **Fahrzeugdetails**: Marke, Modell, Baujahr, VIN, Kennzeichen und Kilometerstand
 - 🛡️ **Versicherungsinformationen**: Versicherer, Versicherungsnummer und Ablaufdatum speichern
 - 📊 **Kilometerstand-Tracking**: Aktualisieren Sie den Kilometerstand direkt aus der Detailansicht
+- 🔐 **Benutzerkonten**: Jeder Benutzer sieht nur seine eigenen Fahrzeuge (Clerk Authentication)
 
 ### 🔧 TÜV-Verwaltung
 
@@ -69,7 +65,13 @@
 - 📜 **Reifenwechsel-Tracking**: Vollständige Historie aller Reifenwechsel mit Datum, Kilometerstand und Reifentyp
 - 🤖 **Automatische Kilometerberechnung**: Aktuelle Kilometer der montierten Reifen werden automatisch berechnet
 - 📦 **Reifen archivieren**: Alte Reifensätze archivieren, ohne sie zu löschen
-- 🔔 **Reifenwechsel-Erinnerungen**: Automatische Berechnung der nächsten Reifenwechsel (Sommer/Winter)
+- 🔔 **Reifenwechsel-Erinnerungen**: Automatische Berechnung basierend auf Jahreszeit (Ostern / 1. Oktober)
+
+### ⛽ Tankprotokoll
+
+- 📊 **Verbrauchsanalyse**: Durchschnittlicher Verbrauch, Kosten pro Kilometer
+- 📈 **Statistiken**: Gesamtkosten, Gesamtliter, gefahrene Kilometer
+- 📝 **Tankeinträge**: Datum, Kilometerstand, Liter, Preis pro Liter
 
 ### 📊 Dashboard
 
@@ -93,15 +95,15 @@
 
 CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwicklererfahrung:
 
-| Technologie                                                                                        | Version | Beschreibung                      |
-| -------------------------------------------------------------------------------------------------- | ------- | --------------------------------- |
-| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js)             | 16.0    | React Framework mit App Router    |
-| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react)                  | 19.0    | UI-Bibliothek                     |
-| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript)   | 5.5     | Typsichere Entwicklung            |
-| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 3.4     | Utility-First CSS Framework       |
-| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square)                      | 3.6     | Datumsberechnungen                |
-| ![Upstash Redis](https://img.shields.io/badge/-Upstash_Redis-00E9A3?style=flat-square)             | 1.34    | Cloud-Datenspeicherung (optional) |
-| ![Vercel Analytics](https://img.shields.io/badge/-Vercel_Analytics-black?style=flat-square)        | 1.6     | Analytics-Integration             |
+| Technologie | Version | Beschreibung |
+|-------------|---------|--------------|
+| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js) | 16.0 | React Framework mit App Router |
+| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react) | 19.0 | UI-Bibliothek |
+| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript) | 5.5 | Typsichere Entwicklung |
+| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 3.4 | Utility-First CSS Framework |
+| ![Convex](https://img.shields.io/badge/-Convex-FF6B6B?style=flat-square) | 1.31 | Real-time Backend-as-a-Service |
+| ![Clerk](https://img.shields.io/badge/-Clerk-6C47FF?style=flat-square) | 6.36 | Authentication & User Management |
+| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 3.6 | Datumsberechnungen |
 
 ---
 
@@ -109,7 +111,9 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 
 ### Voraussetzungen
 
-- [Bun](https://bun.sh/) 1.0 oder höher (beinhaltet bereits einen schnellen JavaScript-Runtime)
+- [Bun](https://bun.sh/) 1.0 oder höher
+- [Convex](https://convex.dev/) Account (kostenlos)
+- [Clerk](https://clerk.com/) Account (kostenlos)
 
 ### Schritte
 
@@ -126,77 +130,58 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
    bun install
    ```
 
-3. **Entwicklungsserver starten**
+3. **Umgebungsvariablen konfigurieren**
+
+   Erstellen Sie eine `.env.local` Datei:
+
+   ```bash
+   # Clerk Authentication
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+   CLERK_SECRET_KEY=sk_test_...
+   CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-domain.clerk.accounts.dev
+
+   # Convex Backend
+   NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud
+   ```
+
+4. **Convex Backend starten**
+
+   ```bash
+   # In einem separaten Terminal
+   npx convex dev
+   ```
+
+5. **Entwicklungsserver starten**
 
    ```bash
    bun dev
    ```
 
-4. **Im Browser öffnen**
+6. **Im Browser öffnen**
    ```
    http://localhost:3000
    ```
 
-Die Anwendung läuft nun lokal und speichert Daten in `data/cars.json`.
+---
 
 ## 💾 Datenspeicherung
 
-CarCheck bietet flexible Speicheroptionen für verschiedene Anwendungsfälle:
+CarCheck verwendet **Convex** als Backend-as-a-Service für Echtzeit-Datenspeicherung.
 
-### 📁 Lokale Entwicklung
+### Warum Convex?
 
-Standardmäßig werden die Daten in `data/cars.json` gespeichert. Diese Datei wird automatisch erstellt, wenn Sie das erste Fahrzeug hinzufügen.
+| Vorteil | Beschreibung |
+|---------|--------------|
+| ⚡ **Echtzeit** | Automatische Synchronisation über alle Clients |
+| 🔐 **Sicher** | Integrierte Authentifizierung via Clerk JWT |
+| 🚀 **Serverless** | Kein Backend-Server zu verwalten |
+| 📊 **Typsicher** | TypeScript-first mit automatischer Codegenerierung |
+| 💰 **Kostenlos** | Großzügiger Free-Tier für persönliche Projekte |
 
-- ✅ Keine Konfiguration erforderlich
-- ✅ Ideal für lokale Entwicklung und Tests
-- ✅ Daten bleiben auf Ihrem Rechner
-
-### ☁️ Produktion (Vercel) - Upstash Redis
-
-Die App verwendet **Upstash Redis** für die Cloud-Speicherung in der Produktion.
-
-#### Warum Redis?
-
-| Vorteil                | Beschreibung                                    |
-| ---------------------- | ----------------------------------------------- |
-| 🎯 **Einfach**         | Key-Value Store - perfekt für JSON-Daten        |
-| ⚡ **Schnell**         | Optimiert für schnelle Lese-/Schreiboperationen |
-| 💰 **Günstig**         | Kostenloser Plan verfügbar                      |
-| 🔄 **Direkter Ersatz** | Ähnlich wie Vercel KV (das eingestellt wurde)   |
-| 🚀 **Kein Overhead**   | Keine komplexen Tabellen-Schemas nötig          |
-
-#### Setup-Anleitung
-
-1. **Integration hinzufügen**
-
-   - Gehen Sie zu Vercel Dashboard → Ihr Projekt → Integrations
-   - Fügen Sie die **"Upstash Redis"** Integration hinzu
-   - Die Umgebungsvariablen werden automatisch hinzugefügt:
-     - `UPSTASH_REDIS_REST_URL`
-     - `UPSTASH_REDIS_REST_TOKEN`
-
-2. **Migration bestehender Daten**
-
-   ```bash
-   # Installiere tsx (falls noch nicht vorhanden)
-   bun add -D tsx
-
-   # Setze Umgebungsvariablen
-   export UPSTASH_REDIS_REST_URL="your-redis-url"
-   export UPSTASH_REDIS_REST_TOKEN="your-redis-token"
-
-   # Führe Migration aus
-   bun run scripts/migrate-to-redis.ts
-   ```
-
-> **💡 Hinweis**: Die App verwendet automatisch Redis, wenn die Umgebungsvariablen gesetzt sind. Andernfalls fällt sie auf die lokale JSON-Datei zurück.
-
-### 📊 Datenmodell
-
-Jedes Fahrzeug enthält folgende Informationen:
+### Datenmodell
 
 ```
-Fahrzeug
+Fahrzeug (Car)
 ├── Grundinformationen
 │   ├── Marke, Modell, Baujahr
 │   ├── VIN (Fahrzeugidentifikationsnummer)
@@ -213,95 +198,65 @@ Fahrzeug
 │   ├── Letzte Inspektion (Datum & Kilometerstand)
 │   ├── Intervalle (Jahre & Kilometer)
 │   └── Nächste Termine (basierend auf Zeit & Kilometer)
-├── Reifensätze
+├── Reifensätze[]
 │   ├── Typ (Sommer/Winter/Allwetter)
 │   ├── Marke & Modell
 │   ├── Gefahrene Kilometer
 │   └── Archiviert (Ja/Nein)
-└── Reifenwechsel-Historie
-    ├── Datum & Kilometerstand
-    ├── Reifentyp
-    └── Aktion (Montage/Demontage)
+├── Reifenwechsel-Historie[]
+│   ├── Datum & Kilometerstand
+│   ├── Reifentyp
+│   └── Aktion (Montage/Demontage)
+├── Tankeinträge[]
+│   ├── Datum, Kilometerstand
+│   ├── Liter, Preis pro Liter
+│   └── Verbrauch (berechnet)
+└── Event-Log[]
+    ├── Datum, Typ
+    └── Beschreibung
 ```
 
 ---
 
 ## 📖 Verwendung
 
+### 🔐 Anmeldung
+
+1. Öffnen Sie die App unter `http://localhost:3000`
+2. Klicken Sie auf **"Anmelden"** oder **"Registrieren"**
+3. Melden Sie sich mit E-Mail, Google oder GitHub an (via Clerk)
+
 ### 🚗 Fahrzeug hinzufügen
 
-1. Klicken Sie auf **"Neues Fahrzeug hinzufügen"** (im Header oder auf der Startseite)
-2. Füllen Sie das Formular mit den Fahrzeugdaten aus:
-   - Marke und Modell
-   - Baujahr
-   - VIN (optional)
-   - Kennzeichen
-   - Aktueller Kilometerstand
-3. Optional: Versicherungsinformationen hinzufügen
-4. Klicken Sie auf **"Speichern"**
+1. Klicken Sie auf **"Neues Fahrzeug hinzufügen"**
+2. Füllen Sie das Formular mit den Fahrzeugdaten aus
+3. Klicken Sie auf **"Speichern"**
 
 ### 🔧 TÜV verwalten
 
-1. Öffnen Sie ein Fahrzeug auf der Detailseite
+1. Öffnen Sie ein Fahrzeug
 2. Im TÜV-Bereich auf **"Bearbeiten"** klicken
 3. Letzten TÜV-Termin eingeben
 4. Der nächste Termin wird automatisch auf **2 Jahre** berechnet
-5. Änderungen speichern
 
 > **💡 Tipp**: Die Fortschrittsanzeige zeigt Ihnen visuell, wie viel Zeit bis zum nächsten TÜV verbleibt
 
 ### 🔍 Inspektion verwalten
 
-1. Auf der Fahrzeugdetailseite im Inspektions-Bereich auf **"Bearbeiten"** klicken
-2. Letzte Inspektion eingeben:
-   - Datum der letzten Inspektion
-   - Kilometerstand bei der letzten Inspektion
+1. Im Inspektions-Bereich auf **"Bearbeiten"** klicken
+2. Letzte Inspektion eingeben (Datum & Kilometerstand)
 3. Intervalle anpassen (Standard: **1 Jahr / 15.000 km**)
-4. Die nächste Inspektion wird automatisch berechnet basierend auf:
-   - Zeit (Jahre seit letzter Inspektion)
-   - Kilometerstand (gefahrene Kilometer seit letzter Inspektion)
-5. Änderungen speichern
+4. Die nächste Inspektion wird automatisch berechnet
 
 > **💡 Tipp**: Es wird immer der frühere Termin (Zeit oder Kilometer) als nächste Inspektion angezeigt
 
 ### 🛞 Reifen verwalten
 
-#### Reifensatz hinzufügen
-
-1. Auf der Fahrzeugdetailseite im Reifen-Bereich auf **"Reifensatz hinzufügen"** klicken
-2. Reifendetails eingeben:
-   - Typ (Sommer, Winter, Allwetter)
-   - Marke
-   - Modell
-   - Bereits gefahrene Kilometer
-3. Reifensatz speichern
-
-#### Reifenwechsel durchführen
-
-1. Im Reifen-Bereich auf **"Reifenwechsel"** klicken
-2. Wechseldetails eingeben:
-   - Datum des Wechsels
-   - Aktueller Kilometerstand
-   - Zu montierenden Reifensatz auswählen
-3. Wechsel bestätigen
+1. **Reifensatz hinzufügen**: Typ, Marke, Modell eingeben
+2. **Reifenwechsel durchführen**: Datum, Kilometerstand, neuen Reifensatz auswählen
+3. **Reifen archivieren**: Alte Reifensätze können ausgeblendet werden
 
 > **💡 Tipp**: Die App berechnet automatisch die gefahrenen Kilometer für jeden Reifensatz
-
-#### Reifen archivieren
-
-1. Nicht mehr verwendete Reifensätze können archiviert werden
-2. Reifensatz muss zuvor demontiert werden
-3. Archivierte Reifen werden ausgeblendet, können aber wiederhergestellt werden
-
-### 📊 Dashboard nutzen
-
-Das Dashboard bietet Ihnen eine zentrale Übersicht über alle wichtigen Informationen:
-
-- **Fahrzeug-Übersicht**: Alle Ihre Fahrzeuge auf einen Blick
-- **Statistiken**: Schnellüberblick über anstehende und überfällige Termine
-- **Bevorstehende Termine**: Listen für TÜV, Inspektionen und Reifenwechsel
-- **Nächste 30 Tage**: Übersicht der Termine in den nächsten 30 Tagen
-- **Statusanzeigen**: Farbcodierte Visualisierung (🟢 OK, 🟡 Anstehend, 🔴 Überfällig)
 
 ---
 
@@ -310,33 +265,38 @@ Das Dashboard bietet Ihnen eine zentrale Übersicht über alle wichtigen Informa
 ```
 CarCheck/
 ├── 📁 app/
-│   ├── 📁 api/              # API-Routen für CRUD-Operationen
-│   │   ├── cars/            # Fahrzeug-Endpunkte
-│   │   └── ...
+│   ├── page.tsx             # Single-Page App (Landing + Dashboard)
+│   ├── layout.tsx           # Root Layout mit Providers
 │   ├── 📁 components/       # React-Komponenten
 │   │   ├── CarCard.tsx      # Fahrzeugkarte
 │   │   ├── CarForm.tsx      # Fahrzeugformular
 │   │   ├── TUVSection.tsx   # TÜV-Verwaltung
-│   │   ├── InspectionSection.tsx  # Inspektions-Verwaltung
-│   │   ├── TireSection.tsx  # Reifenverwaltung
-│   │   └── ...
-│   ├── 📁 lib/              # Utilities und Datenzugriff
-│   │   ├── types.ts         # TypeScript-Typen
-│   │   ├── utils.ts         # Hilfsfunktionen
-│   │   └── storage.ts       # Datenzugriff (JSON/Redis)
-│   ├── 📁 styles/           # Globale Styles
-│   ├── layout.tsx           # App-Layout
-│   └── page.tsx             # Hauptseite
-├── 📁 data/
-│   └── cars.json            # JSON-Datenbank (lokal)
-├── 📁 scripts/
-│   └── migrate-to-redis.ts  # Migrationsskript
-├── 📁 public/               # Statische Assets
-├── package.json             # Abhängigkeiten
-├── next.config.js           # Next.js Konfiguration
-├── tailwind.config.ts       # Tailwind CSS Konfiguration
-├── tsconfig.json            # TypeScript Konfiguration
-└── README.md                # Diese Datei
+│   │   ├── InspectionSection.tsx
+│   │   ├── TireSection.tsx
+│   │   ├── FuelSection.tsx
+│   │   ├── FuelAnalytics.tsx
+│   │   ├── EventLogSection.tsx
+│   │   ├── ThemeProvider.tsx
+│   │   ├── ThemeToggle.tsx
+│   │   ├── ProgressBar.tsx
+│   │   └── 📁 providers/
+│   │       └── ConvexClientProvider.tsx
+│   ├── 📁 lib/
+│   │   ├── types.ts         # TypeScript-Interfaces
+│   │   └── utils.ts         # Hilfsfunktionen (Datum, Status)
+│   └── 📁 styles/
+│       └── globals.css      # Tailwind + CSS Variables
+├── 📁 convex/               # Backend-Funktionen
+│   ├── cars.ts              # CRUD Mutations/Queries
+│   ├── schema.ts            # Datenbank-Schema
+│   ├── auth.config.ts       # Clerk JWT Integration
+│   └── 📁 _generated/       # Auto-generiert (nicht editieren!)
+├── proxy.ts                 # Clerk Middleware
+├── package.json
+├── next.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+└── README.md
 ```
 
 ---
@@ -358,19 +318,27 @@ bun start
 1. **Repository mit Vercel verbinden**
 
    ```bash
-   # Vercel CLI installieren
-   bun add -g vercel
-
-   # Projekt deployen
    vercel
    ```
 
-2. **Umgebungsvariablen konfigurieren** (optional)
+2. **Umgebungsvariablen konfigurieren**
 
-   - `UPSTASH_REDIS_REST_URL` - Redis URL
-   - `UPSTASH_REDIS_REST_TOKEN` - Redis Token
+   Im Vercel Dashboard → Settings → Environment Variables:
 
-3. **Automatisches Deployment**
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+   CLERK_SECRET_KEY
+   CLERK_JWT_ISSUER_DOMAIN
+   NEXT_PUBLIC_CONVEX_URL
+   ```
+
+3. **Convex deployen**
+
+   ```bash
+   npx convex deploy
+   ```
+
+4. **Automatisches Deployment**
    - Jeder Push auf `main` triggert automatisch ein Deployment
    - Preview-Deployments für Pull Requests
 
@@ -378,37 +346,26 @@ bun start
 
 ## 🐛 Fehlerbehebung
 
-### Problem: Daten werden nicht gespeichert
+### Problem: "Not authenticated" Fehler
 
 **Lösung:**
+- Überprüfen Sie die Clerk Umgebungsvariablen
+- Stellen Sie sicher, dass `CLERK_JWT_ISSUER_DOMAIN` korrekt ist
+- Melden Sie sich ab und wieder an
 
-- Stellen Sie sicher, dass das `data`-Verzeichnis existiert und beschreibbar ist
-- Überprüfen Sie die Browser-Console auf Fehler
-- Bei Redis: Überprüfen Sie die Umgebungsvariablen
+### Problem: Daten werden nicht synchronisiert
+
+**Lösung:**
+- Überprüfen Sie, ob Convex läuft (`npx convex dev`)
+- Überprüfen Sie `NEXT_PUBLIC_CONVEX_URL`
+- Schauen Sie in die Browser-Console auf Fehler
 
 ### Problem: TÜV/Inspektion wird nicht berechnet
 
 **Lösung:**
-
 - Stellen Sie sicher, dass Sie einen letzten Termin eingegeben haben
 - Überprüfen Sie das Datumsformat (YYYY-MM-DD)
 - Aktualisieren Sie die Seite (F5)
-
-### Problem: Reifenwechsel funktioniert nicht
-
-**Lösung:**
-
-- Stellen Sie sicher, dass mindestens 2 Reifensätze vorhanden sind
-- Der aktuelle Kilometerstand muss höher sein als beim letzten Wechsel
-- Überprüfen Sie, ob der Reifensatz nicht archiviert ist
-
-### Problem: Dark Mode funktioniert nicht
-
-**Lösung:**
-
-- Leeren Sie den Browser-Cache
-- Überprüfen Sie die Browser-Console auf Fehler
-- Das Theme wird im LocalStorage gespeichert (`theme`)
 
 ### Problem: Build-Fehler
 
@@ -422,39 +379,11 @@ bun install
 # Cache leeren
 rm -rf .next
 
+# Convex-Typen regenerieren
+npx convex dev
+
 # Neu bauen
 bun run build
-```
-
----
-
-## 🤝 Beitragen
-
-Beiträge sind willkommen! Da dies ein privates Projekt ist, kontaktieren Sie bitte den Repository-Inhaber für weitere Informationen.
-
-### Entwicklungsrichtlinien
-
-- Verwenden Sie TypeScript für alle neuen Komponenten
-- Folgen Sie dem bestehenden Code-Stil
-- Testen Sie Ihre Änderungen lokal vor dem Commit
-- Verwenden Sie aussagekräftige Commit-Messages
-
-### Entwicklungsablauf
-
-```bash
-# Repository forken und klonen
-git clone https://github.com/bjrump/CarCheck.git
-
-# Branch erstellen
-git checkout -b feature/mein-feature
-
-# Änderungen durchführen und committen
-git commit -am "Add: Neue Funktion"
-
-# Branch pushen
-git push origin feature/mein-feature
-
-# Pull Request erstellen
 ```
 
 ---
