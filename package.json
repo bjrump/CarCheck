@@ -13,7 +13,7 @@
     "@clerk/localizations": "^3.32.1",
     "@clerk/nextjs": "^6.36.5",
     "convex": "^1.31.2",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,11 +21,11 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
-    "@types/node": "^20.14.12",
+    "@types/node": "^25.0.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.19",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.2.3",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.0.0",
     "eslint-plugin-react": "^7.37.5",
