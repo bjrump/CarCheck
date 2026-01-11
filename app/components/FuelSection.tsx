@@ -214,8 +214,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   );
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="glass rounded-2xl p-6 flex flex-col max-h-[500px]">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Tankeinträge
@@ -345,7 +345,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
           Noch keine Tankeinträge vorhanden
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
           {sortedEntries.map((entry) => (
             <FuelEntryCard
               key={entry.id}

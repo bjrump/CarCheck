@@ -225,8 +225,8 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
   };
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="glass rounded-2xl p-6 flex flex-col max-h-[600px]">
+      <div className="flex justify-between items-start mb-6 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Reifen</p>
           <h2 className="text-xl font-bold">Reifen-Verwaltung</h2>
@@ -345,9 +345,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         </form>
       )}
 
-      {/* Aktive Reifen */}
-      <div className="space-y-6">
-        {/* Sommerreifen */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
         {summerTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -371,7 +369,6 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
           </div>
         )}
 
-        {/* Winterreifen */}
         {winterTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
