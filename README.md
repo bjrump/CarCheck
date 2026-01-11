@@ -81,6 +81,7 @@
 - 📋 **Bevorstehende Termine**: Listen für TÜV, Inspektionen und Reifenwechsel
 - ⏰ **Nächste Termine**: Übersicht der Termine in den nächsten 30 Tagen
 - 🚦 **Statusanzeigen**: Farbcodierte Statusanzeigen für alle Wartungstermine
+- 🖥️ **Neues Layout**: Nicht-scrollbares Dashboard für bessere Übersicht auf allen Geräten
 
 ### 🎨 Benutzeroberfläche
 
@@ -89,6 +90,7 @@
 - 📱 **Responsive Design**: Optimiert für Desktop und Mobile
 - 📊 **Fortschrittsbalken**: Visuelle Fortschrittsanzeigen für alle Wartungsintervalle
 - 🎯 **Intuitive Navigation**: Einfache und übersichtliche Bedienung
+- 💬 **Moderne Dialoge**: Eigene Bestätigungsdialoge statt Browser-Alerts
 
 ---
 
@@ -105,6 +107,7 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 | ![Convex](https://img.shields.io/badge/-Convex-FF6B6B?style=flat-square) | 1.31 | Real-time Backend-as-a-Service |
 | ![Clerk](https://img.shields.io/badge/-Clerk-6C47FF?style=flat-square) | 6.36 | Authentication & User Management |
 | ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 4.1 | Datumsberechnungen |
+| ![Vitest](https://img.shields.io/badge/-Vitest-FCC72B?style=flat-square&logo=vitest) | 4.0 | Unit Testing Framework |
 
 ---
 
@@ -158,7 +161,13 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
    bun dev
    ```
 
-6. **Im Browser öffnen**
+6. **Tests ausführen**
+
+   ```bash
+   bun run test
+   ```
+
+7. **Im Browser öffnen**
    ```
    http://localhost:3000
    ```
@@ -219,48 +228,6 @@ Fahrzeug (Car)
 
 ---
 
-## 📖 Verwendung
-
-### 🔐 Anmeldung
-
-1. Öffnen Sie die App unter `http://localhost:3000`
-2. Klicken Sie auf **"Anmelden"** oder **"Registrieren"**
-3. Melden Sie sich mit E-Mail, Google oder GitHub an (via Clerk)
-
-### 🚗 Fahrzeug hinzufügen
-
-1. Klicken Sie auf **"Neues Fahrzeug hinzufügen"**
-2. Füllen Sie das Formular mit den Fahrzeugdaten aus
-3. Klicken Sie auf **"Speichern"**
-
-### 🔧 TÜV verwalten
-
-1. Öffnen Sie ein Fahrzeug
-2. Im TÜV-Bereich auf **"Bearbeiten"** klicken
-3. Letzten TÜV-Termin eingeben
-4. Der nächste Termin wird automatisch auf **2 Jahre** berechnet
-
-> **💡 Tipp**: Die Fortschrittsanzeige zeigt Ihnen visuell, wie viel Zeit bis zum nächsten TÜV verbleibt
-
-### 🔍 Inspektion verwalten
-
-1. Im Inspektions-Bereich auf **"Bearbeiten"** klicken
-2. Letzte Inspektion eingeben (Datum & Kilometerstand)
-3. Intervalle anpassen (Standard: **1 Jahr / 15.000 km**)
-4. Die nächste Inspektion wird automatisch berechnet
-
-> **💡 Tipp**: Es wird immer der frühere Termin (Zeit oder Kilometer) als nächste Inspektion angezeigt
-
-### 🛞 Reifen verwalten
-
-1. **Reifensatz hinzufügen**: Typ, Marke, Modell eingeben
-2. **Reifenwechsel durchführen**: Datum, Kilometerstand, neuen Reifensatz auswählen
-3. **Reifen archivieren**: Alte Reifensätze können ausgeblendet werden
-
-> **💡 Tipp**: Die App berechnet automatisch die gefahrenen Kilometer für jeden Reifensatz
-
----
-
 ## 🏗️ Projektstruktur
 
 ```
@@ -271,6 +238,8 @@ CarCheck/
 │   ├── 📁 components/       # React-Komponenten
 │   │   ├── CarCard.tsx      # Fahrzeugkarte
 │   │   ├── CarForm.tsx      # Fahrzeugformular
+│   │   ├── ConfirmDialog.tsx # Eigener Bestätigungsdialog
+│   │   ├── CircularProgress.tsx
 │   │   ├── TUVSection.tsx   # TÜV-Verwaltung
 │   │   ├── InspectionSection.tsx
 │   │   ├── TireSection.tsx
@@ -281,14 +250,17 @@ CarCheck/
 │   │   ├── ThemeToggle.tsx
 │   │   ├── ProgressBar.tsx
 │   │   └── 📁 providers/
-│   │       └── ConvexClientProvider.tsx
+│   │       ├── ConvexClientProvider.tsx
+│   │       └── ToastProvider.tsx
 │   ├── 📁 lib/
 │   │   ├── types.ts         # TypeScript-Interfaces
-│   │   └── utils.ts         # Hilfsfunktionen (Datum, Status)
+│   │   ├── utils.ts         # Hilfsfunktionen (Datum, Status)
+│   │   └── utils.test.ts    # Unit-Tests
 │   └── 📁 styles/
 │       └── globals.css      # Tailwind + CSS Variables
 ├── 📁 convex/               # Backend-Funktionen
 │   ├── cars.ts              # CRUD Mutations/Queries
+│   ├── cars.test.ts         # Backend-Tests
 │   ├── schema.ts            # Datenbank-Schema
 │   ├── auth.config.ts       # Clerk JWT Integration
 │   └── 📁 _generated/       # Auto-generiert (nicht editieren!)

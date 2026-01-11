@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
 **Generated:** 2026-01-11
-**Commit:** 10a809e
+**Commit:** 2a8e065
 **Branch:** main
 
 ## OVERVIEW
@@ -19,10 +19,11 @@ CarCheck/
 │   ├── page.tsx          # Single-page app: LandingPage (guest) / Dashboard (auth)
 │   ├── layout.tsx        # Root layout with Clerk + Convex + Theme providers
 │   ├── components/       # React components (flat, no nesting except providers/)
-│   ├── lib/              # types.ts, utils.ts (date calculations, status helpers)
+│   ├── lib/              # types.ts, utils.ts, utils.test.ts
 │   └── styles/           # globals.css (Tailwind v4 + CSS vars + glassmorphism)
 ├── convex/               # Backend functions (NOT REST APIs)
-│   ├── cars.ts           # CRUD mutations/queries (list, getById, create, update, remove)
+│   ├── cars.ts           # CRUD mutations/queries
+│   ├── cars.test.ts      # Backend tests
 │   ├── schema.ts         # Database schema with validators
 │   ├── auth.config.ts    # Clerk JWT integration
 │   └── _generated/       # Auto-generated (do not edit)
@@ -48,14 +49,17 @@ CarCheck/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `Dashboard` | Function | `app/page.tsx:115` | Main authenticated view (763 lines total) |
-| `LandingPage` | Function | `app/page.tsx:25` | Guest landing page |
-| `Car` | Interface | `app/lib/types.ts:74` | Core vehicle data model |
-| `list` | Query | `convex/cars.ts:5` | Fetch all user's cars |
-| `create` | Mutation | `convex/cars.ts:38` | Create new vehicle |
-| `update` | Mutation | `convex/cars.ts:96` | Update vehicle (complex nested args) |
-| `remove` | Mutation | `convex/cars.ts:220` | Delete vehicle |
-| `calculateNextTireChangeDate` | Function | `app/lib/utils.ts:413` | Easter-based tire change logic |
+| `Dashboard` | Function | `app/page.tsx` | Main authenticated view (Non-scrollable layout) |
+| `LandingPage` | Function | `app/page.tsx` | Guest landing page |
+| `Car` | Interface | `app/lib/types.ts` | Core vehicle data model |
+| `ConfirmDialog` | Component | `app/components/ConfirmDialog.tsx` | Custom confirmation modal (replaces native confirm) |
+| `useConfirmDialog` | Hook | `app/components/ConfirmDialog.tsx` | Hook to invoke confirmation dialog |
+| `CircularProgress` | Component | `app/components/CircularProgress.tsx` | Visual progress indicator |
+| `list` | Query | `convex/cars.ts` | Fetch all user's cars |
+| `create` | Mutation | `convex/cars.ts` | Create new vehicle |
+| `update` | Mutation | `convex/cars.ts` | Update vehicle (complex nested args) |
+| `remove` | Mutation | `convex/cars.ts` | Delete vehicle |
+| `calculateNextTireChangeDate` | Function | `app/lib/utils.ts` | Easter-based tire change logic |
 
 ## CONVENTIONS
 
@@ -64,6 +68,7 @@ CarCheck/
 - **Imports**: Absolute paths via `@/*` alias (maps to project root, NOT src)
 - **German UI**: All user-facing text in German, code in English
 - **Date locale**: `date-fns/locale/de` for German formatting
+- **Dialogs**: Use `useConfirmDialog()` hook, NEVER `window.confirm()` or `window.alert()`
 
 ### Backend (Convex)
 - **Mutations**: Use `mutation({ args: {...}, handler: async (ctx, args) => {...} })`
@@ -87,20 +92,15 @@ CarCheck/
 
 | Pattern | Count | Why Bad | Alternative |
 |---------|-------|---------|-------------|
-| `alert()` for errors | 14 | Poor UX, blocks UI | Create toast component |
 | `window.dispatchEvent` | 1 | Fragile coupling | Use React context |
 | `console.error` in prod | 6 | No proper error handling | Error boundary / logging service |
 
-### Files with `alert()` violations:
-- `app/page.tsx` (3)
-- `app/components/TireSection.tsx` (5)
-- `app/components/FuelSection.tsx` (4)
-- `app/components/TUVSection.tsx` (1)
-- `app/components/InspectionSection.tsx` (1)
+*Note: Previous `alert()` violations have been resolved by introducing `ToastProvider` and `ConfirmDialog`.*
 
 ## UNIQUE STYLES
 
 - **Glassmorphism**: `.glass` class with `backdrop-blur-xl` + `color-mix()` transparency
+- **Layout**: Non-scrollable dashboard with fixed header and scrollable content areas
 - **Progress bars**: Custom `ProgressBar` component with color variants
 - **Maintenance status**: Color-coded via `getStatusColorClass()` (`overdue`/`upcoming`/`current`)
 - **Grid backgrounds**: Custom `bg-grid-light` / `bg-grid-dark` patterns
@@ -111,6 +111,7 @@ CarCheck/
 bun dev              # Dev server on :3000
 bun run build        # Production build
 bun run lint         # ESLint check (ESLint 9)
+bun run test         # Run tests (Vitest)
 npx convex dev       # Convex dev server (separate terminal)
 npx convex deploy    # Deploy Convex functions
 ```
@@ -143,7 +144,7 @@ CONVEX_DEPLOY_KEY  # For production deployment
 - **Single page app**: `page.tsx` manages car selection via state, NOT route-based navigation
 - **Easter calculation**: `calculateEaster()` in utils.ts for tire change dates (Gaussian algorithm)
 - **Inspection logic**: Uses EARLIER of time-based or km-based next date
-- **No tests**: Project has zero test files or test infrastructure
+- **Testing**: Vitest is set up for unit testing (`bun run test`)
 - **CI/CD**: GitHub Actions workflows run Lint/Build and manage stale issues
 - **License**: MIT License (see LICENSE file)
 - **Proxy naming**: `proxy.ts` should be `middleware.ts` for Next.js convention
