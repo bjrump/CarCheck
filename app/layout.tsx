@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/app/components/ThemeProvider";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import ConvexClientProvider from "@/app/components/providers/ConvexClientProvider";
 import { ToastProvider } from "@/app/components/ToastProvider";
+import { ConfirmDialogProvider } from "@/app/components/ConfirmDialog";
 import {
   SignInButton,
   SignUpButton,
@@ -28,8 +29,9 @@ export default function RootLayout({
         <ConvexClientProvider>
           <ThemeProvider>
             <ToastProvider>
-              <div className="min-h-screen flex flex-col">
-                <nav className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+              <ConfirmDialogProvider>
+                <div className="h-screen flex flex-col overflow-hidden">
+                <nav className="flex-shrink-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
                   <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-4">
                     <a href="/" className="flex items-center gap-3 group">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-indigo-600 text-accent-foreground font-bold shadow-lg shadow-accent/25 transition-transform group-hover:scale-105">
@@ -72,20 +74,15 @@ export default function RootLayout({
                   </div>
                 </nav>
                 
-                <main className="flex-1">
-                  <div className="container mx-auto px-4 py-6 md:py-8">
-                    {children}
+                <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="container mx-auto px-4 py-6 md:py-8 h-full">
+                      {children}
+                    </div>
                   </div>
                 </main>
-                
-                <footer className="border-t border-border/40 py-6 mt-auto">
-                  <div className="container mx-auto px-4">
-                    <p className="text-center text-sm text-muted-foreground">
-                      CarCheck © {new Date().getFullYear()} — Ihre Fahrzeuge. Perfekt organisiert.
-                    </p>
-                  </div>
-                </footer>
               </div>
+              </ConfirmDialogProvider>
             </ToastProvider>
           </ThemeProvider>
         </ConvexClientProvider>

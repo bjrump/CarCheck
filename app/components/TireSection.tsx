@@ -7,6 +7,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { Car, Tire, TireType, TireChangeEvent } from '@/app/lib/types';
 import { formatDate, formatNumber } from '@/app/lib/utils';
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 
 interface TireSectionProps {
   car: Car;
@@ -15,6 +16,7 @@ interface TireSectionProps {
 
 export default function TireSection({ car, onUpdate }: TireSectionProps) {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [formData, setFormData] = useState<Partial<Tire>>({
@@ -172,7 +174,15 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
   };
 
   const handleArchiveTire = async (tireId: string) => {
-    if (!confirm('Möchten Sie diesen Reifensatz archivieren? Er wird nicht mehr verwendet, bleibt aber gespeichert.')) {
+    const confirmed = await confirm({
+      title: "Reifen archivieren",
+      message: "Möchten Sie diesen Reifensatz archivieren? Er wird nicht mehr verwendet, bleibt aber gespeichert.",
+      confirmText: "Archivieren",
+      cancelText: "Abbrechen",
+      variant: "warning",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -225,8 +235,8 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
   };
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="glass rounded-2xl p-6 flex flex-col max-h-[600px]">
+      <div className="flex justify-between items-start mb-6 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Reifen</p>
           <h2 className="text-xl font-bold">Reifen-Verwaltung</h2>
@@ -345,9 +355,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         </form>
       )}
 
-      {/* Aktive Reifen */}
-      <div className="space-y-6">
-        {/* Sommerreifen */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
         {summerTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -371,7 +379,6 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
           </div>
         )}
 
-        {/* Winterreifen */}
         {winterTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">

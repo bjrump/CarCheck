@@ -9,6 +9,7 @@ import InspectionSection from "@/app/components/InspectionSection";
 import TireSection from "@/app/components/TireSection";
 import TUVSection from "@/app/components/TUVSection";
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 import { Car } from "@/app/lib/types";
 import {
   calculateNextTireChangeDate,
@@ -84,9 +85,9 @@ function LandingPage() {
   ];
 
   return (
-    <div className="space-y-20 py-8">
-      <section className="text-center space-y-6 animate-fade-in">
-        <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
+    <div className="h-full flex flex-col">
+      <section className="flex-1 flex flex-col justify-center text-center space-y-6 animate-fade-in">
+        <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent mx-auto">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
@@ -116,38 +117,38 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="space-y-8 animate-slide-up stagger-1">
+      <section className="flex-shrink-0 pb-6 space-y-4">
         <div className="text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">Features</p>
-          <h2 className="text-3xl font-bold mt-2">Was CarCheck kann</h2>
+          <h2 className="text-2xl font-bold mt-1">Was CarCheck kann</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="glass p-6 space-y-4 group hover:border-accent/30 transition-all duration-300"
+              className="glass p-5 min-w-[280px] max-w-[280px] snap-center space-y-3 group hover:border-accent/30 transition-all duration-300 flex-shrink-0"
             >
-              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-semibold">{feature.title}</h3>
+              <h3 className="text-base font-semibold">{feature.title}</h3>
               <p className="text-muted-foreground text-sm">{feature.description}</p>
             </div>
           ))}
         </div>
-      </section>
 
-      <section className="glass p-8 md:p-12 text-center space-y-6 animate-slide-up stagger-2">
-        <h2 className="text-3xl font-bold">Bereit loszulegen?</h2>
-        <p className="text-muted-foreground max-w-lg mx-auto">
-          Melden Sie sich jetzt an und verpassen Sie nie wieder einen wichtigen Termin.
-        </p>
-        <SignUpButton mode="modal">
-          <button className="btn btn-primary text-lg px-8 py-3">
-            Kostenlos registrieren
-          </button>
-        </SignUpButton>
+        <div className="glass p-6 text-center space-y-4">
+          <h2 className="text-xl font-bold">Bereit loszulegen?</h2>
+          <p className="text-muted-foreground text-sm max-w-lg mx-auto">
+            Melden Sie sich jetzt an und verpassen Sie nie wieder einen wichtigen Termin.
+          </p>
+          <SignUpButton mode="modal">
+            <button className="btn btn-primary px-6 py-2">
+              Kostenlos registrieren
+            </button>
+          </SignUpButton>
+        </div>
       </section>
     </div>
   );
@@ -174,6 +175,7 @@ function StatCard({ label, value, hint, icon }: { label: string; value: string |
 
 function Dashboard() {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const carsData = useQuery(api.cars.list);
   const cars = (carsData ?? []) as Car[];
   const deleteCar = useMutation(api.cars.remove);
@@ -213,7 +215,15 @@ function Dashboard() {
   };
 
   const handleCarDelete = async (carId: string) => {
-    if (!confirm("Möchten Sie dieses Fahrzeug wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) {
+    const confirmed = await confirm({
+      title: "Fahrzeug löschen",
+      message: "Möchten Sie dieses Fahrzeug wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirmText: "Löschen",
+      cancelText: "Abbrechen",
+      variant: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -324,107 +334,109 @@ function Dashboard() {
     ];
 
     return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <button onClick={handleBackToDashboard} className="btn btn-outline self-start">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Zurück
-          </button>
-          
-          <div className="flex gap-2">
-            <button onClick={() => setViewMode("edit-car")} className="btn btn-secondary">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              Bearbeiten
-            </button>
-            <button onClick={() => handleCarDelete(selectedCar._id)} className="btn btn-danger">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-              </svg>
-              Löschen
-            </button>
-          </div>
-        </div>
-
-        <div className="glass p-6">
+      <div className="h-full flex flex-col animate-fade-in">
+        <div className="flex-shrink-0 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-medium">{selectedCar.year}</p>
-              <h1 className="text-2xl md:text-3xl font-bold">{selectedCar.make} {selectedCar.model}</h1>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                {selectedCar.licensePlate && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7M4 7l4-4h8l4 4" />
-                    </svg>
-                    {selectedCar.licensePlate}
-                  </span>
-                )}
-                {selectedCar.vin && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    VIN: {selectedCar.vin}
-                  </span>
+            <button onClick={handleBackToDashboard} className="btn btn-outline self-start">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Zurück
+            </button>
+            
+            <div className="flex gap-2">
+              <button onClick={() => setViewMode("edit-car")} className="btn btn-secondary">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                Bearbeiten
+              </button>
+              <button onClick={() => handleCarDelete(selectedCar._id)} className="btn btn-danger">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                Löschen
+              </button>
+            </div>
+          </div>
+
+          <div className="glass p-4 md:p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-medium">{selectedCar.year}</p>
+                <h1 className="text-2xl md:text-3xl font-bold">{selectedCar.make} {selectedCar.model}</h1>
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  {selectedCar.licensePlate && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7M4 7l4-4h8l4 4" />
+                      </svg>
+                      {selectedCar.licensePlate}
+                    </span>
+                  )}
+                  {selectedCar.vin && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      VIN: {selectedCar.vin}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {!showMileageInput ? (
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-accent">{formatNumber(selectedCar.mileage)} km</p>
+                    <button
+                      onClick={() => { setNewMileage(selectedCar.mileage.toString()); setShowMileageInput(true); }}
+                      className="text-xs text-muted-foreground hover:text-accent transition-colors"
+                    >
+                      Aktualisieren
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={newMileage}
+                      onChange={(e) => setNewMileage(e.target.value)}
+                      className="input w-32"
+                      placeholder="km"
+                      min="0"
+                    />
+                    <button onClick={handleMileageUpdate} disabled={isUpdatingMileage} className="btn btn-success">
+                      {isUpdatingMileage ? "..." : "✓"}
+                    </button>
+                    <button onClick={() => { setShowMileageInput(false); setNewMileage(""); }} className="btn btn-secondary">
+                      ✕
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              {!showMileageInput ? (
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-accent">{formatNumber(selectedCar.mileage)} km</p>
-                  <button
-                    onClick={() => { setNewMileage(selectedCar.mileage.toString()); setShowMileageInput(true); }}
-                    className="text-xs text-muted-foreground hover:text-accent transition-colors"
-                  >
-                    Aktualisieren
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={newMileage}
-                    onChange={(e) => setNewMileage(e.target.value)}
-                    className="input w-32"
-                    placeholder="km"
-                    min="0"
-                  />
-                  <button onClick={handleMileageUpdate} disabled={isUpdatingMileage} className="btn btn-success">
-                    {isUpdatingMileage ? "..." : "✓"}
-                  </button>
-                  <button onClick={() => { setShowMileageInput(false); setNewMileage(""); }} className="btn btn-secondary">
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
+          </div>
+
+          <div className="flex gap-1 overflow-x-auto pb-2 flex-shrink-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+                  activeTab === tab.id
+                    ? "bg-accent text-accent-foreground shadow-lg shadow-accent/25"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex gap-1 overflow-x-auto pb-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
-                activeTab === tab.id
-                  ? "bg-accent text-accent-foreground shadow-lg shadow-accent/25"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="animate-fade-in">
+        <div className="flex-1 min-h-0 overflow-y-auto pt-2 pb-4">
           {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => toast.success("TÜV-Daten aktualisiert")} />
@@ -470,63 +482,67 @@ function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-medium">Dashboard</p>
-          <h1 className="text-2xl md:text-3xl font-bold">Meine Fahrzeuge</h1>
-        </div>
-        <button onClick={() => setViewMode("add-car")} className="btn btn-primary">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Fahrzeug hinzufügen
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          label="Fahrzeuge"
-          value={cars.length}
-          hint="in deiner Garage"
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>}
-        />
-        <StatCard
-          label="Anstehend"
-          value={upcomingSoon}
-          hint="in den nächsten 30 Tagen"
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-        />
-        <StatCard
-          label="Überfällig"
-          value={overdue}
-          hint="bitte zeitnah planen"
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>}
-        />
-      </div>
-
-      {cars.length === 0 ? (
-        <div className="glass text-center py-16 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
-            <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-            </svg>
+    <div className="h-full flex flex-col animate-fade-in">
+      <div className="flex-shrink-0 space-y-4 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-medium">Dashboard</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Meine Fahrzeuge</h1>
           </div>
-          <h3 className="text-xl font-semibold">Noch keine Fahrzeuge</h3>
-          <p className="text-muted-foreground">Fügen Sie Ihr erstes Fahrzeug hinzu, um loszulegen.</p>
           <button onClick={() => setViewMode("add-car")} className="btn btn-primary">
-            Erstes Fahrzeug hinzufügen
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Fahrzeug hinzufügen
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {cars.map((car, index) => (
-            <div key={car._id} className={`animate-slide-up stagger-${Math.min(index + 1, 5)}`}>
-              <CarCard car={car} onSelect={handleSelectCar} />
-            </div>
-          ))}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            label="Fahrzeuge"
+            value={cars.length}
+            hint="in deiner Garage"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>}
+          />
+          <StatCard
+            label="Anstehend"
+            value={upcomingSoon}
+            hint="in den nächsten 30 Tagen"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          />
+          <StatCard
+            label="Überfällig"
+            value={overdue}
+            hint="bitte zeitnah planen"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>}
+          />
         </div>
-      )}
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {cars.length === 0 ? (
+          <div className="glass text-center py-16 space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold">Noch keine Fahrzeuge</h3>
+            <p className="text-muted-foreground">Fügen Sie Ihr erstes Fahrzeug hinzu, um loszulegen.</p>
+            <button onClick={() => setViewMode("add-car")} className="btn btn-primary">
+              Erstes Fahrzeug hinzufügen
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-4">
+            {cars.map((car, index) => (
+              <div key={car._id} className={`animate-slide-up stagger-${Math.min(index + 1, 5)}`}>
+                <CarCard car={car} onSelect={handleSelectCar} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

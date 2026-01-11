@@ -84,8 +84,8 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
   };
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="glass rounded-2xl p-6 flex flex-col max-h-[500px]">
+      <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <h2 className="text-2xl font-bold text-foreground">Event-Log</h2>
         <div className="flex items-center gap-2">
           <select
@@ -99,7 +99,7 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 flex-shrink-0">
         <div className="flex flex-wrap gap-2">
           {eventTypes.map(({ value, label }) => (
             <button
@@ -117,7 +117,7 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
         </div>
       </div>
 
-      <div className="space-y-3 max-h-96 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
         {filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">

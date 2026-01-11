@@ -7,6 +7,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 
 interface FuelSectionProps {
   car: Car;
@@ -15,6 +16,7 @@ interface FuelSectionProps {
 
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FuelEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,7 +146,15 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!confirm("Möchten Sie diesen Tankeintrag wirklich löschen?")) {
+    const confirmed = await confirm({
+      title: "Tankeintrag löschen",
+      message: "Möchten Sie diesen Tankeintrag wirklich löschen?",
+      confirmText: "Löschen",
+      cancelText: "Abbrechen",
+      variant: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -214,8 +224,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   );
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="glass rounded-2xl p-6 flex flex-col max-h-[500px]">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Tankeinträge
@@ -345,7 +355,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
           Noch keine Tankeinträge vorhanden
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
           {sortedEntries.map((entry) => (
             <FuelEntryCard
               key={entry.id}
