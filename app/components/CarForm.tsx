@@ -59,7 +59,6 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
         onCreated();
       }
     } catch (error: unknown) {
-      console.error("Fehler beim Speichern:", error);
       const message =
         error instanceof Error ? error.message : "Unbekannter Fehler";
       toast.error(`Fehler beim Speichern des Fahrzeugs: ${message}`);
