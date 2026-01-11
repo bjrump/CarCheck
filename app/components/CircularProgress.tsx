@@ -30,24 +30,24 @@ export default function CircularProgress({
 
   const colorConfig = {
     default: { 
-      from: "#3b82f6", 
-      to: "#60a5fa", 
-      shadow: "rgba(59, 130, 246, 0.4)" 
+      from: "hsl(var(--primary, 221 83% 53%))", 
+      to: "hsl(var(--primary-light, 217 91% 60%))", 
+      shadow: "rgba(var(--primary-rgb, 59, 130, 246), 0.4)" 
     },
     success: { 
-      from: "#22c55e", 
-      to: "#4ade80", 
-      shadow: "rgba(34, 197, 94, 0.4)" 
+      from: "hsl(var(--success, 142 76% 36%))", 
+      to: "hsl(var(--success-light, 142 71% 45%))", 
+      shadow: "rgba(var(--success-rgb, 34, 197, 94), 0.4)" 
     },
     warning: { 
-      from: "#eab308", 
-      to: "#facc15", 
-      shadow: "rgba(234, 179, 8, 0.4)" 
+      from: "hsl(var(--warning, 38 92% 50%))", 
+      to: "hsl(var(--warning-light, 48 96% 53%))", 
+      shadow: "rgba(var(--warning-rgb, 234, 179, 8), 0.4)" 
     },
     danger: { 
-      from: "#ef4444", 
-      to: "#f87171", 
-      shadow: "rgba(239, 68, 68, 0.4)" 
+      from: "hsl(var(--danger, 0 84% 60%))", 
+      to: "hsl(var(--danger-light, 0 91% 71%))", 
+      shadow: "rgba(var(--danger-rgb, 239, 68, 68), 0.4)" 
     },
   };
 
