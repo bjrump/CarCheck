@@ -4,8 +4,8 @@ import {
   formatDate,
   formatNumber,
   getMaintenanceStatus,
+  getStatusBadgeClass,
   getStatusText,
-  MaintenanceStatus,
 } from "@/app/lib/utils";
 
 interface CarCardProps {
@@ -24,19 +24,6 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
   const tireStatus = nextTireChange
     ? getMaintenanceStatus(nextTireChange.date)
     : "none";
-
-  const getBadgeClass = (status: MaintenanceStatus | "none") => {
-    switch (status) {
-      case "overdue":
-        return "badge-danger";
-      case "upcoming":
-        return "badge-warning";
-      case "current":
-        return "badge-success";
-      default:
-        return "badge-neutral";
-    }
-  };
 
   const getTireTypeLabel = (
     type: "summer" | "winter" | "all-season" | null
@@ -94,7 +81,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
               {formatDate(car.tuv.nextAppointmentDate)}
             </span>
           </div>
-          <span className={`badge ${getBadgeClass(tuvStatus)} shadow-sm`}>
+          <span className={`badge ${getStatusBadgeClass(tuvStatus)} shadow-sm`}>
             {getStatusText(tuvStatus)}
           </span>
         </div>
@@ -106,7 +93,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
               {formatDate(car.inspection.nextInspectionDate)}
             </span>
           </div>
-          <span className={`badge ${getBadgeClass(inspectionStatus)} shadow-sm`}>
+          <span className={`badge ${getStatusBadgeClass(inspectionStatus)} shadow-sm`}>
             {getStatusText(inspectionStatus)}
           </span>
         </div>
@@ -126,7 +113,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
             </div>
           </div>
           {currentTire?.type !== "all-season" && nextTireChange ? (
-            <span className={`badge ${getBadgeClass(tireStatus)} shadow-sm`}>
+            <span className={`badge ${getStatusBadgeClass(tireStatus)} shadow-sm`}>
               {getStatusText(tireStatus)}
             </span>
           ) : (

@@ -7,7 +7,6 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  // Ignore missing files during build
   theme: {
     extend: {
       colors: {
@@ -54,4 +53,3 @@ const config: Config = {
 };
 
 export default config;
-

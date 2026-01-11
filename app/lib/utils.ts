@@ -205,6 +205,19 @@ export function getStatusColorClass(status: MaintenanceStatus): string {
   }
 }
 
+export function getStatusBadgeClass(status: MaintenanceStatus | "none"): string {
+  switch (status) {
+    case "overdue":
+      return "badge-danger";
+    case "upcoming":
+      return "badge-warning";
+    case "current":
+      return "badge-success";
+    default:
+      return "badge-neutral";
+  }
+}
+
 // Get status text in German
 export function getStatusText(status: MaintenanceStatus): string {
   switch (status) {
