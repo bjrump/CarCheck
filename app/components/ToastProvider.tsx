@@ -53,11 +53,11 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
     setTimeout(onRemove, 200);
   }, [onRemove]);
 
-  useState(() => {
+  useEffect(() => {
     const duration = toast.duration ?? 4000;
     const timer = setTimeout(handleRemove, duration);
     return () => clearTimeout(timer);
-  });
+  }, [handleRemove, toast.duration]);
 
   return (
     <div
