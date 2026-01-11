@@ -75,7 +75,7 @@ export default function RootLayout({
                 </nav>
                 
                 <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-0 overflow-hidden">
                     <div className="container mx-auto px-4 py-6 md:py-8 h-full">
                       {children}
                     </div>

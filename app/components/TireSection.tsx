@@ -355,7 +355,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         </form>
       )}
 
-      <div className="flex-1 min-h-0 space-y-6">
+      <div className="flex-1 min-h-0 space-y-6 overflow-hidden">
         {summerTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">

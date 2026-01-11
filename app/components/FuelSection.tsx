@@ -355,8 +355,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
           Noch keine Tankeinträge vorhanden
         </p>
       ) : (
-        <div className="flex-1 min-h-0 space-y-3">
-          {sortedEntries.map((entry) => (
+        <div className="flex-1 min-h-0 space-y-3 overflow-hidden">
+          {sortedEntries.slice(0, 5).map((entry) => (
             <FuelEntryCard
               key={entry.id}
               entry={entry}
@@ -364,6 +364,11 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
               onDelete={handleDelete}
             />
           ))}
+          {sortedEntries.length > 5 && (
+            <p className="text-xs text-center text-muted-foreground pt-2">
+              +{sortedEntries.length - 5} weitere Einträge
+            </p>
+          )}
         </div>
       )}
     </div>

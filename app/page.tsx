@@ -123,11 +123,11 @@ function LandingPage() {
           <h2 className="text-2xl font-bold mt-1">Was CarCheck kann</h2>
         </div>
         
-        <div className="flex gap-4 pb-4 snap-x snap-mandatory">
+        <div className="flex flex-wrap justify-center gap-4 pb-4">
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="glass p-5 min-w-[280px] max-w-[280px] snap-center space-y-3 group hover:border-accent/30 transition-all duration-300 flex-shrink-0"
+              className="glass p-5 w-full sm:w-[280px] max-w-[280px] space-y-3 group hover:border-accent/30 transition-all duration-300"
             >
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
                 {feature.icon}
@@ -418,12 +418,12 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="flex gap-1 pb-2 flex-shrink-0">
+          <div className="flex flex-wrap justify-center gap-2 pb-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
                   activeTab === tab.id
                     ? "bg-accent text-accent-foreground shadow-lg shadow-accent/25"
                     : "text-muted-foreground hover:bg-muted"

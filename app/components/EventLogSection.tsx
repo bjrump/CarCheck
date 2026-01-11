@@ -117,7 +117,7 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 space-y-3">
+      <div className="flex-1 min-h-0 space-y-3 overflow-hidden">
         {filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">
@@ -127,36 +127,43 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
             </p>
           </div>
         ) : (
-          filteredAndSortedEvents.map((event) => (
-            <div
-              key={event.id}
-              className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border"
-            >
-              <div className={`text-2xl flex-shrink-0`}>
-                {getEventIcon(event.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getEventColor(event.type)}`}>
-                    {eventTypes.find(t => t.value === event.type)?.label || event.type}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(event.date)}
-                  </span>
+          <>
+            {filteredAndSortedEvents.slice(0, 5).map((event) => (
+              <div
+                key={event.id}
+                className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border"
+              >
+                <div className={`text-2xl flex-shrink-0`}>
+                  {getEventIcon(event.type)}
                 </div>
-                <p className="text-sm text-foreground">{event.description}</p>
-                {event.metadata && Object.keys(event.metadata).length > 0 && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {Object.entries(event.metadata).map(([key, value]) => (
-                      <div key={key}>
-                        <span className="font-medium">{key}:</span> {String(value)}
-                      </div>
-                    ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getEventColor(event.type)}`}>
+                      {eventTypes.find(t => t.value === event.type)?.label || event.type}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(event.date)}
+                    </span>
                   </div>
-                )}
+                  <p className="text-sm text-foreground">{event.description}</p>
+                  {event.metadata && Object.keys(event.metadata).length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {Object.entries(event.metadata).map(([key, value]) => (
+                        <div key={key}>
+                          <span className="font-medium">{key}:</span> {String(value)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+            {filteredAndSortedEvents.length > 5 && (
+              <p className="text-xs text-center text-muted-foreground pt-2">
+                +{filteredAndSortedEvents.length - 5} weitere Events
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>
