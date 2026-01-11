@@ -11,7 +11,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Convex](https://img.shields.io/badge/Convex-1.31-FF6B6B?style=for-the-badge)](https://convex.dev/)
 [![Clerk](https://img.shields.io/badge/Clerk-6.36-6C47FF?style=for-the-badge)](https://clerk.com/)
-[![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 **CarCheck** ist eine moderne Next.js-Anwendung zur umfassenden Verwaltung Ihrer Fahrzeuge mit TÜV-Terminen, Inspektionen, Reifenverwaltung und Tankprotokoll. Verwalten Sie alle wichtigen Fahrzeugdaten an einem Ort – übersichtlich, intuitiv und modern.
 
@@ -391,7 +391,7 @@ bun run build
 
 ## 📄 Lizenz
 
-Dieses Projekt ist privat und nicht für die öffentliche Nutzung lizenziert.
+Dieses Projekt ist unter der MIT Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
 
 ---
 

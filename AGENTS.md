@@ -12,7 +12,9 @@ Vehicle management app (German: "Fahrzeugverwaltung") for tracking TUV, inspecti
 
 ```
 CarCheck/
-├── .github/              # CI/CD Workflows, Dependabot, Issue Templates
+├── .github/              # CI/CD Workflows, Dependabot, Issue Templates (YAML)
+│   ├── ISSUE_TEMPLATE/   # bug-report.yml, feature-request.yml
+│   └── workflows/        # ci.yml, stale-issues.yml
 ├── app/
 │   ├── page.tsx          # Single-page app: LandingPage (guest) / Dashboard (auth)
 │   ├── layout.tsx        # Root layout with Clerk + Convex + Theme providers
@@ -39,7 +41,7 @@ CarCheck/
 | Add utility function | `app/lib/utils.ts` | Date/calculation helpers with `date-fns` |
 | Change styling | `app/styles/globals.css` | CSS variables for theming |
 | Auth configuration | `convex/auth.config.ts` | Clerk JWT provider settings |
-| CI/CD Config | `.github/workflows/ci.yml` | Build, Lint, TypeCheck workflow |
+| CI/CD Config | `.github/workflows/` | CI/CD (ci.yml) & Stale Issues (stale-issues.yml) |
 
 
 ## CODE MAP
@@ -142,6 +144,7 @@ CONVEX_DEPLOY_KEY  # For production deployment
 - **Easter calculation**: `calculateEaster()` in utils.ts for tire change dates (Gaussian algorithm)
 - **Inspection logic**: Uses EARLIER of time-based or km-based next date
 - **No tests**: Project has zero test files or test infrastructure
-- **CI/CD**: GitHub Actions workflow (`.github/workflows/ci.yml`) runs Lint, TypeCheck, and Build
+- **CI/CD**: GitHub Actions workflows run Lint/Build and manage stale issues
+- **License**: MIT License (see LICENSE file)
 - **Proxy naming**: `proxy.ts` should be `middleware.ts` for Next.js convention
 - **Convex _generated/**: Auto-generated files with `eslint-disable` - never edit manually
