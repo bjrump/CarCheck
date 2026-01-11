@@ -15,10 +15,11 @@ import ProgressBar from "./ProgressBar";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/app/components/ToastProvider";
 
 interface TUVSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
@@ -26,6 +27,7 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
   const [formData, setFormData] = useState<TUV>(car.tuv);
   const [isLoading, setIsLoading] = useState(false);
   const updateCar = useMutation(api.cars.update);
+  const toast = useToast();
 
   const status = getMaintenanceStatus(car.tuv.nextAppointmentDate);
 
@@ -60,11 +62,12 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
       });
 
       if (result) {
-        onUpdate(result as Car);
+        onUpdate?.(result as Car);
       }
       setIsEditing(false);
+      toast.success("TÜV-Informationen erfolgreich gespeichert");
     } catch (error) {
-      alert("Fehler beim Speichern der TÜV-Informationen");
+      toast.error("Fehler beim Speichern der TÜV-Informationen");
     } finally {
       setIsLoading(false);
     }

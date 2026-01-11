@@ -21,10 +21,11 @@ import ProgressBar from "./ProgressBar";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/app/components/ToastProvider";
 
 interface InspectionSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function InspectionSection({
@@ -35,6 +36,7 @@ export default function InspectionSection({
   const [formData, setFormData] = useState<Inspection>(car.inspection);
   const [isLoading, setIsLoading] = useState(false);
   const updateCar = useMutation(api.cars.update);
+  const toast = useToast();
 
   const status = getMaintenanceStatus(car.inspection.nextInspectionDate);
   const statusByYear = getMaintenanceStatus(
@@ -98,7 +100,7 @@ export default function InspectionSection({
       });
 
       if (result) {
-        onUpdate(result as Car);
+        onUpdate?.(result as Car);
       }
       setIsEditing(false);
     } catch (error) {
@@ -107,7 +109,7 @@ export default function InspectionSection({
           ? error.message
           : "Fehler beim Speichern der Inspektions-Informationen";
       console.error("Fehler beim Speichern:", error);
-      alert(
+      toast.error(
         `Fehler beim Speichern der Inspektions-Informationen: ${errorMessage}`
       );
     } finally {

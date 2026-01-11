@@ -4,7 +4,7 @@ import {
   formatDate,
   formatNumber,
   getMaintenanceStatus,
-  getStatusColorClass,
+  getStatusBadgeClass,
   getStatusText,
 } from "@/app/lib/utils";
 
@@ -15,9 +15,7 @@ interface CarCardProps {
 
 export default function CarCard({ car, onSelect }: CarCardProps) {
   const tuvStatus = getMaintenanceStatus(car.tuv.nextAppointmentDate);
-  const inspectionStatus = getMaintenanceStatus(
-    car.inspection.nextInspectionDate
-  );
+  const inspectionStatus = getMaintenanceStatus(car.inspection.nextInspectionDate);
 
   const currentTire = car.currentTireId
     ? car.tires?.find((t) => t.id === car.currentTireId)
@@ -43,104 +41,97 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     }
   };
 
-  const content = (
-    <>
-      <div className="flex justify-between items-start gap-4 mb-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            {car.year}
-          </p>
-          <h2 className="text-xl font-semibold text-foreground">
-            {car.make} {car.model}
-          </h2>
-          {car.licensePlate && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Kennzeichen: {car.licensePlate}
-            </p>
-          )}
-        </div>
-        <span className="text-3xl font-bold text-accent">
-          {formatNumber(car.mileage)} km
-        </span>
-      </div>
-
-      <div className="space-y-2 mt-4">
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xs font-semibold text-muted-foreground w-20">
-                TÜV
-              </h3>
-              <span className="text-sm text-foreground">
-                {formatDate(car.tuv.nextAppointmentDate)}
-              </span>
-            </div>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
-                tuvStatus
-              )}`}
-            >
-              {getStatusText(tuvStatus)}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xs font-semibold text-muted-foreground w-20">
-                Inspektion
-              </h3>
-              <span className="text-sm text-foreground">
-                {formatDate(car.inspection.nextInspectionDate)}
-              </span>
-            </div>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
-                inspectionStatus
-              )}`}
-            >
-              {getStatusText(inspectionStatus)}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-muted/60 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xs font-semibold text-muted-foreground w-20">
-                Reifen
-              </h3>
-              <span className="text-sm text-foreground">
-                {currentTire ? getTireTypeLabel(currentTire.type) : "Keine"}
-                {currentTire?.type !== "all-season" && nextTireChange && (
-                  <span className="text-muted-foreground ml-2">
-                    • Wechsel: {formatDate(nextTireChange.date)}
-                  </span>
-                )}
-              </span>
-            </div>
-            {currentTire?.type !== "all-season" && nextTireChange && (
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getStatusColorClass(
-                  tireStatus
-                )}`}
-              >
-                {getStatusText(tireStatus)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(car);
+    }
+  };
 
   return (
     <div
       onClick={() => onSelect(car)}
-      className="glass rounded-2xl p-6 hover:-translate-y-1 transition duration-200 cursor-pointer"
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`${car.make} ${car.model} ${car.year} auswählen`}
+      className="glass group relative overflow-hidden p-6 cursor-pointer animate-fade-in transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
     >
-      {content}
+      <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-gradient-to-br from-white/10 to-transparent blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:from-white/20" />
+
+      <div className="relative mb-6 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">🚗</span>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {car.year}
+            </p>
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            {car.make} {car.model}
+          </h2>
+          {car.licensePlate && (
+            <div className="mt-2 inline-flex items-center rounded-md bg-background/50 px-2 py-1 text-xs font-mono font-medium text-muted-foreground ring-1 ring-inset ring-border/50">
+              {car.licensePlate}
+            </div>
+          )}
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-medium text-muted-foreground mb-0.5">Laufleistung</p>
+          <span className="text-2xl font-black text-accent tracking-tight">
+            {formatNumber(car.mileage)} <span className="text-sm font-bold text-muted-foreground">km</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-3 relative z-10">
+        <div className="flex items-center justify-between rounded-xl bg-muted/40 p-3 transition-colors hover:bg-muted/60">
+          <div className="flex flex-col">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">TÜV</span>
+            <span className="text-sm font-semibold text-foreground">
+              {formatDate(car.tuv.nextAppointmentDate)}
+            </span>
+          </div>
+          <span className={`badge ${getStatusBadgeClass(tuvStatus)} shadow-sm`}>
+            {getStatusText(tuvStatus)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl bg-muted/40 p-3 transition-colors hover:bg-muted/60">
+          <div className="flex flex-col">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Inspektion</span>
+            <span className="text-sm font-semibold text-foreground">
+              {formatDate(car.inspection.nextInspectionDate)}
+            </span>
+          </div>
+          <span className={`badge ${getStatusBadgeClass(inspectionStatus)} shadow-sm`}>
+            {getStatusText(inspectionStatus)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl bg-muted/40 p-3 transition-colors hover:bg-muted/60">
+          <div className="flex flex-col">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reifen</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {currentTire ? getTireTypeLabel(currentTire.type) : "Keine"}
+              </span>
+              {currentTire?.type !== "all-season" && nextTireChange && (
+                <span className="text-xs text-muted-foreground/80">
+                  • {formatDate(nextTireChange.date)}
+                </span>
+              )}
+            </div>
+          </div>
+          {currentTire?.type !== "all-season" && nextTireChange ? (
+            <span className={`badge ${getStatusBadgeClass(tireStatus)} shadow-sm`}>
+              {getStatusText(tireStatus)}
+            </span>
+          ) : (
+            <span className="badge badge-neutral shadow-sm">Alles ok</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

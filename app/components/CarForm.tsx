@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Car, Insurance } from "@/app/lib/types";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useToast } from "@/app/components/ToastProvider";
 
 interface CarFormProps {
   car?: Car;
@@ -13,6 +14,7 @@ interface CarFormProps {
 }
 
 export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarFormProps) {
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const createCar = useMutation(api.cars.create);
   const [formData, setFormData] = useState({
@@ -57,10 +59,9 @@ export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarForm
         onCreated();
       }
     } catch (error: unknown) {
-      console.error("Fehler beim Speichern:", error);
       const message =
         error instanceof Error ? error.message : "Unbekannter Fehler";
-      alert(`Fehler beim Speichern des Fahrzeugs: ${message}`);
+      toast.error(`Fehler beim Speichern des Fahrzeugs: ${message}`);
     } finally {
       setIsLoading(false);
     }
