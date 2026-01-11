@@ -19,7 +19,7 @@ import { useToast } from "@/app/components/ToastProvider";
 
 interface TUVSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
@@ -62,7 +62,7 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
       });
 
       if (result) {
-        onUpdate(result as Car);
+        onUpdate?.(result as Car);
       }
       setIsEditing(false);
       toast.success("TÜV-Informationen erfolgreich gespeichert");

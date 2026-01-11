@@ -25,7 +25,7 @@ import { useToast } from "@/app/components/ToastProvider";
 
 interface InspectionSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function InspectionSection({
@@ -100,7 +100,7 @@ export default function InspectionSection({
       });
 
       if (result) {
-        onUpdate(result as Car);
+        onUpdate?.(result as Car);
       }
       setIsEditing(false);
     } catch (error) {

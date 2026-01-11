@@ -20,7 +20,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
 
 type ViewMode = "dashboard" | "add-car" | "edit-car" | "car-detail";
 type DetailTab = "overview" | "tuv" | "inspection" | "tires" | "fuel" | "history";
@@ -143,11 +143,11 @@ function LandingPage() {
         <p className="text-muted-foreground max-w-lg mx-auto">
           Melden Sie sich jetzt an und verpassen Sie nie wieder einen wichtigen Termin.
         </p>
-        <SignInButton mode="modal">
+        <SignUpButton mode="modal">
           <button className="btn btn-primary text-lg px-8 py-3">
             Kostenlos registrieren
           </button>
-        </SignInButton>
+        </SignUpButton>
       </section>
     </div>
   );

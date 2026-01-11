@@ -10,7 +10,7 @@ import { useToast } from "@/app/components/ToastProvider";
 
 interface FuelSectionProps {
   car: Car;
-  onUpdate: (updatedCar: Car) => void;
+  onUpdate?: (updatedCar: Car) => void;
 }
 
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
@@ -93,7 +93,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       });
 
       if (updatedCar) {
-        onUpdate(updatedCar as Car);
+        onUpdate?.(updatedCar as Car);
       }
       
       setIsAdding(false);
@@ -156,7 +156,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       });
 
       if (updatedCar) {
-        onUpdate(updatedCar as Car);
+        onUpdate?.(updatedCar as Car);
       }
     } catch (error) {
       toast.error("Fehler beim Löschen des Tankeintrags");
