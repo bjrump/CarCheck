@@ -2,47 +2,47 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --background: hsl(210 40% 98%);
-  --foreground: hsl(222 47% 11%);
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
   
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222 47% 11%);
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
   
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222 47% 11%);
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
   
-  --primary: hsl(221 83% 53%);
-  --primary-foreground: hsl(210 40% 98%);
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
   
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222 47% 11%);
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222 47% 11%;
   
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
   
-  --accent: hsl(221 83% 53%);
-  --accent-foreground: hsl(210 40% 98%);
+  --accent: 221 83% 53%;
+  --accent-foreground: 210 40% 98%;
   
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
 
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(221 83% 53%);
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221 83% 53%;
   
   --radius: 0.75rem;
   
-  --success: hsl(142 76% 36%);
-  --success-foreground: hsl(0 0% 100%);
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
   
-  --warning: hsl(38 92% 50%);
-  --warning-foreground: hsl(0 0% 0%);
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
   
-  --danger: hsl(0 84% 60%);
-  --danger-foreground: hsl(0 0% 100%);
+  --danger: 0 84% 60%;
+  --danger-foreground: 0 0% 100%;
   
-  --info: hsl(199 89% 48%);
-  --info-foreground: hsl(0 0% 100%);
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
 
   --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
@@ -51,33 +51,33 @@
 }
 
 .dark {
-  --background: hsl(224 71% 4%);
-  --foreground: hsl(210 40% 98%);
+  --background: 224 71% 4%;
+  --foreground: 210 40% 98%;
   
-  --card: hsl(222 47% 11%);
-  --card-foreground: hsl(210 40% 98%);
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
   
-  --popover: hsl(222 47% 11%);
-  --popover-foreground: hsl(210 40% 98%);
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
   
-  --primary: hsl(217 91% 60%);
-  --primary-foreground: hsl(222 47% 11%);
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
   
-  --secondary: hsl(217.2 32.6% 17.5%);
-  --secondary-foreground: hsl(210 40% 98%);
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
   
-  --muted: hsl(217.2 32.6% 17.5%);
-  --muted-foreground: hsl(215 20.2% 65.1%);
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
   
-  --accent: hsl(217 91% 60%);
-  --accent-foreground: hsl(222 47% 11%);
+  --accent: 217 91% 60%;
+  --accent-foreground: 222 47% 11%;
   
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
   
-  --border: hsl(217.2 32.6% 17.5%);
-  --input: hsl(217.2 32.6% 17.5%);
-  --ring: hsl(217 91% 60%);
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 217 91% 60%;
 
   --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
@@ -87,7 +87,7 @@
 
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: hsl(var(--border));
   }
 
   html {
@@ -95,8 +95,8 @@
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     background-image: 
       radial-gradient(ellipse 80% 50% at 20% 40%, hsl(221 83% 53% / 0.08), transparent),
       radial-gradient(ellipse 60% 40% at 80% 20%, hsl(142 70% 50% / 0.06), transparent),
@@ -111,7 +111,7 @@
 
   ::selection {
     background: hsl(221 83% 53% / 0.2);
-    color: var(--foreground);
+    color: hsl(var(--foreground));
   }
 
   ::-webkit-scrollbar {
@@ -149,7 +149,7 @@
 @layer components {
   .card {
     @apply rounded-2xl border text-card-foreground transition-all duration-300;
-    border-color: color-mix(in srgb, var(--border) 60%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--border)) 60%, transparent);
     background: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(0 0% 100% / 0.85));
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(12px);
@@ -180,7 +180,7 @@
   }
   
   .btn-primary:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--accent) 90%, transparent);
+    background: color-mix(in srgb, hsl(var(--accent)) 90%, transparent);
     box-shadow: 0 6px 20px -3px hsl(221 83% 53% / 0.5);
     transform: translateY(-1px);
   }
@@ -199,7 +199,7 @@
   
   .btn-outline:hover:not(:disabled) {
     @apply bg-muted;
-    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--accent)) 50%, transparent);
   }
   
   .btn-danger {
@@ -208,7 +208,7 @@
   }
   
   .btn-danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--danger) 90%, transparent);
+    background: color-mix(in srgb, hsl(var(--danger)) 90%, transparent);
     box-shadow: 0 6px 20px -3px hsl(0 84% 60% / 0.4);
     transform: translateY(-1px);
   }
@@ -219,7 +219,7 @@
   }
   
   .btn-success:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--success) 90%, transparent);
+    background: color-mix(in srgb, hsl(var(--success)) 90%, transparent);
     box-shadow: 0 6px 20px -3px hsl(142 76% 36% / 0.4);
     transform: translateY(-1px);
   }
@@ -238,7 +238,7 @@
   }
   
   .input:hover:not(:disabled):not(:focus) {
-    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--accent)) 50%, transparent);
   }
   
   .input:focus {
@@ -255,14 +255,14 @@
   
   .badge-success {
     @apply text-success border;
-    background: color-mix(in srgb, var(--success) 15%, transparent);
-    border-color: color-mix(in srgb, var(--success) 30%, transparent);
+    background: color-mix(in srgb, hsl(var(--success)) 15%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--success)) 30%, transparent);
   }
   
   .badge-warning {
     @apply text-warning border;
-    background: color-mix(in srgb, var(--warning) 15%, transparent);
-    border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+    background: color-mix(in srgb, hsl(var(--warning)) 15%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--warning)) 30%, transparent);
   }
   
   .dark .badge-warning {
@@ -271,14 +271,14 @@
   
   .badge-danger {
     @apply text-danger border;
-    background: color-mix(in srgb, var(--danger) 15%, transparent);
-    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+    background: color-mix(in srgb, hsl(var(--danger)) 15%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--danger)) 30%, transparent);
   }
   
   .badge-info {
     @apply text-info border;
-    background: color-mix(in srgb, var(--info) 15%, transparent);
-    border-color: color-mix(in srgb, var(--info) 30%, transparent);
+    background: color-mix(in srgb, hsl(var(--info)) 15%, transparent);
+    border-color: color-mix(in srgb, hsl(var(--info)) 30%, transparent);
   }
   
   .badge-neutral {
@@ -439,13 +439,13 @@
 
 .dark select,
 .dark select option {
-  background-color: var(--input);
-  color: var(--foreground);
+  background-color: hsl(var(--input));
+  color: hsl(var(--foreground));
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   opacity: 0.7;
 }
 
