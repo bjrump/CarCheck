@@ -355,7 +355,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
           Noch keine Tankeinträge vorhanden
         </p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
+        <div className="flex-1 min-h-0 space-y-3">
           {sortedEntries.map((entry) => (
             <FuelEntryCard
               key={entry.id}

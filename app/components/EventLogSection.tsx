@@ -117,7 +117,7 @@ export default function EventLogSection({ car }: EventLogSectionProps) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
+      <div className="flex-1 min-h-0 space-y-3">
         {filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">

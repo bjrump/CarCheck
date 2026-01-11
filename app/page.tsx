@@ -123,7 +123,7 @@ function LandingPage() {
           <h2 className="text-2xl font-bold mt-1">Was CarCheck kann</h2>
         </div>
         
-        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+        <div className="flex gap-4 pb-4 snap-x snap-mandatory">
           {features.map((feature, index) => (
             <div 
               key={index} 
@@ -418,7 +418,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto pb-2 flex-shrink-0">
+          <div className="flex gap-1 pb-2 flex-shrink-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -436,7 +436,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pt-2 pb-4">
+        <div className="flex-1 min-h-0 pt-2 pb-4">
           {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => toast.success("TÜV-Daten aktualisiert")} />
@@ -519,7 +519,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0">
         {cars.length === 0 ? (
           <div className="glass text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
