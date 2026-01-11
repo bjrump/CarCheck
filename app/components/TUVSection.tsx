@@ -66,7 +66,7 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
       }
       setIsEditing(false);
       toast.success("TÜV-Informationen erfolgreich gespeichert");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Fehler beim Speichern der TÜV-Informationen");
     } finally {
       setIsLoading(false);

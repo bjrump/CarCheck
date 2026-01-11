@@ -13,7 +13,7 @@ interface CarFormProps {
   onCancel?: () => void;
 }
 
-export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarFormProps) {
+export default function CarForm({ car, onCreated, onUpdated: _onUpdated, onCancel }: CarFormProps) {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const createCar = useMutation(api.cars.create);

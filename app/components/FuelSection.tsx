@@ -168,7 +168,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       if (updatedCar) {
         onUpdate?.(updatedCar as Car);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Fehler beim Löschen des Tankeintrags");
     }
   };

@@ -93,7 +93,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         currentMileage: 0,
         archived: false,
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error('Fehler beim Hinzufügen der Reifen');
     } finally {
       setIsLoading(false);
@@ -166,7 +166,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
       }
 
       setIsChanging(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Fehler beim Reifenwechsel');
     } finally {
       setIsLoading(false);
@@ -207,7 +207,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
       if (updatedCar && onUpdate) {
         onUpdate(updatedCar as Car);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Fehler beim Archivieren der Reifen');
     }
   };

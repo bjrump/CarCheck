@@ -1,6 +1,5 @@
 import {
   addDays,
-  addMonths,
   addYears,
   differenceInDays,
   differenceInMonths,
@@ -8,7 +7,6 @@ import {
   parseISO,
 } from "date-fns";
 import { de } from "date-fns/locale";
-import { Car } from "./types";
 
 // Constants
 const UPCOMING_THRESHOLD_DAYS = 30; // Days before an appointment is considered "upcoming"
