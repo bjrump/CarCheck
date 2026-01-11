@@ -146,7 +146,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
     minValue: number = 0
   ) => {
     if (data.length === 0) return "";
-    const padding = 40;
+    const padding = 10;
     const width = 100;
     const height = 100;
     const range = maxValue - minValue || 1;
@@ -172,7 +172,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
     minValue: number = 0
   ) => {
     if (data.length === 0) return "";
-    const padding = 40;
+    const padding = 10;
     const width = 100;
     const height = 100;
     const range = maxValue - minValue || 1;
