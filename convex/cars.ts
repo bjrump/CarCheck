@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 export const list = query({
   args: {},
@@ -207,7 +206,7 @@ export const update = mutation({
       throw new Error("Fahrzeug nicht gefunden");
     }
     
-    const { id, ...updates } = args;
+    const { id: _id, ...updates } = args;
     const filteredUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );

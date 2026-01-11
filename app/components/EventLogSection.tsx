@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Car, CarEvent, EventType } from '@/app/lib/types';
+import { Car, EventType } from '@/app/lib/types';
 import { formatDate } from '@/app/lib/utils';
 
 interface EventLogSectionProps {
