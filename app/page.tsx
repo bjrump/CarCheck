@@ -26,6 +26,12 @@ import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
 type ViewMode = "dashboard" | "add-car" | "edit-car" | "car-detail";
 type DetailTab = "overview" | "tuv" | "inspection" | "tires" | "fuel" | "history";
 
+/**
+ * LandingPage Component
+ *
+ * The public-facing landing page shown to unauthenticated users.
+ * Features a hero section and a list of application features.
+ */
 function LandingPage() {
   const features = [
     {
@@ -173,6 +179,13 @@ function StatCard({ label, value, hint, icon }: { label: string; value: string |
   );
 }
 
+/**
+ * Dashboard Component
+ *
+ * The main authenticated view of the application.
+ * Displays the list of user's cars and summary statistics.
+ * Handles car selection, creation, and deletion.
+ */
 function Dashboard() {
   const toast = useToast();
   const { confirm } = useConfirmDialog();

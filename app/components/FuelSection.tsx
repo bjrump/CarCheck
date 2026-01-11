@@ -14,6 +14,17 @@ interface FuelSectionProps {
   onUpdate?: (updatedCar: Car) => void;
 }
 
+/**
+ * FuelSection Component
+ *
+ * Displays a list of fuel entries for a specific car.
+ * Allows adding, editing, and deleting fuel entries.
+ * Calculates consumption and costs.
+ * 
+ * @param {Object} props - Component props
+ * @param {Car} props.car - The car object containing fuel entries
+ * @param {Function} [props.onUpdate] - Callback function when car data is updated
+ */
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const toast = useToast();
   const { confirm } = useConfirmDialog();

@@ -8,6 +8,15 @@ interface EventLogSectionProps {
   car: Car;
 }
 
+/**
+ * EventLogSection Component
+ *
+ * Displays a chronological log of events for a car (e.g., refueling, tire changes, inspections).
+ * Supports filtering by event type and sorting by date.
+ * 
+ * @param {Object} props - Component props
+ * @param {Car} props.car - The car object containing the event log
+ */
 export default function EventLogSection({ car }: EventLogSectionProps) {
   const [filterType, setFilterType] = useState<EventType | 'all'>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
