@@ -31,4 +31,4 @@ jobs:
         run: bun run build
         env:
           NEXT_PUBLIC_CONVEX_URL: https://placeholder.convex.cloud
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_placeholder
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_d2FybS1lYWdsZS0yNC5jbGVyay5hY2NvdW50cy5kZXYk
