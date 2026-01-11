@@ -405,14 +405,14 @@ function FuelEntryCard({
 
   return (
     <div className="border border-border rounded-xl p-4 hover:bg-muted/30 transition">
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2">
         <div>
           <p className="font-semibold">{formatDate(entry.date)}</p>
           <p className="text-sm text-muted-foreground">
             KM-Stand: {formatNumber(entry.mileage)} km
           </p>
         </div>
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 w-full sm:w-auto justify-between sm:justify-end">
           <div className="text-right">
             <p className="font-semibold text-accent">
               {formatNumber(entry.liters)} Liter

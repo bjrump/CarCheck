@@ -59,7 +59,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     >
       <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-gradient-to-br from-white/10 to-transparent blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:from-white/20" />
 
-      <div className="relative mb-6 flex items-start justify-between">
+      <div className="relative mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl">🚗</span>
