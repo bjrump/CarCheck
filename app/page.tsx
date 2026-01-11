@@ -91,7 +91,7 @@ function LandingPage() {
   ];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-y-auto">
       <section className="flex-1 flex flex-col justify-center text-center space-y-6 animate-fade-in">
         <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent mx-auto">
           <span className="relative flex h-2 w-2">
@@ -449,7 +449,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 pt-2 pb-4">
+        <div className="flex-1 min-h-0 pt-2 pb-4 overflow-y-auto">
           {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => toast.success("TÜV-Daten aktualisiert")} />
@@ -532,7 +532,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {cars.length === 0 ? (
           <div className="glass text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
