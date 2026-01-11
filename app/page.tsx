@@ -429,6 +429,8 @@ function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => {}} />
               <InspectionSection car={selectedCar} onUpdate={() => {}} />
+              <TireSection car={selectedCar} onUpdate={() => {}} />
+              <FuelSection car={selectedCar} onUpdate={() => {}} />
               {selectedCar.insurance && (
                 <div className="glass p-6 lg:col-span-2">
                   <h3 className="text-lg font-semibold mb-4">Versicherung</h3>
