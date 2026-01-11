@@ -4,10 +4,11 @@
 
 ### Moderne Webanwendung zur umfassenden Verwaltung Ihrer Fahrzeuge
 
+[![CI](https://github.com/bjrump/CarCheck/actions/workflows/ci.yml/badge.svg)](https://github.com/bjrump/CarCheck/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Convex](https://img.shields.io/badge/Convex-1.31-FF6B6B?style=for-the-badge)](https://convex.dev/)
 [![Clerk](https://img.shields.io/badge/Clerk-6.36-6C47FF?style=for-the-badge)](https://clerk.com/)
 [![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
@@ -100,10 +101,10 @@ CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwic
 | ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js) | 16.0 | React Framework mit App Router |
 | ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react) | 19.0 | UI-Bibliothek |
 | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript) | 5.5 | Typsichere Entwicklung |
-| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 3.4 | Utility-First CSS Framework |
+| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 4.1 | Utility-First CSS Framework |
 | ![Convex](https://img.shields.io/badge/-Convex-FF6B6B?style=flat-square) | 1.31 | Real-time Backend-as-a-Service |
 | ![Clerk](https://img.shields.io/badge/-Clerk-6C47FF?style=flat-square) | 6.36 | Authentication & User Management |
-| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 3.6 | Datumsberechnungen |
+| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 4.1 | Datumsberechnungen |
 
 ---
 

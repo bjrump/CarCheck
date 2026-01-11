@@ -1,28 +1,31 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-01-10
-**Commit:** a160405
+**Generated:** 2026-01-11
+**Commit:** 10a809e
 **Branch:** main
 
 ## OVERVIEW
 
-Vehicle management app (German: "Fahrzeugverwaltung") for tracking TUV, inspections, tires, and fuel. Next.js 16 + React 19, Tailwind CSS, **Convex** real-time backend, **Clerk** authentication.
+Vehicle management app (German: "Fahrzeugverwaltung") for tracking TUV, inspections, tires, and fuel. Next.js 16 + React 19, Tailwind CSS v4, **Convex** real-time backend, **Clerk** authentication.
 
 ## STRUCTURE
 
 ```
 CarCheck/
+├── .github/              # CI/CD Workflows, Dependabot, Issue Templates
 ├── app/
 │   ├── page.tsx          # Single-page app: LandingPage (guest) / Dashboard (auth)
 │   ├── layout.tsx        # Root layout with Clerk + Convex + Theme providers
 │   ├── components/       # React components (flat, no nesting except providers/)
 │   ├── lib/              # types.ts, utils.ts (date calculations, status helpers)
-│   └── styles/           # globals.css (Tailwind + CSS vars + glassmorphism)
+│   └── styles/           # globals.css (Tailwind v4 + CSS vars + glassmorphism)
 ├── convex/               # Backend functions (NOT REST APIs)
 │   ├── cars.ts           # CRUD mutations/queries (list, getById, create, update, remove)
 │   ├── schema.ts         # Database schema with validators
 │   ├── auth.config.ts    # Clerk JWT integration
 │   └── _generated/       # Auto-generated (do not edit)
+├── eslint.config.mjs     # ESLint 9 Flat Config
+├── postcss.config.mjs    # Tailwind v4 PostCSS Config
 └── proxy.ts              # Clerk middleware (non-standard name, should be middleware.ts)
 ```
 
@@ -36,6 +39,8 @@ CarCheck/
 | Add utility function | `app/lib/utils.ts` | Date/calculation helpers with `date-fns` |
 | Change styling | `app/styles/globals.css` | CSS variables for theming |
 | Auth configuration | `convex/auth.config.ts` | Clerk JWT provider settings |
+| CI/CD Config | `.github/workflows/ci.yml` | Build, Lint, TypeCheck workflow |
+
 
 ## CODE MAP
 
@@ -103,7 +108,7 @@ CarCheck/
 ```bash
 bun dev              # Dev server on :3000
 bun run build        # Production build
-bun run lint         # ESLint check
+bun run lint         # ESLint check (ESLint 9)
 npx convex dev       # Convex dev server (separate terminal)
 npx convex deploy    # Deploy Convex functions
 ```
@@ -137,6 +142,6 @@ CONVEX_DEPLOY_KEY  # For production deployment
 - **Easter calculation**: `calculateEaster()` in utils.ts for tire change dates (Gaussian algorithm)
 - **Inspection logic**: Uses EARLIER of time-based or km-based next date
 - **No tests**: Project has zero test files or test infrastructure
-- **No CI/CD**: No GitHub Actions, Makefile, or Docker configuration
+- **CI/CD**: GitHub Actions workflow (`.github/workflows/ci.yml`) runs Lint, TypeCheck, and Build
 - **Proxy naming**: `proxy.ts` should be `middleware.ts` for Next.js convention
 - **Convex _generated/**: Auto-generated files with `eslint-disable` - never edit manually
