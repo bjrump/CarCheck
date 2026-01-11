@@ -14,6 +14,17 @@ interface TireSectionProps {
   onUpdate?: (updatedCar: Car) => void;
 }
 
+/**
+ * TireSection Component
+ *
+ * Manages tire sets for a vehicle.
+ * Allows adding new tire sets, switching between sets (mounting/unmounting),
+ * and tracking tire mileage.
+ * 
+ * @param {Object} props - Component props
+ * @param {Car} props.car - The car object containing tire data
+ * @param {Function} [props.onUpdate] - Callback function when car data is updated
+ */
 export default function TireSection({ car, onUpdate }: TireSectionProps) {
   const toast = useToast();
   const { confirm } = useConfirmDialog();
@@ -355,7 +366,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         </form>
       )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
+      <div className="flex-1 min-h-0 space-y-6 overflow-hidden">
         {summerTires.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">

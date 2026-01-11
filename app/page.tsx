@@ -26,6 +26,12 @@ import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
 type ViewMode = "dashboard" | "add-car" | "edit-car" | "car-detail";
 type DetailTab = "overview" | "tuv" | "inspection" | "tires" | "fuel" | "history";
 
+/**
+ * LandingPage Component
+ *
+ * The public-facing landing page shown to unauthenticated users.
+ * Features a hero section and a list of application features.
+ */
 function LandingPage() {
   const features = [
     {
@@ -123,11 +129,11 @@ function LandingPage() {
           <h2 className="text-2xl font-bold mt-1">Was CarCheck kann</h2>
         </div>
         
-        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+        <div className="flex flex-wrap justify-center gap-4 pb-4">
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="glass p-5 min-w-[280px] max-w-[280px] snap-center space-y-3 group hover:border-accent/30 transition-all duration-300 flex-shrink-0"
+              className="glass p-5 w-full sm:w-[280px] max-w-[280px] space-y-3 group hover:border-accent/30 transition-all duration-300"
             >
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
                 {feature.icon}
@@ -173,6 +179,13 @@ function StatCard({ label, value, hint, icon }: { label: string; value: string |
   );
 }
 
+/**
+ * Dashboard Component
+ *
+ * The main authenticated view of the application.
+ * Displays the list of user's cars and summary statistics.
+ * Handles car selection, creation, and deletion.
+ */
 function Dashboard() {
   const toast = useToast();
   const { confirm } = useConfirmDialog();
@@ -418,12 +431,12 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto pb-2 flex-shrink-0">
+          <div className="flex flex-wrap justify-center gap-2 pb-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
                   activeTab === tab.id
                     ? "bg-accent text-accent-foreground shadow-lg shadow-accent/25"
                     : "text-muted-foreground hover:bg-muted"
@@ -436,7 +449,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pt-2 pb-4">
+        <div className="flex-1 min-h-0 pt-2 pb-4">
           {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => toast.success("TÜV-Daten aktualisiert")} />
@@ -519,7 +532,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0">
         {cars.length === 0 ? (
           <div className="glass text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">

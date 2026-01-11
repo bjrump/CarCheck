@@ -14,6 +14,17 @@ interface FuelSectionProps {
   onUpdate?: (updatedCar: Car) => void;
 }
 
+/**
+ * FuelSection Component
+ *
+ * Displays a list of fuel entries for a specific car.
+ * Allows adding, editing, and deleting fuel entries.
+ * Calculates consumption and costs.
+ * 
+ * @param {Object} props - Component props
+ * @param {Car} props.car - The car object containing fuel entries
+ * @param {Function} [props.onUpdate] - Callback function when car data is updated
+ */
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const toast = useToast();
   const { confirm } = useConfirmDialog();
@@ -355,8 +366,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
           Noch keine Tankeinträge vorhanden
         </p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
-          {sortedEntries.map((entry) => (
+        <div className="flex-1 min-h-0 space-y-3 overflow-hidden">
+          {sortedEntries.slice(0, 5).map((entry) => (
             <FuelEntryCard
               key={entry.id}
               entry={entry}
@@ -364,6 +375,11 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
               onDelete={handleDelete}
             />
           ))}
+          {sortedEntries.length > 5 && (
+            <p className="text-xs text-center text-muted-foreground pt-2">
+              +{sortedEntries.length - 5} weitere Einträge
+            </p>
+          )}
         </div>
       )}
     </div>
