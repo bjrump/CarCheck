@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/app/components/ThemeProvider";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import ConvexClientProvider from "@/app/components/providers/ConvexClientProvider";
 import { ToastProvider } from "@/app/components/ToastProvider";
+import { ConfirmDialogProvider } from "@/app/components/ConfirmDialog";
 import {
   SignInButton,
   SignUpButton,
@@ -28,7 +29,8 @@ export default function RootLayout({
         <ConvexClientProvider>
           <ThemeProvider>
             <ToastProvider>
-              <div className="h-screen flex flex-col overflow-hidden">
+              <ConfirmDialogProvider>
+                <div className="h-screen flex flex-col overflow-hidden">
                 <nav className="flex-shrink-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
                   <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-4">
                     <a href="/" className="flex items-center gap-3 group">
@@ -80,6 +82,7 @@ export default function RootLayout({
                   </div>
                 </main>
               </div>
+              </ConfirmDialogProvider>
             </ToastProvider>
           </ThemeProvider>
         </ConvexClientProvider>

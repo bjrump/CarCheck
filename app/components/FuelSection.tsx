@@ -7,6 +7,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 
 interface FuelSectionProps {
   car: Car;
@@ -15,6 +16,7 @@ interface FuelSectionProps {
 
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FuelEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,7 +146,15 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!confirm("Möchten Sie diesen Tankeintrag wirklich löschen?")) {
+    const confirmed = await confirm({
+      title: "Tankeintrag löschen",
+      message: "Möchten Sie diesen Tankeintrag wirklich löschen?",
+      confirmText: "Löschen",
+      cancelText: "Abbrechen",
+      variant: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 

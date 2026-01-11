@@ -9,6 +9,7 @@ import InspectionSection from "@/app/components/InspectionSection";
 import TireSection from "@/app/components/TireSection";
 import TUVSection from "@/app/components/TUVSection";
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 import { Car } from "@/app/lib/types";
 import {
   calculateNextTireChangeDate,
@@ -174,6 +175,7 @@ function StatCard({ label, value, hint, icon }: { label: string; value: string |
 
 function Dashboard() {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const carsData = useQuery(api.cars.list);
   const cars = (carsData ?? []) as Car[];
   const deleteCar = useMutation(api.cars.remove);
@@ -213,7 +215,15 @@ function Dashboard() {
   };
 
   const handleCarDelete = async (carId: string) => {
-    if (!confirm("Möchten Sie dieses Fahrzeug wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) {
+    const confirmed = await confirm({
+      title: "Fahrzeug löschen",
+      message: "Möchten Sie dieses Fahrzeug wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirmText: "Löschen",
+      cancelText: "Abbrechen",
+      variant: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 

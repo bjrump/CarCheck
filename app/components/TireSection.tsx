@@ -7,6 +7,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { Car, Tire, TireType, TireChangeEvent } from '@/app/lib/types';
 import { formatDate, formatNumber } from '@/app/lib/utils';
 import { useToast } from "@/app/components/ToastProvider";
+import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 
 interface TireSectionProps {
   car: Car;
@@ -15,6 +16,7 @@ interface TireSectionProps {
 
 export default function TireSection({ car, onUpdate }: TireSectionProps) {
   const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [formData, setFormData] = useState<Partial<Tire>>({
@@ -172,7 +174,15 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
   };
 
   const handleArchiveTire = async (tireId: string) => {
-    if (!confirm('Möchten Sie diesen Reifensatz archivieren? Er wird nicht mehr verwendet, bleibt aber gespeichert.')) {
+    const confirmed = await confirm({
+      title: "Reifen archivieren",
+      message: "Möchten Sie diesen Reifensatz archivieren? Er wird nicht mehr verwendet, bleibt aber gespeichert.",
+      confirmText: "Archivieren",
+      cancelText: "Abbrechen",
+      variant: "warning",
+    });
+
+    if (!confirmed) {
       return;
     }
 

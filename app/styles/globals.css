@@ -100,13 +100,13 @@
     border-color: hsl(var(--border));
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
-
   html, body {
     height: 100%;
     overflow: hidden;
+  }
+
+  * {
+    scroll-behavior: smooth;
   }
 
   body {
