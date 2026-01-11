@@ -451,8 +451,8 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
         {totalCost > 0 && (
           <div>
             <h3 className="font-semibold mb-3">Kosten pro Monat</h3>
-            <div className="border border-border rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="border border-border rounded-xl overflow-hidden overflow-x-auto">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-left p-3 font-medium">Monat</th>
