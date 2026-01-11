@@ -2,33 +2,87 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --background: #f6f7fb;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #60a5fa;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #2563eb;
-  --accent-foreground: #f8fafc;
-  --grid: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
+  --background: hsl(210 40% 98%);
+  --foreground: hsl(222 47% 11%);
+  
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 47% 11%);
+  
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 47% 11%);
+  
+  --primary: hsl(221 83% 53%);
+  --primary-foreground: hsl(210 40% 98%);
+  
+  --secondary: hsl(210 40% 96.1%);
+  --secondary-foreground: hsl(222 47% 11%);
+  
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  
+  --accent: hsl(221 83% 53%);
+  --accent-foreground: hsl(210 40% 98%);
+  
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221 83% 53%);
+  
+  --radius: 0.75rem;
+  
+  --success: hsl(142 76% 36%);
+  --success-foreground: hsl(0 0% 100%);
+  
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 0%);
+  
+  --danger: hsl(0 84% 60%);
+  --danger-foreground: hsl(0 0% 100%);
+  
+  --info: hsl(199 89% 48%);
+  --info-foreground: hsl(0 0% 100%);
+
+  --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+  
+  --grid: radial-gradient(circle at 1px 1px, hsl(222 47% 11% / 0.04) 1px, transparent 0);
 }
 
 .dark {
-  --background: #0b1224;
-  --foreground: #e5e7eb;
-  --card: #0f172a;
-  --card-foreground: #e5e7eb;
-  --border: #1f2937;
-  --input: #1a1f35;
-  --ring: #3b82f6;
-  --muted: #1a1f35;
-  --muted-foreground: #94a3b8;
-  --accent: #3b82f6;
-  --accent-foreground: #f8fafc;
-  --grid: radial-gradient(circle at 1px 1px, rgba(226, 232, 240, 0.05) 1px, transparent 0);
+  --background: hsl(224 71% 4%);
+  --foreground: hsl(210 40% 98%);
+  
+  --card: hsl(222 47% 11%);
+  --card-foreground: hsl(210 40% 98%);
+  
+  --popover: hsl(222 47% 11%);
+  --popover-foreground: hsl(210 40% 98%);
+  
+  --primary: hsl(217 91% 60%);
+  --primary-foreground: hsl(222 47% 11%);
+  
+  --secondary: hsl(217.2 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  
+  --muted: hsl(217.2 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  
+  --accent: hsl(217 91% 60%);
+  --accent-foreground: hsl(222 47% 11%);
+  
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  
+  --border: hsl(217.2 32.6% 17.5%);
+  --input: hsl(217.2 32.6% 17.5%);
+  --ring: hsl(217 91% 60%);
+
+  --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  
+  --grid: radial-gradient(circle at 1px 1px, hsl(210 40% 98% / 0.03) 1px, transparent 0);
 }
 
 @layer base {
@@ -36,74 +90,338 @@
     border-color: var(--border);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    color: var(--foreground);
     background-color: var(--background);
-    background-image:
-      radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.08), transparent 25%),
-      radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 20%),
+    color: var(--foreground);
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, hsl(221 83% 53% / 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 20%, hsl(142 70% 50% / 0.06), transparent),
       var(--grid);
-    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-attachment: fixed;
+    background-size: 100% 100%, 100% 100%, 24px 24px;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
   }
 
   ::selection {
-    background: rgba(37, 99, 235, 0.2);
+    background: hsl(221 83% 53% / 0.2);
     color: var(--foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(215 16% 47% / 0.3);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(215 16% 47% / 0.5);
+    background-clip: padding-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(215 20% 65% / 0.2);
+    background-clip: padding-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(215 20% 65% / 0.4);
+    background-clip: padding-box;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border text-card-foreground transition-all duration-300;
+    border-color: color-mix(in srgb, var(--border) 60%, transparent);
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(0 0% 100% / 0.85));
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .dark .card {
+    background: linear-gradient(135deg, hsl(222 47% 11% / 0.9), hsl(222 47% 11% / 0.7));
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(221 83% 53% / 0.3);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  
+  .btn-primary {
+    @apply bg-accent text-accent-foreground;
+    box-shadow: 0 4px 14px -3px hsl(221 83% 53% / 0.4);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 90%, transparent);
+    box-shadow: 0 6px 20px -3px hsl(221 83% 53% / 0.5);
+    transform: translateY(-1px);
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground border border-border;
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-muted;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-border bg-transparent text-foreground;
+  }
+  
+  .btn-outline:hover:not(:disabled) {
+    @apply bg-muted;
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  
+  .btn-danger {
+    @apply bg-danger text-danger-foreground;
+    box-shadow: 0 4px 14px -3px hsl(0 84% 60% / 0.3);
+  }
+  
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger) 90%, transparent);
+    box-shadow: 0 6px 20px -3px hsl(0 84% 60% / 0.4);
+    transform: translateY(-1px);
+  }
+  
+  .btn-success {
+    @apply bg-success text-success-foreground;
+    box-shadow: 0 4px 14px -3px hsl(142 76% 36% / 0.3);
+  }
+  
+  .btn-success:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--success) 90%, transparent);
+    box-shadow: 0 6px 20px -3px hsl(142 76% 36% / 0.4);
+    transform: translateY(-1px);
+  }
+
+  .input {
+    @apply flex h-11 w-full rounded-xl border border-input px-4 py-2.5 text-sm ring-offset-background transition-all duration-200;
+    background: hsl(0 0% 100% / 0.6);
+  }
+  
+  .dark .input {
+    background: hsl(217.2 32.6% 17.5% / 0.6);
+  }
+  
+  .input::placeholder {
+    @apply text-muted-foreground;
+  }
+  
+  .input:hover:not(:disabled):not(:focus) {
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  
+  .input:focus {
+    @apply outline-none ring-2 ring-ring ring-offset-2 border-transparent;
+  }
+  
+  .input:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+  }
+  
+  .badge-success {
+    @apply text-success border;
+    background: color-mix(in srgb, var(--success) 15%, transparent);
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  }
+  
+  .badge-warning {
+    @apply text-warning border;
+    background: color-mix(in srgb, var(--warning) 15%, transparent);
+    border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  }
+  
+  .dark .badge-warning {
+    @apply text-yellow-400;
+  }
+  
+  .badge-danger {
+    @apply text-danger border;
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+  
+  .badge-info {
+    @apply text-info border;
+    background: color-mix(in srgb, var(--info) 15%, transparent);
+    border-color: color-mix(in srgb, var(--info) 30%, transparent);
+  }
+  
+  .badge-neutral {
+    @apply bg-muted text-muted-foreground border border-border;
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
   }
 }
 
 @layer utilities {
+  .glass {
+    @apply border border-white/20 rounded-2xl;
+    background: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.9),
+      hsl(0 0% 100% / 0.7)
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 
+      0 8px 32px -8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  }
+  
+  .dark .glass {
+    @apply border-white/10;
+    background: linear-gradient(
+      135deg,
+      hsl(222 47% 11% / 0.85),
+      hsl(222 47% 11% / 0.65)
+    );
+    box-shadow: 
+      0 8px 32px -8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
+  }
+  
+  .dark .gradient-text {
+    background-image: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 68%));
+  }
+
   .text-balance {
     text-wrap: balance;
   }
 
-  .glass {
-    @apply backdrop-blur-xl border border-border shadow-soft;
-    background-color: var(--card);
-    background-color: color-mix(in srgb, var(--card) 90%, transparent);
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(0 0% 100% / 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Dark mode improvements for form elements */
-.dark select,
-.dark select option {
-  background-color: var(--input);
-  color: var(--foreground);
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Dark mode styling for all input types and textareas */
-.dark input[type="text"],
-.dark input[type="number"],
-.dark input[type="email"],
-.dark input[type="password"],
-.dark input[type="search"],
-.dark input[type="tel"],
-.dark input[type="url"],
-.dark input[type="date"],
-.dark input[type="datetime-local"],
-.dark input[type="time"],
-.dark input[type="month"],
-.dark input[type="week"],
-.dark textarea {
-  background-color: var(--input);
-  color: var(--foreground);
-  border-color: var(--border);
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Placeholder text in dark mode */
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: var(--muted-foreground);
-  opacity: 0.7;
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
-/* Date picker dark mode support for WebKit browsers (Chrome, Safari, Edge) */
-.dark input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Date picker and time-related inputs - uses native dark styling across all browsers */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Form element dark mode handling */
 .dark input[type="date"],
 .dark input[type="datetime-local"],
 .dark input[type="time"],
@@ -112,3 +430,46 @@
   color-scheme: dark;
 }
 
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.dark select,
+.dark select option {
+  background-color: var(--input);
+  color: var(--foreground);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+/* Number input spinner styling */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.5;
+}
+
+input[type="number"]:hover::-webkit-inner-spin-button,
+input[type="number"]:hover::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Toast animation classes */
+.toast-enter {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-exit {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/app/components/ToastProvider";
 
 interface FuelSectionProps {
   car: Car;
@@ -13,6 +14,7 @@ interface FuelSectionProps {
 }
 
 export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
+  const toast = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FuelEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,7 +33,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
     e.preventDefault();
 
     if (!formData.liters || parseFloat(formData.liters) <= 0) {
-      alert("Bitte geben Sie eine gültige Literzahl ein");
+      toast.warning("Bitte geben Sie eine gültige Literzahl ein");
       return;
     }
 
@@ -39,7 +41,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
       !editingEntry &&
       (!formData.mileage || parseInt(formData.mileage, 10) < car.mileage)
     ) {
-      alert(
+      toast.warning(
         `Der Kilometerstand muss mindestens ${formatNumber(
           car.mileage
         )} km betragen`
@@ -105,7 +107,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
         notes: "",
       });
     } catch (error) {
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Fehler beim Speichern des Tankeintrags"
@@ -157,7 +159,7 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
         onUpdate(updatedCar as Car);
       }
     } catch (error) {
-      alert("Fehler beim Löschen des Tankeintrags");
+      toast.error("Fehler beim Löschen des Tankeintrags");
     }
   };
 

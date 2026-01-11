@@ -6,6 +6,7 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { Car, Tire, TireType, TireChangeEvent } from '@/app/lib/types';
 import { formatDate, formatNumber } from '@/app/lib/utils';
+import { useToast } from "@/app/components/ToastProvider";
 
 interface TireSectionProps {
   car: Car;
@@ -13,6 +14,7 @@ interface TireSectionProps {
 }
 
 export default function TireSection({ car, onUpdate }: TireSectionProps) {
+  const toast = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [formData, setFormData] = useState<Partial<Tire>>({
@@ -90,7 +92,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         archived: false,
       });
     } catch (error) {
-      alert('Fehler beim Hinzufügen der Reifen');
+      toast.error('Fehler beim Hinzufügen der Reifen');
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +165,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
 
       setIsChanging(false);
     } catch (error) {
-      alert('Fehler beim Reifenwechsel');
+      toast.error('Fehler beim Reifenwechsel');
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +177,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
     }
 
     if (car.currentTireId === tireId) {
-      alert('Bitte demontieren Sie die Reifen zuerst, bevor Sie sie archivieren.');
+      toast.warning('Bitte demontieren Sie die Reifen zuerst, bevor Sie sie archivieren.');
       return;
     }
 
@@ -196,7 +198,7 @@ export default function TireSection({ car, onUpdate }: TireSectionProps) {
         onUpdate(updatedCar as Car);
       }
     } catch (error) {
-      alert('Fehler beim Archivieren der Reifen');
+      toast.error('Fehler beim Archivieren der Reifen');
     }
   };
 
@@ -585,6 +587,7 @@ interface TireChangeDialogProps {
 }
 
 function TireChangeDialog({ car, currentTire, availableTires, onCancel, onConfirm, isLoading, getTireTypeLabel }: TireChangeDialogProps) {
+  const toast = useToast();
   const [selectedTireId, setSelectedTireId] = useState<string>('');
   const [carMileage, setCarMileage] = useState<string>(car.mileage.toString());
   const [changeDate, setChangeDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -599,7 +602,7 @@ function TireChangeDialog({ car, currentTire, availableTires, onCancel, onConfir
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTireId) {
-      alert('Bitte wählen Sie einen Reifensatz aus');
+      toast.warning('Bitte wählen Sie einen Reifensatz aus');
       return;
     }
     onConfirm(selectedTireId, parseInt(carMileage), changeDate);
