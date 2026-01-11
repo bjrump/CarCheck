@@ -41,10 +41,21 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(car);
+    }
+  };
+
   return (
     <div
       onClick={() => onSelect(car)}
-      className="glass group relative overflow-hidden p-6 cursor-pointer animate-fade-in transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`${car.make} ${car.model} ${car.year} auswählen`}
+      className="glass group relative overflow-hidden p-6 cursor-pointer animate-fade-in transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
     >
       <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-gradient-to-br from-white/10 to-transparent blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:from-white/20" />
 
@@ -117,7 +128,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
               {getStatusText(tireStatus)}
             </span>
           ) : (
-            <span className="badge badge-neutral shadow-sm">OK</span>
+            <span className="badge badge-neutral shadow-sm">Alles ok</span>
           )}
         </div>
       </div>
