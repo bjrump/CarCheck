@@ -91,7 +91,7 @@ function LandingPage() {
   ];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-y-auto">
       <section className="flex-1 flex flex-col justify-center text-center space-y-6 animate-fade-in">
         <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent mx-auto">
           <span className="relative flex h-2 w-2">
