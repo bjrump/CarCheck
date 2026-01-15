@@ -49,7 +49,7 @@ CarCheck/
 
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
-| `Dashboard` | Function | `app/page.tsx` | Main authenticated view (Non-scrollable layout) |
+| `Dashboard` | Function | `app/page.tsx` | Main authenticated view (Scrollable layout) |
 | `LandingPage` | Function | `app/page.tsx` | Guest landing page |
 | `Car` | Interface | `app/lib/types.ts` | Core vehicle data model |
 | `ConfirmDialog` | Component | `app/components/ConfirmDialog.tsx` | Custom confirmation modal (replaces native confirm) |
@@ -100,7 +100,7 @@ CarCheck/
 ## UNIQUE STYLES
 
 - **Glassmorphism**: `.glass` class with `backdrop-blur-xl` + `color-mix()` transparency
-- **Layout**: Non-scrollable dashboard with fixed header and scrollable content areas
+- **Layout**: Scrollable dashboard with sticky header
 - **Progress bars**: Custom `ProgressBar` component with color variants
 - **Maintenance status**: Color-coded via `getStatusColorClass()` (`overdue`/`upcoming`/`current`)
 - **Grid backgrounds**: Custom `bg-grid-light` / `bg-grid-dark` patterns

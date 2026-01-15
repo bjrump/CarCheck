@@ -30,8 +30,8 @@ export default function RootLayout({
           <ThemeProvider>
             <ToastProvider>
               <ConfirmDialogProvider>
-                <div className="h-screen flex flex-col overflow-hidden">
-                <nav className="flex-shrink-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+                <div className="min-h-screen flex flex-col">
+                <nav className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
                   <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-4">
                     <a href="/" className="flex items-center gap-3 group">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-indigo-600 text-accent-foreground font-bold shadow-lg shadow-accent/25 transition-transform group-hover:scale-105">
@@ -74,12 +74,10 @@ export default function RootLayout({
                   </div>
                 </nav>
                 
-                <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <div className="container mx-auto px-4 py-6 md:py-8 h-full">
+                <main className="flex-1 flex flex-col">
+                    <div className="container mx-auto px-4 py-6 md:py-8">
                       {children}
                     </div>
-                  </div>
                 </main>
               </div>
               </ConfirmDialogProvider>

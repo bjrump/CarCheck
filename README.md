@@ -81,7 +81,7 @@
 - 📋 **Bevorstehende Termine**: Listen für TÜV, Inspektionen und Reifenwechsel
 - ⏰ **Nächste Termine**: Übersicht der Termine in den nächsten 30 Tagen
 - 🚦 **Statusanzeigen**: Farbcodierte Statusanzeigen für alle Wartungstermine
-- 🖥️ **Neues Layout**: Nicht-scrollbares Dashboard für bessere Übersicht auf allen Geräten
+- 🖥️ **Layout**: Scrollbares Dashboard für intuitive Bedienung auf allen Geräten
 
 ### 🎨 Benutzeroberfläche
 

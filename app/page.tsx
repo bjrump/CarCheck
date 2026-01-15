@@ -91,8 +91,8 @@ function LandingPage() {
   ];
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto">
-      <section className="flex-1 flex flex-col justify-center text-center space-y-6 animate-fade-in">
+    <div className="flex flex-col">
+      <section className="flex flex-col justify-center text-center space-y-6 animate-fade-in py-12 md:py-20">
         <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent mx-auto">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -123,7 +123,7 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="flex-shrink-0 pb-6 space-y-4">
+      <section className="pb-6 space-y-4">
         <div className="text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">Features</p>
           <h2 className="text-2xl font-bold mt-1">Was CarCheck kann</h2>
@@ -347,8 +347,8 @@ function Dashboard() {
     ];
 
     return (
-      <div className="h-full flex flex-col animate-fade-in">
-        <div className="flex-shrink-0 space-y-4">
+      <div className="flex flex-col animate-fade-in">
+        <div className="space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <button onClick={handleBackToDashboard} className="btn btn-outline self-start">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -449,7 +449,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 pt-2 pb-4 overflow-y-auto">
+        <div className="pt-2 pb-4">
           {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TUVSection car={selectedCar} onUpdate={() => toast.success("TÜV-Daten aktualisiert")} />
@@ -495,8 +495,8 @@ function Dashboard() {
   }
 
   return (
-    <div className="h-full flex flex-col animate-fade-in">
-      <div className="flex-shrink-0 space-y-4 pb-4">
+    <div className="flex flex-col animate-fade-in">
+      <div className="space-y-4 pb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-medium">Dashboard</p>
@@ -532,7 +532,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="">
         {cars.length === 0 ? (
           <div className="glass text-center py-16 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
