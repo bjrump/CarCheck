@@ -372,7 +372,7 @@ Dieses Projekt ist unter der MIT Lizenz lizenziert. Siehe [LICENSE](LICENSE) fü
 
 <div align="center">
 
-**2025 Entwickelt mit ❤️ für Fahrzeugbesitzer**
+**2026 Entwickelt mit ❤️ für Fahrzeugbesitzer**
 
 [⬆ Nach oben](#-carcheck---fahrzeugverwaltung)
 
