@@ -98,16 +98,16 @@
 
 CarCheck basiert auf modernen Web-Technologien für beste Performance und Entwicklererfahrung:
 
-| Technologie | Version | Beschreibung |
-|-------------|---------|--------------|
-| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js) | 16.0 | React Framework mit App Router |
-| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react) | 19.0 | UI-Bibliothek |
-| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript) | 5.5 | Typsichere Entwicklung |
-| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 4.1 | Utility-First CSS Framework |
-| ![Convex](https://img.shields.io/badge/-Convex-FF6B6B?style=flat-square) | 1.31 | Real-time Backend-as-a-Service |
-| ![Clerk](https://img.shields.io/badge/-Clerk-6C47FF?style=flat-square) | 6.36 | Authentication & User Management |
-| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square) | 4.1 | Datumsberechnungen |
-| ![Vitest](https://img.shields.io/badge/-Vitest-FCC72B?style=flat-square&logo=vitest) | 4.0 | Unit Testing Framework |
+| Technologie                                                                                        | Version | Beschreibung                     |
+| -------------------------------------------------------------------------------------------------- | ------- | -------------------------------- |
+| ![Next.js](https://img.shields.io/badge/-Next.js-black?style=flat-square&logo=next.js)             | 16.0    | React Framework mit App Router   |
+| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react)                  | 19.0    | UI-Bibliothek                    |
+| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript)   | 5.5     | Typsichere Entwicklung           |
+| ![Tailwind CSS](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css) | 4.1     | Utility-First CSS Framework      |
+| ![Convex](https://img.shields.io/badge/-Convex-FF6B6B?style=flat-square)                           | 1.31    | Real-time Backend-as-a-Service   |
+| ![Clerk](https://img.shields.io/badge/-Clerk-6C47FF?style=flat-square)                             | 6.36    | Authentication & User Management |
+| ![date-fns](https://img.shields.io/badge/-date--fns-770C56?style=flat-square)                      | 4.1     | Datumsberechnungen               |
+| ![Vitest](https://img.shields.io/badge/-Vitest-FCC72B?style=flat-square&logo=vitest)               | 4.0     | Unit Testing Framework           |
 
 ---
 
@@ -180,13 +180,13 @@ CarCheck verwendet **Convex** als Backend-as-a-Service für Echtzeit-Datenspeich
 
 ### Warum Convex?
 
-| Vorteil | Beschreibung |
-|---------|--------------|
-| ⚡ **Echtzeit** | Automatische Synchronisation über alle Clients |
-| 🔐 **Sicher** | Integrierte Authentifizierung via Clerk JWT |
-| 🚀 **Serverless** | Kein Backend-Server zu verwalten |
-| 📊 **Typsicher** | TypeScript-first mit automatischer Codegenerierung |
-| 💰 **Kostenlos** | Großzügiger Free-Tier für persönliche Projekte |
+| Vorteil           | Beschreibung                                       |
+| ----------------- | -------------------------------------------------- |
+| ⚡ **Echtzeit**   | Automatische Synchronisation über alle Clients     |
+| 🔐 **Sicher**     | Integrierte Authentifizierung via Clerk JWT        |
+| 🚀 **Serverless** | Kein Backend-Server zu verwalten                   |
+| 📊 **Typsicher**  | TypeScript-first mit automatischer Codegenerierung |
+| 💰 **Kostenlos**  | Großzügiger Free-Tier für persönliche Projekte     |
 
 ### Datenmodell
 
@@ -322,6 +322,7 @@ bun start
 ### Problem: "Not authenticated" Fehler
 
 **Lösung:**
+
 - Überprüfen Sie die Clerk Umgebungsvariablen
 - Stellen Sie sicher, dass `CLERK_JWT_ISSUER_DOMAIN` korrekt ist
 - Melden Sie sich ab und wieder an
@@ -329,6 +330,7 @@ bun start
 ### Problem: Daten werden nicht synchronisiert
 
 **Lösung:**
+
 - Überprüfen Sie, ob Convex läuft (`npx convex dev`)
 - Überprüfen Sie `NEXT_PUBLIC_CONVEX_URL`
 - Schauen Sie in die Browser-Console auf Fehler
@@ -336,6 +338,7 @@ bun start
 ### Problem: TÜV/Inspektion wird nicht berechnet
 
 **Lösung:**
+
 - Stellen Sie sicher, dass Sie einen letzten Termin eingegeben haben
 - Überprüfen Sie das Datumsformat (YYYY-MM-DD)
 - Aktualisieren Sie die Seite (F5)
@@ -369,7 +372,7 @@ Dieses Projekt ist unter der MIT Lizenz lizenziert. Siehe [LICENSE](LICENSE) fü
 
 <div align="center">
 
-**Entwickelt mit ❤️ für Fahrzeugbesitzer**
+**2025 Entwickelt mit ❤️ für Fahrzeugbesitzer**
 
 [⬆ Nach oben](#-carcheck---fahrzeugverwaltung)
 
