@@ -1,7 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-01-11
-**Commit:** 2a8e065
+**Generated:** 2026-01-31
 **Branch:** main
 
 ## OVERVIEW
@@ -34,36 +33,36 @@ CarCheck/
 
 ## WHERE TO LOOK
 
-| Task | Location | Notes |
-|------|----------|-------|
-| Add vehicle feature | `app/components/` | Create component, import in `page.tsx` |
-| Modify backend logic | `convex/cars.ts` | Convex mutations/queries, NOT REST |
-| Change data model | `convex/schema.ts` + `app/lib/types.ts` | Schema validators + TS interfaces |
-| Add utility function | `app/lib/utils.ts` | Date/calculation helpers with `date-fns` |
-| Change styling | `app/styles/globals.css` | CSS variables for theming |
-| Auth configuration | `convex/auth.config.ts` | Clerk JWT provider settings |
-| CI/CD Config | `.github/workflows/` | CI/CD (ci.yml) & Stale Issues (stale-issues.yml) |
-
+| Task                 | Location                                | Notes                                            |
+| -------------------- | --------------------------------------- | ------------------------------------------------ |
+| Add vehicle feature  | `app/components/`                       | Create component, import in `page.tsx`           |
+| Modify backend logic | `convex/cars.ts`                        | Convex mutations/queries, NOT REST               |
+| Change data model    | `convex/schema.ts` + `app/lib/types.ts` | Schema validators + TS interfaces                |
+| Add utility function | `app/lib/utils.ts`                      | Date/calculation helpers with `date-fns`         |
+| Change styling       | `app/styles/globals.css`                | CSS variables for theming                        |
+| Auth configuration   | `convex/auth.config.ts`                 | Clerk JWT provider settings                      |
+| CI/CD Config         | `.github/workflows/`                    | CI/CD (ci.yml) & Stale Issues (stale-issues.yml) |
 
 ## CODE MAP
 
-| Symbol | Type | Location | Role |
-|--------|------|----------|------|
-| `Dashboard` | Function | `app/page.tsx` | Main authenticated view (Scrollable layout) |
-| `LandingPage` | Function | `app/page.tsx` | Guest landing page |
-| `Car` | Interface | `app/lib/types.ts` | Core vehicle data model |
-| `ConfirmDialog` | Component | `app/components/ConfirmDialog.tsx` | Custom confirmation modal (replaces native confirm) |
-| `useConfirmDialog` | Hook | `app/components/ConfirmDialog.tsx` | Hook to invoke confirmation dialog |
-| `CircularProgress` | Component | `app/components/CircularProgress.tsx` | Visual progress indicator |
-| `list` | Query | `convex/cars.ts` | Fetch all user's cars |
-| `create` | Mutation | `convex/cars.ts` | Create new vehicle |
-| `update` | Mutation | `convex/cars.ts` | Update vehicle (complex nested args) |
-| `remove` | Mutation | `convex/cars.ts` | Delete vehicle |
-| `calculateNextTireChangeDate` | Function | `app/lib/utils.ts` | Easter-based tire change logic |
+| Symbol                        | Type      | Location                              | Role                                                |
+| ----------------------------- | --------- | ------------------------------------- | --------------------------------------------------- |
+| `Dashboard`                   | Function  | `app/page.tsx`                        | Main authenticated view (Scrollable layout)         |
+| `LandingPage`                 | Function  | `app/page.tsx`                        | Guest landing page                                  |
+| `Car`                         | Interface | `app/lib/types.ts`                    | Core vehicle data model                             |
+| `ConfirmDialog`               | Component | `app/components/ConfirmDialog.tsx`    | Custom confirmation modal (replaces native confirm) |
+| `useConfirmDialog`            | Hook      | `app/components/ConfirmDialog.tsx`    | Hook to invoke confirmation dialog                  |
+| `CircularProgress`            | Component | `app/components/CircularProgress.tsx` | Visual progress indicator                           |
+| `list`                        | Query     | `convex/cars.ts`                      | Fetch all user's cars                               |
+| `create`                      | Mutation  | `convex/cars.ts`                      | Create new vehicle                                  |
+| `update`                      | Mutation  | `convex/cars.ts`                      | Update vehicle (complex nested args)                |
+| `remove`                      | Mutation  | `convex/cars.ts`                      | Delete vehicle                                      |
+| `calculateNextTireChangeDate` | Function  | `app/lib/utils.ts`                    | Easter-based tire change logic                      |
 
 ## CONVENTIONS
 
 ### Code Style
+
 - **Components**: `export default function Name()` (no named exports)
 - **Imports**: Absolute paths via `@/*` alias (maps to project root, NOT src)
 - **German UI**: All user-facing text in German, code in English
@@ -71,18 +70,21 @@ CarCheck/
 - **Dialogs**: Use `useConfirmDialog()` hook, NEVER `window.confirm()` or `window.alert()`
 
 ### Backend (Convex)
+
 - **Mutations**: Use `mutation({ args: {...}, handler: async (ctx, args) => {...} })`
 - **Queries**: Use `query({ args: {...}, handler: async (ctx, args) => {...} })`
 - **Auth**: Call `ctx.auth.getUserIdentity()` - throws if not authenticated
 - **Schema**: Validators in `convex/schema.ts`, TS types in `app/lib/types.ts`
 
 ### Components
+
 - **State**: Local useState, no global state library
 - **Data fetching**: `useQuery(api.cars.list)`, `useMutation(api.cars.update)`
 - **Forms**: Controlled inputs with inline validation
 - **Communication**: `window.dispatchEvent(new CustomEvent('addCar'))` (fragile - see anti-patterns)
 
 ### Styling
+
 - **Tailwind**: Utility-first with custom `.glass` class (glassmorphism)
 - **Theme**: CSS variables in `:root` / `.dark`, toggle via `ThemeProvider`
 - **Colors**: Use semantic vars (`--accent`, `--muted-foreground`, `--background`)
@@ -90,12 +92,12 @@ CarCheck/
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
-| Pattern | Count | Why Bad | Alternative |
-|---------|-------|---------|-------------|
-| `window.dispatchEvent` | 1 | Fragile coupling | Use React context |
-| `console.error` in prod | 6 | No proper error handling | Error boundary / logging service |
+| Pattern                 | Count | Why Bad                  | Alternative                      |
+| ----------------------- | ----- | ------------------------ | -------------------------------- |
+| `window.dispatchEvent`  | 1     | Fragile coupling         | Use React context                |
+| `console.error` in prod | 6     | No proper error handling | Error boundary / logging service |
 
-*Note: Previous `alert()` violations have been resolved by introducing `ToastProvider` and `ConfirmDialog`.*
+_Note: Previous `alert()` violations have been resolved by introducing `ToastProvider` and `ConfirmDialog`._
 
 ## UNIQUE STYLES
 
@@ -118,13 +120,13 @@ npx convex deploy    # Deploy Convex functions
 
 ## DOMAIN CONCEPTS
 
-| German Term | English | Description |
-|-------------|---------|-------------|
-| TUV | Vehicle inspection | German mandatory safety check (2-year cycle) |
-| Inspektion | Service inspection | Manufacturer maintenance (time + km based) |
-| Reifenwechsel | Tire change | Summer->Winter (Oct 1), Winter->Summer (Easter) |
-| Kilometerstand | Mileage | Current odometer reading |
-| Kennzeichen | License plate | Vehicle registration number |
+| German Term    | English            | Description                                     |
+| -------------- | ------------------ | ----------------------------------------------- |
+| TUV            | Vehicle inspection | German mandatory safety check (2-year cycle)    |
+| Inspektion     | Service inspection | Manufacturer maintenance (time + km based)      |
+| Reifenwechsel  | Tire change        | Summer->Winter (Oct 1), Winter->Summer (Easter) |
+| Kilometerstand | Mileage            | Current odometer reading                        |
+| Kennzeichen    | License plate      | Vehicle registration number                     |
 
 ## ENVIRONMENT VARIABLES
 
@@ -134,7 +136,7 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
 CLERK_JWT_ISSUER_DOMAIN
 
-# Required (Convex backend)  
+# Required (Convex backend)
 NEXT_PUBLIC_CONVEX_URL
 CONVEX_DEPLOY_KEY  # For production deployment
 ```
@@ -148,4 +150,4 @@ CONVEX_DEPLOY_KEY  # For production deployment
 - **CI/CD**: GitHub Actions workflows run Lint/Build and manage stale issues
 - **License**: MIT License (see LICENSE file)
 - **Proxy naming**: `proxy.ts` should be `middleware.ts` for Next.js convention
-- **Convex _generated/**: Auto-generated files with `eslint-disable` - never edit manually
+- **Convex \_generated/**: Auto-generated files with `eslint-disable` - never edit manually
