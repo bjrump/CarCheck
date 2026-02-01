@@ -29,7 +29,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.1.2",
-    "autoprefixer": "^10.4.19",
+    "autoprefixer": "^10.4.24",
     "convex-test": "^0.0.41",
     "dotenv": "^17.2.3",
     "eslint": "^9.0.0",
