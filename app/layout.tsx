@@ -8,8 +8,7 @@ import { ConfirmDialogProvider } from "@/app/components/ConfirmDialog";
 import {
   SignInButton,
   SignUpButton,
-  SignedIn,
-  SignedOut,
+  Show,
   UserButton,
 } from "@clerk/nextjs";
 
@@ -49,7 +48,7 @@ export default function RootLayout({
                     
                     <div className="flex items-center gap-2 md:gap-3">
                       <ThemeToggle />
-                      <SignedOut>
+                      <Show when="signed-out">
                         <SignInButton mode="modal">
                           <button className="btn btn-primary text-sm">
                             Anmelden
@@ -60,8 +59,8 @@ export default function RootLayout({
                             Registrieren
                           </button>
                         </SignUpButton>
-                      </SignedOut>
-                      <SignedIn>
+                      </Show>
+                      <Show when="signed-in">
                         <UserButton
                           appearance={{
                             elements: {
@@ -69,7 +68,7 @@ export default function RootLayout({
                             },
                           }}
                         />
-                      </SignedIn>
+                      </Show>
                     </div>
                   </div>
                 </nav>
