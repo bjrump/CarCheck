@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, Show } from "@clerk/nextjs";
 
 type ViewMode = "dashboard" | "add-car" | "edit-car" | "car-detail";
 type DetailTab = "overview" | "tuv" | "inspection" | "tires" | "fuel" | "history";
@@ -563,12 +563,12 @@ function Dashboard() {
 export default function Home() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <LandingPage />
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <Dashboard />
-      </SignedIn>
+      </Show>
     </>
   );
 }
