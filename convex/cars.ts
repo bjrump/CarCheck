@@ -236,7 +236,7 @@ export const update = mutation({
     }
 
     const { id: _id, eventLog: _eventLogArg, ...updates } = args;
-    const filteredUpdates = Object.fromEntries(
+    const filteredUpdates: Record<string, any> = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
 
