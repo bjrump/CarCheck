@@ -153,19 +153,16 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
     minValue: number = 0
   ) => {
     if (data.length === 0) return "";
-    const padding = 10;
-    const width = 100;
-    const height = 100;
     const range = maxValue - minValue || 1;
 
     return data
       .map((m, i) => {
         const x =
-          padding + (i / Math.max(data.length - 1, 1)) * (width - padding * 2);
+          SVG_PADDING + (i / Math.max(data.length - 1, 1)) * (SVG_WIDTH - SVG_PADDING * 2);
         const y =
-          height -
-          padding -
-          ((getValue(m) - minValue) / range) * (height - padding * 2);
+          SVG_HEIGHT -
+          SVG_PADDING -
+          ((getValue(m) - minValue) / range) * (SVG_HEIGHT - SVG_PADDING * 2);
         return `${i === 0 ? "M" : "L"} ${x} ${y}`;
       })
       .join(" ");
@@ -179,29 +176,26 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
     minValue: number = 0
   ) => {
     if (data.length === 0) return "";
-    const padding = 10;
-    const width = 100;
-    const height = 100;
     const range = maxValue - minValue || 1;
-    const baseline = height - padding;
+    const baseline = SVG_HEIGHT - SVG_PADDING;
 
     const linePath = data
       .map((m, i) => {
         const x =
-          padding + (i / Math.max(data.length - 1, 1)) * (width - padding * 2);
+          SVG_PADDING + (i / Math.max(data.length - 1, 1)) * (SVG_WIDTH - SVG_PADDING * 2);
         const y =
-          height -
-          padding -
-          ((getValue(m) - minValue) / range) * (height - padding * 2);
+          SVG_HEIGHT -
+          SVG_PADDING -
+          ((getValue(m) - minValue) / range) * (SVG_HEIGHT - SVG_PADDING * 2);
         return `${i === 0 ? "M" : "L"} ${x} ${y}`;
       })
       .join(" ");
 
     const lastX =
-      padding +
+      SVG_PADDING +
       ((data.length - 1) / Math.max(data.length - 1, 1)) *
-        (width - padding * 2);
-    const firstX = padding;
+        (SVG_WIDTH - SVG_PADDING * 2);
+    const firstX = SVG_PADDING;
 
     return `${linePath} L ${lastX} ${baseline} L ${firstX} ${baseline} Z`;
   };
