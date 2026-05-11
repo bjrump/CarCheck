@@ -112,6 +112,13 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
   const averagePricePerLiter =
     totalLitersUsed > 0 ? totalCost / totalLitersUsed : 0;
 
+  // SVG coordinate constants (must match generatePath / generateAreaPath)
+  const SVG_PADDING = 10;
+  const SVG_WIDTH = 100;
+  const SVG_HEIGHT = 100;
+  // Scale the minimum consumption down so the line doesn't sit flush at the baseline
+  const CONSUMPTION_MIN_SCALE = 0.9;
+
   // Calculate max values for scaling graphs
   const maxKm = Math.max(...monthlyData.map((m) => m.kmDriven), 1);
   const maxConsumption = Math.max(
@@ -310,8 +317,8 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
               />
               {/* Data points */}
               {monthlyData.map((m, i) => {
-                const x = 40 + (i / Math.max(monthlyData.length - 1, 1)) * 20;
-                const y = 60 - (m.kmDriven / maxKm) * 40;
+                const x = SVG_PADDING + (i / Math.max(monthlyData.length - 1, 1)) * (SVG_WIDTH - SVG_PADDING * 2);
+                const y = SVG_HEIGHT - SVG_PADDING - (m.kmDriven / maxKm) * (SVG_HEIGHT - SVG_PADDING * 2);
                 return (
                   <circle
                     key={i}
@@ -399,7 +406,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
                   monthlyData,
                   (m) => m.averageConsumption,
                   maxConsumption,
-                  minConsumption * 0.9
+                  minConsumption * CONSUMPTION_MIN_SCALE
                 )}
                 fill="url(#consumptionGradient)"
               />
@@ -409,7 +416,7 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
                   monthlyData,
                   (m) => m.averageConsumption,
                   maxConsumption,
-                  minConsumption * 0.9
+                  minConsumption * CONSUMPTION_MIN_SCALE
                 )}
                 fill="none"
                 stroke="#3b82f6"
@@ -419,11 +426,10 @@ export default function FuelAnalytics({ fuelEntries }: FuelAnalyticsProps) {
               />
               {/* Data points */}
               {monthlyData.map((m, i) => {
-                const x = 40 + (i / Math.max(monthlyData.length - 1, 1)) * 20;
-                const range = maxConsumption - minConsumption * 0.9 || 1;
-                const y =
-                  60 -
-                  ((m.averageConsumption - minConsumption * 0.9) / range) * 40;
+                const minVal = minConsumption * CONSUMPTION_MIN_SCALE;
+                const range = maxConsumption - minVal || 1;
+                const x = SVG_PADDING + (i / Math.max(monthlyData.length - 1, 1)) * (SVG_WIDTH - SVG_PADDING * 2);
+                const y = SVG_HEIGHT - SVG_PADDING - ((m.averageConsumption - minVal) / range) * (SVG_HEIGHT - SVG_PADDING * 2);
                 return <circle key={i} cx={x} cy={y} r="1" fill="#3b82f6" />;
               })}
             </svg>

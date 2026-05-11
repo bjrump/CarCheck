@@ -15,6 +15,7 @@ import {
   calculateNextInspectionDateByYear,
   calculateNextInspectionDateByKm,
   getEarliestDate,
+  AB_ZIELE_INTERVAL_KM,
 } from "@/app/lib/utils";
 import { useState } from "react";
 import ProgressBar from "./ProgressBar";
@@ -211,6 +212,24 @@ export default function InspectionSection({
             </div>
           </div>
 
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="inspection-completed"
+              checked={formData.completed}
+              onChange={(e) =>
+                setFormData({ ...formData, completed: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            <label
+              htmlFor="inspection-completed"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Inspektion abgeschlossen
+            </label>
+          </div>
+
           <div className="rounded-xl bg-accent/10 p-3 text-sm text-accent">
             <strong>Hinweis:</strong> Die nächste Inspektion wird automatisch
             basierend auf dem früheren Datum berechnet (Jahre oder Kilometer).
@@ -290,7 +309,7 @@ export default function InspectionSection({
               Nach Kilometer:
             </span>
             <span className="ml-2 font-medium">
-              {car.inspection.intervalKm === 95 &&
+              {car.inspection.intervalKm === AB_ZIELE_INTERVAL_KM &&
               car.inspection.nextInspectionDateByKm === null &&
               car.inspection.lastInspectionMileage !== null
                 ? formatRemainingKm(

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Car, Insurance } from "@/app/lib/types";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/app/components/ToastProvider";
 
 interface CarFormProps {
@@ -13,10 +14,11 @@ interface CarFormProps {
   onCancel?: () => void;
 }
 
-export default function CarForm({ car, onCreated, onUpdated: _onUpdated, onCancel }: CarFormProps) {
+export default function CarForm({ car, onCreated, onUpdated, onCancel }: CarFormProps) {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const createCar = useMutation(api.cars.create);
+  const updateCar = useMutation(api.cars.update);
   const [formData, setFormData] = useState({
     make: car?.make || "",
     model: car?.model || "",
@@ -34,29 +36,62 @@ export default function CarForm({ car, onCreated, onUpdated: _onUpdated, onCance
     setIsLoading(true);
 
     try {
-      const insurance: Insurance | null =
+      const hasAnyInsuranceField =
+        formData.insuranceProvider ||
+        formData.insurancePolicyNumber ||
+        formData.insuranceExpiryDate;
+      const hasAllInsuranceFields =
         formData.insuranceProvider &&
         formData.insurancePolicyNumber &&
-        formData.insuranceExpiryDate
-          ? {
-              provider: formData.insuranceProvider,
-              policyNumber: formData.insurancePolicyNumber,
-              expiryDate: formData.insuranceExpiryDate,
-            }
-          : null;
+        formData.insuranceExpiryDate;
 
-      await createCar({
-        make: formData.make,
-        model: formData.model,
-        year: parseInt(formData.year.toString()),
-        vin: formData.vin || undefined,
-        licensePlate: formData.licensePlate || undefined,
-        mileage: parseInt(formData.mileage.toString()),
-        insurance,
-      });
+      if (hasAnyInsuranceField && !hasAllInsuranceFields) {
+        toast.error(
+          "Wenn Versicherungsdaten angegeben werden, müssen alle 3 Felder (Versicherer, Versicherungsnummer, Ablaufdatum) ausgefüllt sein."
+        );
+        setIsLoading(false);
+        return;
+      }
 
-      if (onCreated) {
-        onCreated();
+      const insurance: Insurance | null = hasAllInsuranceFields
+        ? {
+            provider: formData.insuranceProvider,
+            policyNumber: formData.insurancePolicyNumber,
+            expiryDate: formData.insuranceExpiryDate,
+          }
+        : null;
+
+      if (car) {
+        const result = await updateCar({
+          id: car._id as Id<"cars">,
+          make: formData.make,
+          model: formData.model,
+          year: parseInt(formData.year.toString()),
+          vin: formData.vin || undefined,
+          licensePlate: formData.licensePlate || undefined,
+          mileage: parseInt(formData.mileage.toString()),
+          insurance,
+        });
+
+        toast.success("Fahrzeug erfolgreich aktualisiert");
+        if (onUpdated && result) {
+          onUpdated(result as Car);
+        }
+      } else {
+        await createCar({
+          make: formData.make,
+          model: formData.model,
+          year: parseInt(formData.year.toString()),
+          vin: formData.vin || undefined,
+          licensePlate: formData.licensePlate || undefined,
+          mileage: parseInt(formData.mileage.toString()),
+          insurance,
+        });
+
+        toast.success("Fahrzeug erfolgreich hinzugefügt");
+        if (onCreated) {
+          onCreated();
+        }
       }
     } catch (error: unknown) {
       const message =

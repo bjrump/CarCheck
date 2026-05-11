@@ -45,7 +45,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.liters || parseFloat(formData.liters) <= 0) {
+    const liters = parseFloat(formData.liters);
+    if (!formData.liters || isNaN(liters) || liters <= 0) {
       toast.warning("Bitte geben Sie eine gültige Literzahl ein");
       return;
     }
