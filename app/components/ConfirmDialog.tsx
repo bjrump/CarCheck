@@ -154,12 +154,12 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   const handleConfirm = useCallback(() => {
     dialog.resolve?.(true);
     setDialog({ isOpen: false, options: null, resolve: null });
-  }, [dialog.resolve]);
+  }, [dialog]);
 
   const handleCancel = useCallback(() => {
     dialog.resolve?.(false);
     setDialog({ isOpen: false, options: null, resolve: null });
-  }, [dialog.resolve]);
+  }, [dialog]);
 
   return (
     <ConfirmDialogContext.Provider value={{ confirm }}>
