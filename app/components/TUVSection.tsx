@@ -66,8 +66,10 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
       }
       setIsEditing(false);
       toast.success("TÜV-Informationen erfolgreich gespeichert");
-    } catch (_error) {
-      toast.error("Fehler beim Speichern der TÜV-Informationen");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error(`Fehler beim Speichern der TÜV-Informationen: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +105,24 @@ export default function TUVSection({ car, onUpdate }: TUVSectionProps) {
               }
               className="w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-foreground shadow-inner focus:border-transparent focus:ring-2 focus:ring-ring"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="tuv-completed"
+              checked={formData.completed}
+              onChange={(e) =>
+                setFormData({ ...formData, completed: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            <label
+              htmlFor="tuv-completed"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              TÜV abgeschlossen
+            </label>
           </div>
 
           <div className="rounded-xl bg-accent/10 p-3 text-sm text-accent">

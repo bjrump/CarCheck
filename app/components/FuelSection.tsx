@@ -45,7 +45,8 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.liters || parseFloat(formData.liters) <= 0) {
+    const validatedLiters = parseFloat(formData.liters);
+    if (!formData.liters || isNaN(validatedLiters) || validatedLiters <= 0) {
       toast.warning("Bitte geben Sie eine gültige Literzahl ein");
       return;
     }
@@ -75,14 +76,13 @@ export default function FuelSection({ car, onUpdate }: FuelSectionProps) {
         .pop();
 
       const kmDriven = previousEntry ? newMileage - previousEntry.mileage : undefined;
-      const liters = parseFloat(formData.liters);
-      const consumption = kmDriven && kmDriven > 0 ? (liters / kmDriven) * 100 : undefined;
+      const consumption = kmDriven && kmDriven > 0 ? (validatedLiters / kmDriven) * 100 : undefined;
 
       const newEntry: FuelEntry = {
         id: editingEntry?.id || crypto.randomUUID(),
         date: formData.date,
         mileage: newMileage,
-        liters,
+        liters: validatedLiters,
         kmDriven,
         consumption,
         pricePerLiter: formData.pricePerLiter ? parseFloat(formData.pricePerLiter) : undefined,

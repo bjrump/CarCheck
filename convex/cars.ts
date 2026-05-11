@@ -56,13 +56,26 @@ export const create = mutation({
     if (!identity) {
       throw new Error("Nicht authentifiziert");
     }
-    
+
+    if (!args.make || args.make.trim() === "") {
+      throw new Error("Marke darf nicht leer sein");
+    }
+    if (!args.model || args.model.trim() === "") {
+      throw new Error("Modell darf nicht leer sein");
+    }
+    if (!Number.isFinite(args.year) || args.year < 1886 || args.year > new Date().getFullYear() + 1) {
+      throw new Error("Ungültiges Baujahr");
+    }
+    if (!Number.isFinite(args.mileage) || args.mileage < 0) {
+      throw new Error("Kilometerstand darf nicht negativ sein");
+    }
+
     const defaultTuv = {
       lastAppointmentDate: null,
       nextAppointmentDate: null,
       completed: false,
     };
-    
+
     const defaultInspection = {
       lastInspectionDate: null,
       lastInspectionMileage: null,
@@ -73,7 +86,18 @@ export const create = mutation({
       intervalKm: 15000,
       completed: false,
     };
-    
+
+    const now = new Date().toISOString();
+    const eventLog = [
+      {
+        id: crypto.randomUUID(),
+        type: "car_created" as const,
+        date: now,
+        description: `Fahrzeug ${args.make} ${args.model} (${args.year}) angelegt`,
+        metadata: { make: args.make, model: args.model, year: args.year },
+      },
+    ];
+
     return await ctx.db.insert("cars", {
       userId: identity.tokenIdentifier,
       make: args.make,
@@ -88,6 +112,7 @@ export const create = mutation({
       tires: [],
       tireChangeEvents: [],
       currentTireId: null,
+      eventLog,
     });
   },
 });
@@ -200,17 +225,111 @@ export const update = mutation({
     if (!identity) {
       throw new Error("Nicht authentifiziert");
     }
-    
+
     const car = await ctx.db.get(args.id);
     if (!car || car.userId !== identity.tokenIdentifier) {
       throw new Error("Fahrzeug nicht gefunden");
     }
-    
-    const { id: _id, ...updates } = args;
-    const filteredUpdates = Object.fromEntries(
+
+    if (args.mileage !== undefined && args.mileage < 0) {
+      throw new Error("Kilometerstand darf nicht negativ sein");
+    }
+
+    const { id: _id, eventLog: _eventLogArg, ...updates } = args;
+    const filteredUpdates: Record<string, any> = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
-    
+
+    // Auto-generate event log entries based on what changed
+    const now = new Date().toISOString();
+    const existingLog = car.eventLog ?? [];
+    const newEvents: typeof existingLog = [];
+
+    const fuelEntriesGrew =
+      args.fuelEntries !== undefined &&
+      args.fuelEntries.length > (car.fuelEntries?.length ?? 0);
+
+    if (fuelEntriesGrew) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "fuel_entry",
+        date: now,
+        description: "Tankeintrag hinzugefügt",
+      });
+    }
+
+    if (
+      args.mileage !== undefined &&
+      args.mileage !== car.mileage &&
+      !fuelEntriesGrew
+    ) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "mileage_update",
+        date: now,
+        description: `Kilometerstand aktualisiert: ${car.mileage} → ${args.mileage} km`,
+        metadata: { von: car.mileage, auf: args.mileage },
+      });
+    }
+
+    if (args.tuv !== undefined) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "tuv_update",
+        date: now,
+        description: "TÜV-Informationen aktualisiert",
+      });
+    }
+
+    if (args.inspection !== undefined) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "inspection_update",
+        date: now,
+        description: "Inspektions-Informationen aktualisiert",
+      });
+    }
+
+    if (args.insurance !== undefined) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "insurance_update",
+        date: now,
+        description: "Versicherungsinformationen aktualisiert",
+      });
+    }
+
+    const carFieldUpdated =
+      args.make !== undefined ||
+      args.model !== undefined ||
+      args.year !== undefined ||
+      args.vin !== undefined ||
+      args.licensePlate !== undefined;
+    if (carFieldUpdated) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "car_updated",
+        date: now,
+        description: "Fahrzeugdaten aktualisiert",
+      });
+    }
+
+    const tireChangeGrew =
+      args.tireChangeEvents !== undefined &&
+      args.tireChangeEvents.length > (car.tireChangeEvents?.length ?? 0);
+    if (tireChangeGrew) {
+      newEvents.push({
+        id: crypto.randomUUID(),
+        type: "tire_change",
+        date: now,
+        description: "Reifenwechsel durchgeführt",
+      });
+    }
+
+    if (newEvents.length > 0) {
+      filteredUpdates.eventLog = [...existingLog, ...newEvents];
+    }
+
     await ctx.db.patch(args.id, filteredUpdates);
     return await ctx.db.get(args.id);
   },

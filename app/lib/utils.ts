@@ -10,6 +10,10 @@ import { de } from "date-fns/locale";
 
 // Constants
 const UPCOMING_THRESHOLD_DAYS = 30; // Days before an appointment is considered "upcoming"
+// Sentinel value for the "AB Ziele 95" emission-compliance inspection regime.
+// When intervalKm equals this value the km-based date cannot be calculated
+// (the inspection is triggered by condition, not distance).
+export const AB_ZIELE_INTERVAL_KM = 95;
 
 // Helper function to parse date (handles both YYYY-MM-DD and ISO formats)
 export function parseDate(date: string | null): Date | null {
@@ -101,7 +105,7 @@ export function calculateNextInspectionDateByKm(
   if (!lastDate || lastMileage === null) return null;
 
   // For AB Ziele 95, don't calculate expected time
-  if (intervalKm === 95) {
+  if (intervalKm === AB_ZIELE_INTERVAL_KM) {
     return null;
   }
 
