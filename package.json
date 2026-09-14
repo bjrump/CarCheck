@@ -30,7 +30,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.5.4",
-    "convex-test": "^0.0.55",
+    "convex-test": "^0.0.57",
     "dotenv": "^17.4.2",
     "eslint": "^10.8.0",
     "eslint-config-next": "^16.3.4",
