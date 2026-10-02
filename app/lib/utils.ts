@@ -1,4 +1,4 @@
-import { differenceInMonths, isValid, parseISO } from "date-fns";
+import { addMonths, differenceInMonths, isValid, parseISO } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Car, FuelEntry, Tire, TireType } from "./types";
 
@@ -7,7 +7,7 @@ const UPCOMING_THRESHOLD_KM = 1000;
 const DAY_MS = 86_400_000;
 const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ZONED_TIMESTAMP =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-](\d{2}):?(\d{2}))$/;
 const berlinCalendar = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Berlin",
   year: "numeric",
@@ -63,7 +63,13 @@ function berlinDay(date: Date): string {
 export function normalizeCalendarDate(value: string | null): string | null {
   if (!value) return null;
   if (CALENDAR_DATE.test(value)) return calendarParts(value) ? value : null;
-  if (!ZONED_TIMESTAMP.test(value)) return null;
+  const timestamp = ZONED_TIMESTAMP.exec(value);
+  if (
+    !timestamp ||
+    Number(timestamp[1] ?? 0) > 23 ||
+    Number(timestamp[2] ?? 0) > 59
+  )
+    return null;
   const date = parseISO(value);
   if (!isValid(date)) return null;
   const calendarDate = berlinDay(date);
@@ -142,10 +148,52 @@ export function formatCurrency(value: number | null): string {
       }).format(value);
 }
 
-// Account for binary floating-point error at the half-cent boundary.
+function decimalParts(value: number): { coefficient: bigint; exponent: number } {
+  const [coefficient, exponent = "0"] = String(value).split("e");
+  return {
+    coefficient: BigInt(coefficient.replace(".", "")),
+    exponent: Number(exponent) - (coefficient.split(".")[1]?.length ?? 0),
+  };
+}
+
+/** Round decimal cents exactly, with the same tie direction as Math.round. */
+function roundDecimalCurrency(coefficient: bigint, exponent: number): number {
+  const centsExponent = exponent + 2;
+  if (centsExponent >= 0)
+    return Number(`${coefficient}e${exponent}`);
+  const divisor = BigInt(10) ** BigInt(-centsExponent);
+  let cents = coefficient / divisor;
+  const doubledRemainder = (coefficient % divisor) * BigInt(2);
+  if (doubledRemainder >= divisor) cents += BigInt(1);
+  else if (doubledRemainder < -divisor) cents -= BigInt(1);
+  return Number(`${cents}e-2`);
+}
+
 export function roundCurrency(value: number): number {
-  const cents = value * 100;
-  return Math.round(cents + Number.EPSILON * Math.abs(cents)) / 100;
+  if (!Number.isFinite(value)) return value;
+  const { coefficient, exponent } = decimalParts(value);
+  return roundDecimalCurrency(coefficient, exponent);
+}
+
+/** Multiply the entered decimal liters and pump price before rounding to receipt cents. */
+export function calculateFuelCost(liters: number, pricePerLiter: number): number {
+  if (!Number.isFinite(liters) || !Number.isFinite(pricePerLiter))
+    return liters * pricePerLiter;
+  const quantity = decimalParts(liters);
+  const price = decimalParts(pricePerLiter);
+  return roundDecimalCurrency(
+    quantity.coefficient * price.coefficient,
+    quantity.exponent + price.exponent,
+  );
+}
+
+/** Fractional liters are supported; quantities outside reliable numeric precision are not. */
+export function isValidFuelLiters(value: number): boolean {
+  return Number.isFinite(value) && value > 0 && value <= Number.MAX_SAFE_INTEGER;
+}
+
+function isUsableMileage(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= Number.MAX_SAFE_INTEGER;
 }
 
 export function calculateNextTUVDate(lastDate: string | null): string | null {
@@ -173,7 +221,7 @@ export function calculateRemainingKm(
     intervalKm === AB_ZIELE_INTERVAL_KM
   )
     return null;
-  return lastMileage + intervalKm - currentMileage;
+  return intervalKm - (currentMileage - lastMileage);
 }
 
 export function calculateNextInspectionDateByKm(
@@ -283,7 +331,9 @@ export function getTireMileage(car: Car, tire: Tire): number {
     .find((event) => event.tireId === tire.id && event.changeType === "mount");
   return (
     tire.currentMileage +
-    (mount ? Math.max(0, car.mileage - mount.carMileage) : 0)
+    (mount && isUsableMileage(mount.carMileage) && isUsableMileage(car.mileage)
+      ? Math.max(0, car.mileage - mount.carMileage)
+      : 0)
   );
 }
 
@@ -440,11 +490,14 @@ export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
           result.pricePerLiter !== undefined &&
           Number.isFinite(result.pricePerLiter) &&
           result.pricePerLiter >= 0 &&
-          Number.isFinite(result.liters)
+          isValidFuelLiters(result.liters)
         ) {
-          result.totalCost = roundCurrency(
-            result.pricePerLiter * result.liters,
-          );
+          const cost = calculateFuelCost(result.liters, result.pricePerLiter);
+          if (
+            Number.isFinite(cost) &&
+            Number.isSafeInteger(Math.round(cost * 100))
+          )
+            result.totalCost = cost;
         }
       }
       return result;
@@ -457,15 +510,27 @@ export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
         firstDate.localeCompare(secondDate) || first.mileage - second.mileage
       );
     });
+  let highestMileage = 0;
   return sorted.map((entry, index) => {
     const previous = sorted[index - 1];
     const kmDriven = previous ? entry.mileage - previous.mileage : 0;
-    return normalizeCalendarDate(entry.date) &&
+    const usableReading =
+      normalizeCalendarDate(entry.date) && isUsableMileage(entry.mileage);
+    const consumption = (entry.liters / kmDriven) * 100;
+    const usableInterval =
+      usableReading &&
+      previous &&
+      normalizeCalendarDate(previous.date) &&
+      isUsableMileage(previous.mileage) &&
+      previous.mileage >= highestMileage &&
       kmDriven > 0 &&
       Number.isFinite(kmDriven) &&
-      Number.isFinite(entry.liters) &&
-      entry.liters > 0
-      ? { ...entry, kmDriven, consumption: (entry.liters / kmDriven) * 100 }
+      isValidFuelLiters(entry.liters) &&
+      Number.isFinite(consumption);
+    // A legacy rollback cannot establish the next interval's starting mileage.
+    if (usableReading) highestMileage = Math.max(highestMileage, entry.mileage);
+    return usableInterval
+      ? { ...entry, kmDriven, consumption }
       : entry;
   });
 }
@@ -481,13 +546,13 @@ export function getFuelSummary(entries: FuelEntry[]): {
   const calculated = recalculateFuelEntries(entries);
   let totalLiters = 0;
   let pricedLiters = 0;
+  let pricedCost = 0;
   let totalCost = 0;
   let hasCost = false;
   let intervalLiters = 0;
   let totalKm = 0;
   for (const entry of calculated) {
-    if (Number.isFinite(entry.liters) && entry.liters > 0)
-      totalLiters += entry.liters;
+    if (isValidFuelLiters(entry.liters)) totalLiters += entry.liters;
     if (
       entry.totalCost !== undefined &&
       Number.isFinite(entry.totalCost) &&
@@ -495,20 +560,26 @@ export function getFuelSummary(entries: FuelEntry[]): {
     ) {
       totalCost += entry.totalCost;
       hasCost = true;
-      if (entry.liters > 0 && Number.isFinite(entry.liters))
+      if (isValidFuelLiters(entry.liters)) {
         pricedLiters += entry.liters;
+        pricedCost += entry.totalCost;
+      }
     }
     if (entry.kmDriven !== undefined && entry.kmDriven > 0) {
       totalKm += entry.kmDriven;
       intervalLiters += entry.liters;
     }
   }
+  const averagePrice = pricedCost / pricedLiters;
+  const averageConsumption = (intervalLiters / totalKm) * 100;
   return {
     entries: calculated,
     totalLiters,
-    totalCost: hasCost ? totalCost : null,
-    averagePrice: pricedLiters > 0 ? totalCost / pricedLiters : null,
-    averageConsumption: totalKm > 0 ? (intervalLiters / totalKm) * 100 : null,
+    totalCost: hasCost && Number.isFinite(totalCost) ? totalCost : null,
+    averagePrice:
+      pricedLiters > 0 && Number.isFinite(averagePrice) ? averagePrice : null,
+    averageConsumption:
+      totalKm > 0 && Number.isFinite(averageConsumption) ? averageConsumption : null,
     totalKm,
   };
 }
@@ -575,8 +646,7 @@ export function calculateTimeElapsed(
     return null;
   const today = parseDate(todayDate(now))!;
   const months = Math.max(0, differenceInMonths(today, last));
-  const afterMonths = new Date(last);
-  afterMonths.setMonth(afterMonths.getMonth() + months);
+  const afterMonths = addMonths(last, months);
   const afterDate = dateString(
     afterMonths.getFullYear(),
     afterMonths.getMonth() + 1,

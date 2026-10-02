@@ -6,11 +6,13 @@ import type { Car, FuelEntry, TireType } from "@/app/lib/types";
 import { errorMessage, type CarActions } from "@/app/lib/actions";
 import {
   AB_ZIELE_INTERVAL_KM,
+  calculateFuelCost,
   calculateNextInspectionDateByYear,
   calculateNextTUVDate,
   formatCurrency,
   formatDate,
   formatNumber,
+  isValidFuelLiters,
   roundCurrency,
   todayDate,
   toDateInput,
@@ -338,7 +340,7 @@ function VehicleForm({
   const [values, setValues] = useState({
     make: car?.make ?? "",
     model: car?.model ?? "",
-    year: String(car?.year ?? new Date().getFullYear()),
+    year: String(car?.year ?? Number(todayDate().slice(0, 4))),
     mileage: "0",
     vin: car?.vin ?? "",
     licensePlate: car?.licensePlate ?? "",
@@ -359,7 +361,7 @@ function VehicleForm({
       values.year,
       "Baujahr",
       1886,
-      new Date().getFullYear() + 1,
+      Number(todayDate().slice(0, 4)) + 1,
     );
     if (yearError) return yearError;
     if (!car) {
@@ -445,7 +447,7 @@ function VehicleForm({
           required
           type="number"
           min={1886}
-          max={new Date().getFullYear() + 1}
+          max={Number(todayDate().slice(0, 4)) + 1}
           step={1}
           value={values.year}
           onChange={(event) =>
@@ -902,7 +904,7 @@ function FuelForm({
     entry.totalCost !== undefined &&
     Math.abs(
       roundCurrency(entry.totalCost) -
-        roundCurrency(entry.pricePerLiter * entry.liters),
+        calculateFuelCost(entry.liters, entry.pricePerLiter),
     ) <= 0.010001;
   const [priceMode, setPriceMode] = useState(
     entry?.totalCost !== undefined && !priceMatchesReceipt
@@ -921,7 +923,7 @@ function FuelForm({
     priceMode === "total"
       ? numberValue(totalCost)
       : (retainedReceiptTotal ??
-        numberValue(liters) * numberValue(pricePerLiter));
+        calculateFuelCost(numberValue(liters), numberValue(pricePerLiter)));
 
   function validate() {
     const unchangedLegacyMileage =
@@ -934,8 +936,8 @@ function FuelForm({
         ? undefined
         : integerError(mileage, "Kilometerstand"));
     if (error) return error;
-    if (!Number.isFinite(numberValue(liters)) || numberValue(liters) <= 0)
-      return "Bitte gib eine Literzahl größer als 0 ein.";
+    if (!isValidFuelLiters(numberValue(liters)))
+      return "Bitte gib eine gültige Literzahl größer als 0 ein.";
     if (
       enteredPrice.trim() &&
       (!Number.isFinite(numberValue(enteredPrice)) ||
