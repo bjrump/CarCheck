@@ -102,10 +102,22 @@ export const prepare = action({
     }
     if (owners.size > 1) throw new Error("Ambiguous legacy ownership");
     const owner = owners.values().next().value;
-    if (owner)
+    if (owner) {
+      const separator = owner.indexOf("|");
+      const ownerIssuer = owner.slice(0, separator);
+      const ownerSubject = owner.slice(separator + 1);
+      if (
+        separator <= 0 ||
+        !ownerSubject ||
+        ownerSubject.includes("|") ||
+        ownerIssuer === identity.issuer ||
+        ownerIssuer !== process.env.CLERK_LEGACY_ISSUER_DOMAIN
+      )
+        throw new Error("Invalid legacy owner mapping");
       await ctx.runMutation(internal.identity.bindOwner, {
         identity: identity.tokenIdentifier,
         owner,
       });
+    }
   },
 });

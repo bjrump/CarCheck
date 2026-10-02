@@ -52,6 +52,7 @@ function clerkUser(
 describe("Clerk production ownership migration", () => {
   beforeEach(() => {
     vi.stubEnv("CLERK_JWT_ISSUER_DOMAIN", issuer);
+    vi.stubEnv("CLERK_LEGACY_ISSUER_DOMAIN", "https://old.clerk.accounts.dev");
     vi.stubEnv("CLERK_SECRET_KEY", "test-only-secret");
     vi.stubEnv(
       "CLERK_LEGACY_GOOGLE_OWNERS",
@@ -228,6 +229,41 @@ describe("Clerk production ownership migration", () => {
       "Ambiguous legacy ownership",
     );
     expect(await owner.query(api.cars.list)).toEqual([]);
+  });
+
+  it.each([
+    `${issuer}|other-user`,
+    "https://unknown.clerk.accounts.dev|other-user",
+    "malformed-owner",
+    "|old-user",
+    "https://old.clerk.accounts.dev|",
+    "https://old.clerk.accounts.dev|old-user|extra",
+  ])("rejects an invalid owner namespace: %s", async (invalidOwner) => {
+    const { t, owner, other, carId } = await fixture();
+    const otherCarId = await other.mutation(api.cars.create, carInput);
+    vi.stubEnv(
+      "CLERK_LEGACY_GOOGLE_OWNERS",
+      JSON.stringify({
+        "google-owner": invalidOwner,
+      }),
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json(clerkUser())),
+    );
+    await expect(owner.action(api.identity.prepare)).rejects.toThrow(
+      "Invalid legacy owner mapping",
+    );
+    expect(await owner.query(api.cars.list)).toEqual([]);
+    expect((await other.query(api.cars.list)).map((car) => car._id)).toEqual([
+      otherCarId,
+    ]);
+    expect(await t.run((ctx) => ctx.db.get(carId))).toMatchObject({
+      userId: legacyOwner,
+    });
+    expect(
+      await t.run((ctx) => ctx.db.query("ownerAliases").collect()),
+    ).toEqual([]);
   });
 
   it("leaves the old instance functional and rejects anonymous migration", async () => {
