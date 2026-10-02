@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Shield } from "lucide-react";
 import ThemeToggle from "@/app/components/ThemeToggle";
 
 export type AppView = "garage" | "tasks" | "history";
@@ -43,6 +43,13 @@ export default function AppHeader({
         </nav>
       )}
       <div className="flex items-center gap-3">
+        <Link
+          href="/datenschutz"
+          aria-label="Datenschutz"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Shield size={16} />
+        </Link>
         <ThemeToggle />
         {account}
       </div>

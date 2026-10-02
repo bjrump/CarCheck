@@ -9,6 +9,8 @@
  */
 
 import type * as cars from "../cars.js";
+import type * as identity from "../identity.js";
+import type * as owners from "../owners.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   cars: typeof cars;
+  identity: typeof identity;
+  owners: typeof owners;
 }>;
 
 /**

@@ -15,6 +15,7 @@ import {
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { insuranceValidator, tireTypeValidator } from "./schema";
+import { vehicleOwner } from "./owners";
 
 type Car = Doc<"cars">;
 type CarEvent = NonNullable<Car["eventLog"]>[number];
@@ -81,7 +82,7 @@ async function requireCar(ctx: MutationCtx, id: Id<"cars">) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new ConvexError("Nicht authentifiziert");
   const car = await ctx.db.get(id);
-  if (!car || car.userId !== identity.tokenIdentifier) {
+  if (!car || car.userId !== (await vehicleOwner(ctx, identity))) {
     throw new ConvexError("Fahrzeug nicht gefunden");
   }
   return car;
@@ -300,9 +301,10 @@ export const list = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
+    const owner = await vehicleOwner(ctx, identity);
     return await ctx.db
       .query("cars")
-      .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_user", (q) => q.eq("userId", owner))
       .collect();
   },
 });
@@ -313,7 +315,7 @@ export const getById = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     const car = await ctx.db.get(args.id);
-    return car?.userId === identity.tokenIdentifier ? car : null;
+    return car?.userId === (await vehicleOwner(ctx, identity)) ? car : null;
   },
 });
 
@@ -335,7 +337,7 @@ export const create = mutation({
     requireYear(args.year);
     requireMileage(args.mileage);
     return await ctx.db.insert("cars", {
-      userId: identity.tokenIdentifier,
+      userId: await vehicleOwner(ctx, identity),
       make,
       model,
       year: args.year,
