@@ -12,6 +12,7 @@ import VehicleDialogs, {
 } from "@/app/components/VehicleDialogs";
 import { ToastProvider } from "@/app/components/ToastProvider";
 import type { CarActions } from "@/app/lib/actions";
+import type { Car } from "@/app/lib/types";
 import { api } from "@/convex/_generated/api";
 import schema from "@/convex/schema";
 
@@ -21,7 +22,13 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-async function form(kind: VehicleDialog["kind"], editVehicle = false) {
+async function form(
+  kind: VehicleDialog["kind"],
+  editVehicle = false,
+  initial: Partial<
+    Pick<Car, "mileage" | "tuv" | "inspection" | "tireChangeEvents">
+  > = {},
+) {
   const t = convexTest(schema, modules);
   const owner = t.withIdentity({ tokenIdentifier: "form-edge-owner" });
   const carId = await owner.mutation(api.cars.create, {
@@ -74,6 +81,9 @@ async function form(kind: VehicleDialog["kind"], editVehicle = false) {
       });
     });
   }
+  await t.run(async (ctx) => {
+    await ctx.db.patch(carId, initial);
+  });
   const car = (await owner.query(api.cars.list))[0];
   const actions = {
     create: vi.fn<CarActions["create"]>().mockResolvedValue(carId),
@@ -116,6 +126,174 @@ function save() {
 }
 
 describe("form input and calculation contracts", () => {
+  const latestMaintenance = {
+    tuv: {
+      lastAppointmentDate: "2025-06-01",
+      nextAppointmentDate: "2027-06-01",
+      completed: true,
+    },
+    inspection: {
+      lastInspectionDate: "2025-06-01",
+      lastInspectionMileage: 50000,
+      nextInspectionDateByYear: "2027-06-01",
+      nextInspectionDateByKm: null,
+      nextInspectionDate: "2027-06-01",
+      intervalYears: 2,
+      intervalKm: 20000,
+      completed: true,
+    },
+  } satisfies Pick<Car, "tuv" | "inspection">;
+
+  it.each(["tuv", "inspection"] as const)(
+    "records an older %s by default without replacing the latest service basis",
+    async (kind) => {
+      const { actions } = await form(kind, false, latestMaintenance);
+      expect(screen.getByLabelText("Eintragsart")).toHaveProperty("value", "add");
+      enter(
+        kind === "tuv" ? "Datum der Untersuchung" : "Datum der Inspektion",
+        "2024-06-01",
+      );
+      if (kind === "inspection") {
+        enter("Kilometerstand (km)", "49000");
+        enter("Alle wie viele Jahre?", "1");
+        enter("Alle wie viele Kilometer?", "15000");
+        expect(screen.getByText(/70\.000 km/)).toBeTruthy();
+      }
+      expect(screen.getByText("01.06.2027")).toBeTruthy();
+      expect(
+        screen.getByText(
+          "Historischer Eintrag. Die aktuelle Frist bleibt unverändert.",
+        ),
+      ).toBeTruthy();
+      save();
+      const action = kind === "tuv" ? actions.saveTuv : actions.saveInspection;
+      await waitFor(() => expect(action).toHaveBeenCalledOnce());
+      const [args] = action.mock.calls[0];
+      expect(args).toMatchObject({ date: "2024-06-01" });
+      expect(args).not.toHaveProperty("correctLast");
+    },
+  );
+
+  it.each(["tuv", "inspection"] as const)(
+    "prefills and explicitly marks correction of the latest %s",
+    async (kind) => {
+      const { actions } = await form(kind, false, latestMaintenance);
+      if (kind === "inspection") {
+        enter("Kilometerstand (km)", "49000");
+        enter("Alle wie viele Jahre?", "3");
+        enter("Alle wie viele Kilometer?", "15000");
+      }
+      enter("Eintragsart", "correct");
+      const dateLabel =
+        kind === "tuv" ? "Datum der Untersuchung" : "Datum der Inspektion";
+      expect(screen.getByLabelText(dateLabel)).toHaveProperty(
+        "value",
+        "2025-06-01",
+      );
+      if (kind === "inspection") {
+        expect(screen.getByLabelText("Kilometerstand (km)")).toHaveProperty(
+          "value",
+          "50000",
+        );
+        expect(screen.getByLabelText("Alle wie viele Jahre?")).toHaveProperty(
+          "value",
+          "2",
+        );
+        expect(screen.getByLabelText("Alle wie viele Kilometer?")).toHaveProperty(
+          "value",
+          "20000",
+        );
+      }
+      enter(dateLabel, "2024-06-01");
+      expect(screen.getByText("01.06.2026")).toBeTruthy();
+      expect(
+        screen.queryByText(
+          "Historischer Eintrag. Die aktuelle Frist bleibt unverändert.",
+        ),
+      ).toBeNull();
+      save();
+      const action = kind === "tuv" ? actions.saveTuv : actions.saveInspection;
+      await waitFor(() => expect(action).toHaveBeenCalledOnce());
+      expect(action).toHaveBeenCalledWith(
+        expect.objectContaining({ date: "2024-06-01", correctLast: true }),
+      );
+    },
+  );
+
+  it("keeps the latest inspection deadline when adding a lower mileage on the same service day", async () => {
+    const { actions } = await form("inspection", false, latestMaintenance);
+    enter("Datum der Inspektion", "2025-06-01");
+    enter("Kilometerstand (km)", "49000");
+    enter("Alle wie viele Jahre?", "1");
+    expect(screen.getByText("01.06.2027")).toBeTruthy();
+    expect(screen.getByText(/70\.000 km/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Historischer Eintrag. Die aktuelle Frist bleibt unverändert.",
+      ),
+    ).toBeTruthy();
+    save();
+    await waitFor(() => expect(actions.saveInspection).toHaveBeenCalledOnce());
+    const [args] = actions.saveInspection.mock.calls[0];
+    expect(args).toMatchObject({ date: "2025-06-01", mileage: 49000 });
+    expect(args).not.toHaveProperty("correctLast");
+  });
+
+  it.each(["tuv", "inspection"] as const)(
+    "does not offer correction for %s without a valid previous service date",
+    async (kind) => {
+      await form(kind, false, {
+        tuv: { ...latestMaintenance.tuv, lastAppointmentDate: "2025-02-30" },
+        inspection: {
+          ...latestMaintenance.inspection,
+          lastInspectionDate: null,
+        },
+      });
+      expect(screen.queryByLabelText("Eintragsart")).toBeNull();
+    },
+  );
+
+  it("omits an inspection mileage deadline that cannot be represented exactly", async () => {
+    await form("inspection");
+    enter("Datum der Inspektion", "2024-06-01");
+    enter("Alle wie viele Kilometer?", String(Number.MAX_SAFE_INTEGER));
+    expect(screen.getByText("01.06.2025")).toBeTruthy();
+    expect(screen.queryByText(/oder bei/)).toBeNull();
+  });
+
+  it("passes a historical tire change below the current vehicle odometer to chronological backend validation", async () => {
+    const { actions } = await form("change-tires", false, {
+      mileage: 12000,
+      tireChangeEvents: [
+        {
+          id: "previous-mount",
+          date: "2024-01-01",
+          carMileage: 10000,
+          tireId: "mounted",
+          tireMileage: 8000,
+          changeType: "mount",
+        },
+      ],
+    });
+    enter("Reifensatz montieren", "spare");
+    enter("Datum des Wechsels", "2024-06-01");
+    enter("Kilometerstand (km)", "11000");
+    expect(screen.getByLabelText("Kilometerstand (km)")).toHaveProperty(
+      "min",
+      "0",
+    );
+    save();
+    await waitFor(() =>
+      expect(actions.changeTires).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tireId: "spare",
+          date: "2024-06-01",
+          mileage: 11000,
+        }),
+      ),
+    );
+  });
+
   it("stores fractional liters and the full three-decimal pump price, rounding only the paid total", async () => {
     const { actions, owner } = await form("fuel");
     actions.saveFuelEntry.mockImplementation((args) =>

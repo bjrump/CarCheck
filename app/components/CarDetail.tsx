@@ -29,6 +29,7 @@ import {
   getTireMileage,
   normalizeCalendarDate,
   type MaintenanceStatus,
+  type FuelStop,
 } from "@/app/lib/utils";
 import { useConfirmDialog } from "@/app/components/ConfirmDialog";
 import { useToast } from "@/app/components/ToastProvider";
@@ -249,7 +250,10 @@ function Overview({
           </Button>
         </div>
         {fuel.entries.length ? (
-          <FuelTable entries={[...fuel.entries].reverse().slice(0, 3)} />
+          <FuelTable
+            entries={[...fuel.entries].reverse().slice(0, 3)}
+            stops={fuel.stops}
+          />
         ) : (
           <p className="py-5 text-sm text-muted-foreground">
             Noch keine Tankfüllung. Trage deine erste ein.
@@ -616,15 +620,22 @@ function TiresView({
 
 function FuelTable({
   entries,
+  stops,
   pending,
   onEdit,
   onDelete,
 }: {
   entries: FuelEntry[];
+  stops: FuelStop[];
   pending?: boolean;
   onEdit?: (entry: FuelEntry) => void;
   onDelete?: (entry: FuelEntry) => void;
 }) {
+  const combinedStops = new Map(
+    stops
+      .filter((stop) => stop.receiptCount > 1)
+      .map((stop) => [stop.entryId, stop]),
+  );
   return (
     <Table className="garage-table">
       <TableHeader>
@@ -644,76 +655,85 @@ function FuelTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {entries.map((entry) => (
-          <TableRow key={entry.id}>
-            <TableCell>{formatDate(entry.date)}</TableCell>
-            <TableCell className="tabular-nums">
-              {formatNumber(entry.mileage)}
-            </TableCell>
-            <TableCell className="tabular-nums">
-              {decimal.format(entry.liters)} l
-            </TableCell>
-            <TableCell className="tabular-nums text-muted-foreground">
-              {entry.pricePerLiter !== undefined
-                ? `${price.format(entry.pricePerLiter)} €`
-                : entry.totalCost !== undefined && entry.liters > 0
-                  ? `${price.format(entry.totalCost / entry.liters)} €`
-                  : "Offen"}
-            </TableCell>
-            <TableCell className="tabular-nums">
-              {entry.totalCost !== undefined
-                ? formatCurrency(entry.totalCost)
-                : "Offen"}
-            </TableCell>
-            <TableCell className="tabular-nums">
-              {entry.consumption !== undefined
-                ? decimal.format(entry.consumption)
-                : "–"}
-              {entry.kmDriven !== undefined && (
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  {formatNumber(entry.kmDriven)} km
-                </span>
-              )}
-            </TableCell>
-            {onEdit && (
-              <TableCell className="max-w-52 whitespace-normal text-muted-foreground">
-                {entry.notes || "–"}
+        {entries.map((entry) => {
+          const combined = combinedStops.get(entry.id);
+          return (
+            <TableRow key={entry.id}>
+              <TableCell>{formatDate(entry.date)}</TableCell>
+              <TableCell className="tabular-nums">
+                {formatNumber(entry.mileage)}
               </TableCell>
-            )}
-            {onEdit && (
-              <TableCell>
-                <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={`Tankfüllung vom ${formatDate(entry.date)} bearbeiten`}
-                    disabled={pending}
-                    onClick={() => onEdit(entry)}
-                  >
-                    <Pencil />
-                  </Button>
-                  {onDelete && (
+              <TableCell className="tabular-nums">
+                {decimal.format(entry.liters)} l
+              </TableCell>
+              <TableCell className="tabular-nums text-muted-foreground">
+                {entry.pricePerLiter !== undefined
+                  ? `${price.format(entry.pricePerLiter)} €`
+                  : entry.totalCost !== undefined && entry.liters > 0
+                    ? `${price.format(entry.totalCost / entry.liters)} €`
+                    : "Offen"}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {entry.totalCost !== undefined
+                  ? formatCurrency(entry.totalCost)
+                  : "Offen"}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {entry.consumption !== undefined
+                  ? decimal.format(entry.consumption)
+                  : "–"}
+                {entry.kmDriven !== undefined && (
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {formatNumber(entry.kmDriven)} km
+                    {combined && (
+                      <> · {combined.receiptCount} Belege / {decimal.format(combined.liters)} l</>
+                    )}
+                  </span>
+                )}
+              </TableCell>
+              {onEdit && (
+                <TableCell className="max-w-52 whitespace-normal text-muted-foreground">
+                  {entry.notes || "–"}
+                </TableCell>
+              )}
+              {onEdit && (
+                <TableCell>
+                  <div className="flex justify-end gap-1">
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      aria-label={`Tankfüllung vom ${formatDate(entry.date)} löschen`}
+                      aria-label={`Tankfüllung vom ${formatDate(entry.date)} bearbeiten`}
                       disabled={pending}
-                      onClick={() => onDelete(entry)}
+                      onClick={() => onEdit(entry)}
                     >
-                      <Trash2 />
+                      <Pencil />
                     </Button>
-                  )}
-                </div>
-              </TableCell>
-            )}
-          </TableRow>
-        ))}
+                    {onDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Tankfüllung vom ${formatDate(entry.date)} löschen`}
+                        disabled={pending}
+                        onClick={() => onDelete(entry)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              )}
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
 }
 
-function MonthlyFuel({ entries }: { entries: FuelEntry[] }) {
+function MonthlyFuel({ entries, stops }: {
+  entries: FuelEntry[];
+  stops: FuelStop[];
+}) {
   const months = new Map<string, FuelEntry[]>();
   for (const entry of entries) {
     const date = normalizeCalendarDate(entry.date);
@@ -744,8 +764,10 @@ function MonthlyFuel({ entries }: { entries: FuelEntry[] }) {
             .sort(([a], [b]) => b.localeCompare(a))
             .map(([month, fills]) => {
               const summary = getFuelSummary(fills);
-              const intervals = fills.filter(
-                (entry) => entry.kmDriven !== undefined && entry.kmDriven > 0,
+              const intervals = stops.filter(
+                (stop) =>
+                  normalizeCalendarDate(stop.date)?.startsWith(month) &&
+                  stop.kmDriven !== undefined,
               );
               const km = intervals.reduce(
                 (sum, entry) => sum + (entry.kmDriven ?? 0),
@@ -876,6 +898,7 @@ function FuelView({
         {fuel.entries.length ? (
           <FuelTable
             entries={[...fuel.entries].reverse()}
+            stops={fuel.stops}
             pending={pending}
             onEdit={(entry) =>
               openDialog({ kind: "fuel", carId: car._id, entryId: entry.id })
@@ -897,11 +920,13 @@ function FuelView({
         {fuel.entries.length > 1 && (
           <p className="mt-4 text-xs text-muted-foreground">
             Der Verbrauch setzt vollständige Einträge und vergleichbare
-            Volltankungen voraus.
+            Volltankungen voraus. Belege bei gleichem Kilometerstand zählen als
+            ein Tankstopp. Sein Verbrauch steht am letzten Beleg und zählt in
+            dessen Monat.
           </p>
         )}
       </section>
-      <MonthlyFuel entries={fuel.entries} />
+      <MonthlyFuel entries={fuel.entries} stops={fuel.stops} />
     </>
   );
 }

@@ -552,6 +552,11 @@ function MileageForm({ car, actions, onClose }: CarFormProps) {
 
 function TuvForm({ car, actions, onClose }: CarFormProps) {
   const [date, setDate] = useState(todayDate());
+  const [correctLast, setCorrectLast] = useState(false);
+  const lastDate = toDateInput(car.tuv.lastAppointmentDate);
+  const historical =
+    !correctLast && lastDate !== "" && validDate(date) && date < lastDate;
+  const previewDate = historical ? lastDate : date;
   return (
     <FormDialog
       title="TÜV eintragen"
@@ -559,10 +564,28 @@ function TuvForm({ car, actions, onClose }: CarFormProps) {
       successMessage="TÜV gespeichert."
       validate={() => completedDateError(date)}
       onSave={async () => {
-        await actions.saveTuv({ carId: car._id, date });
+        await actions.saveTuv({
+          carId: car._id,
+          date,
+          ...(correctLast ? { correctLast: true } : {}),
+        });
       }}
       onClose={onClose}
     >
+      {lastDate && (
+        <SelectField
+          label="Eintragsart"
+          value={correctLast ? "correct" : "add"}
+          onChange={(event) => {
+            const correct = event.target.value === "correct";
+            setCorrectLast(correct);
+            setDate(correct ? lastDate : todayDate());
+          }}
+        >
+          <option value="add">Eintrag hinzufügen</option>
+          <option value="correct">Letzten Eintrag korrigieren</option>
+        </SelectField>
+      )}
       <InputField
         label="Datum der Untersuchung"
         required
@@ -576,12 +599,17 @@ function TuvForm({ car, actions, onClose }: CarFormProps) {
             : undefined
         }
       />
-      {validDate(date) && (
+      {validDate(previewDate) && (
         <p className="text-sm text-muted-foreground">
           Nächster TÜV:{" "}
           <span className="text-foreground">
-            {formatDate(calculateNextTUVDate(date))}
+            {formatDate(calculateNextTUVDate(previewDate))}
           </span>
+        </p>
+      )}
+      {historical && (
+        <p className="text-xs text-muted-foreground">
+          Historischer Eintrag. Die aktuelle Frist bleibt unverändert.
         </p>
       )}
     </FormDialog>
@@ -591,6 +619,7 @@ function TuvForm({ car, actions, onClose }: CarFormProps) {
 function InspectionForm({ car, actions, onClose }: CarFormProps) {
   const [date, setDate] = useState(todayDate());
   const [mileage, setMileage] = useState(String(car.mileage));
+  const [correctLast, setCorrectLast] = useState(false);
   const [intervalYears, setIntervalYears] = useState(
     String(car.inspection.intervalYears),
   );
@@ -604,12 +633,43 @@ function InspectionForm({ car, actions, onClose }: CarFormProps) {
   const [conditionBased, setConditionBased] = useState(
     car.inspection.intervalKm === AB_ZIELE_INTERVAL_KM,
   );
-  const nextDate =
+  const lastDate = toDateInput(car.inspection.lastInspectionDate);
+  const historical =
+    !correctLast &&
+    lastDate !== "" &&
     validDate(date) &&
-    Number.isSafeInteger(numberValue(intervalYears)) &&
-    numberValue(intervalYears) >= 1 &&
-    numberValue(intervalYears) <= 10
-      ? calculateNextInspectionDateByYear(date, numberValue(intervalYears))
+    (date < lastDate ||
+      (date === lastDate &&
+        car.inspection.lastInspectionMileage !== null &&
+        numberValue(mileage) < car.inspection.lastInspectionMileage));
+  const previewDate = historical ? lastDate : date;
+  const previewYears = historical
+    ? car.inspection.intervalYears
+    : numberValue(intervalYears);
+  const previewMileage = historical
+    ? car.inspection.lastInspectionMileage
+    : numberValue(mileage);
+  const previewIntervalKm = historical
+    ? car.inspection.intervalKm
+    : conditionBased
+      ? AB_ZIELE_INTERVAL_KM
+      : numberValue(intervalKm);
+  const nextMileage =
+    previewMileage !== null &&
+    Number.isSafeInteger(previewMileage) &&
+    previewMileage >= 0 &&
+    Number.isSafeInteger(previewIntervalKm) &&
+    previewIntervalKm > 0 &&
+    previewIntervalKm !== AB_ZIELE_INTERVAL_KM &&
+    Number.isSafeInteger(previewMileage + previewIntervalKm)
+      ? previewMileage + previewIntervalKm
+      : null;
+  const nextDate =
+    validDate(previewDate) &&
+    Number.isSafeInteger(previewYears) &&
+    previewYears >= 1 &&
+    previewYears <= 10
+      ? calculateNextInspectionDateByYear(previewDate, previewYears)
       : null;
 
   function validate() {
@@ -641,10 +701,43 @@ function InspectionForm({ car, actions, onClose }: CarFormProps) {
           intervalKm: conditionBased
             ? AB_ZIELE_INTERVAL_KM
             : numberValue(intervalKm),
+          ...(correctLast ? { correctLast: true } : {}),
         });
       }}
       onClose={onClose}
     >
+      {lastDate && (
+        <SelectField
+          label="Eintragsart"
+          value={correctLast ? "correct" : "add"}
+          onChange={(event) => {
+            const correct = event.target.value === "correct";
+            setCorrectLast(correct);
+            setDate(correct ? lastDate : todayDate());
+            setMileage(
+              String(
+                correct
+                  ? (car.inspection.lastInspectionMileage ?? car.mileage)
+                  : car.mileage,
+              ),
+            );
+            setIntervalYears(String(car.inspection.intervalYears));
+            setIntervalKm(
+              String(
+                car.inspection.intervalKm === AB_ZIELE_INTERVAL_KM
+                  ? 15000
+                  : car.inspection.intervalKm,
+              ),
+            );
+            setConditionBased(
+              car.inspection.intervalKm === AB_ZIELE_INTERVAL_KM,
+            );
+          }}
+        >
+          <option value="add">Eintrag hinzufügen</option>
+          <option value="correct">Letzten Eintrag korrigieren</option>
+        </SelectField>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <InputField
           label="Datum der Inspektion"
@@ -712,11 +805,13 @@ function InspectionForm({ car, actions, onClose }: CarFormProps) {
         <p className="text-sm text-muted-foreground">
           Spätestens{" "}
           <span className="text-foreground">{formatDate(nextDate)}</span>
-          {!conditionBased &&
-            Number.isSafeInteger(numberValue(mileage)) &&
-            Number.isSafeInteger(numberValue(intervalKm)) &&
-            ` oder bei ${formatNumber(numberValue(mileage) + numberValue(intervalKm))} km`}
+          {nextMileage !== null && ` oder bei ${formatNumber(nextMileage)} km`}
           .
+        </p>
+      )}
+      {historical && (
+        <p className="text-xs text-muted-foreground">
+          Historischer Eintrag. Die aktuelle Frist bleibt unverändert.
         </p>
       )}
     </FormDialog>
@@ -809,7 +904,7 @@ function ChangeTiresForm({ car, actions, onClose }: CarFormProps) {
       return "Bitte wähle einen Reifensatz oder „Nur demontieren“.";
     return (
       completedDateError(date) ||
-      integerError(mileage, "Kilometerstand", car.mileage)
+      integerError(mileage, "Kilometerstand")
     );
   }
 
@@ -867,7 +962,7 @@ function ChangeTiresForm({ car, actions, onClose }: CarFormProps) {
           label="Kilometerstand (km)"
           required
           type="number"
-          min={car.mileage}
+          min={0}
           step={1}
           value={mileage}
           onChange={(event) => setMileage(event.target.value)}

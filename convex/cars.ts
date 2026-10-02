@@ -3,6 +3,8 @@ import {
   calculateFuelCost,
   calculateNextInspectionDateByYear,
   calculateNextTUVDate,
+  formatDate,
+  formatNumber,
   getTireMileage,
   isValidFuelLiters,
   normalizeCalendarDate,
@@ -110,7 +112,10 @@ async function saveCar(
     const tire = car.tires.find((item) => item.id === car.currentTireId);
     if (tire) {
       const previousMileage = getTireMileage(car, tire);
-      const nextMileage = getTireMileage({ ...car, mileage: updates.mileage }, tire);
+      const nextMileage = getTireMileage(
+        { ...car, mileage: updates.mileage },
+        tire,
+      );
       if (
         Number.isFinite(previousMileage) &&
         previousMileage >= 0 &&
@@ -175,6 +180,89 @@ function validateFuelNeighbors(entries: FuelEntry[], entry: FuelEntry) {
   }
 }
 
+/** Preserve completed dates while removing the date replaced by an explicit correction. */
+function tuvDates(car: Car) {
+  const dates = new Set<string>();
+  for (const entry of car.eventLog ?? []) {
+    const metadata = entry.metadata;
+    if (
+      entry.type !== "tuv_update" ||
+      (metadata?.action !== "recorded" && metadata?.action !== "corrected")
+    )
+      continue;
+    const previousDate =
+      typeof metadata.previousDate === "string"
+        ? normalizeCalendarDate(metadata.previousDate)
+        : null;
+    if (previousDate) {
+      if (metadata.action === "corrected") dates.delete(previousDate);
+      else dates.add(previousDate);
+    }
+    const date =
+      typeof metadata.date === "string"
+        ? normalizeCalendarDate(metadata.date)
+        : null;
+    if (date) dates.add(date);
+  }
+  const lastDate = normalizeCalendarDate(car.tuv.lastAppointmentDate);
+  if (lastDate) dates.add(lastDate);
+  return [...dates];
+}
+
+/** Retain recorded services for chronology, excluding a deliberately replaced reading. */
+function inspectionReadings(car: Car, skipLatest: boolean) {
+  const readings = new Map<string, { date: string; mileage: number }>();
+  for (const entry of car.eventLog ?? []) {
+    const metadata = entry.metadata;
+    if (
+      entry.type !== "inspection_update" ||
+      (metadata?.action !== "recorded" && metadata?.action !== "corrected")
+    )
+      continue;
+    const previousDate =
+      typeof metadata.previousDate === "string"
+        ? normalizeCalendarDate(metadata.previousDate)
+        : null;
+    const previousMileage = metadata.previousMileage;
+    if (
+      previousDate &&
+      typeof previousMileage === "number" &&
+      Number.isFinite(previousMileage) &&
+      previousMileage >= 0
+    ) {
+      if (metadata.action === "corrected") {
+        readings.delete(`${previousDate}:${metadata.previousMileage}`);
+      } else {
+        readings.set(`${previousDate}:${previousMileage}`, {
+          date: previousDate,
+          mileage: previousMileage,
+        });
+      }
+    }
+    const date =
+      typeof metadata.date === "string"
+        ? normalizeCalendarDate(metadata.date)
+        : null;
+    const mileage = metadata.mileage;
+    if (
+      date &&
+      typeof mileage === "number" &&
+      Number.isFinite(mileage) &&
+      mileage >= 0
+    ) {
+      readings.set(`${date}:${mileage}`, { date, mileage });
+    }
+  }
+  const date = normalizeCalendarDate(car.inspection.lastInspectionDate);
+  const mileage = car.inspection.lastInspectionMileage;
+  if (date && mileage !== null && Number.isFinite(mileage) && mileage >= 0) {
+    const key = `${date}:${mileage}`;
+    if (skipLatest) readings.delete(key);
+    else readings.set(key, { date, mileage });
+  }
+  return [...readings.values()];
+}
+
 /** Different record types share one odometer; dates do not establish order within a day. */
 function validateDatedMileage(
   car: Car,
@@ -182,20 +270,14 @@ function validateDatedMileage(
   options: { skipFuel?: boolean; skipInspection?: boolean } = {},
 ) {
   const readings = [
-    ...(options.skipFuel ? [] : car.fuelEntries ?? [])
-      .map(({ date, mileage }) => ({ date, mileage })),
+    ...(options.skipFuel ? [] : (car.fuelEntries ?? [])).map(
+      ({ date, mileage }) => ({ date, mileage }),
+    ),
     ...car.tireChangeEvents.map(({ date, carMileage }) => ({
       date,
       mileage: carMileage,
     })),
-    ...(options.skipInspection
-      ? []
-      : [
-          {
-            date: car.inspection.lastInspectionDate,
-            mileage: car.inspection.lastInspectionMileage,
-          },
-        ]),
+    ...inspectionReadings(car, options.skipInspection === true),
   ];
   for (const previous of readings) {
     const date = normalizeCalendarDate(previous.date);
@@ -577,12 +659,9 @@ export const changeTires = mutation({
     const car = await requireCar(ctx, args.carId);
     const date = requireDate(args.date, true);
     requireMileage(args.mileage);
-    if (
-      args.mileage < car.mileage ||
-      car.tireChangeEvents.some((entry) => entry.carMileage > args.mileage)
-    ) {
+    if (car.tireChangeEvents.some((entry) => entry.carMileage > args.mileage)) {
       throw new ConvexError(
-        "Der Kilometerstand darf nicht kleiner als der aktuelle Kilometerstand sein.",
+        "Der Kilometerstand darf nicht kleiner als beim letzten Reifenwechsel sein.",
       );
     }
     if (args.tireId === car.currentTireId) {
@@ -642,18 +721,35 @@ export const changeTires = mutation({
         changeType: "mount",
       });
     }
+    const mileage = Math.max(car.mileage, args.mileage);
+    const tires = car.tires.map((tire) =>
+      tire.id === source?.id && sourceMileage !== null
+        ? { ...tire, currentMileage: sourceMileage }
+        : tire,
+    );
+    if (target) {
+      requireMileage(
+        getTireMileage(
+          {
+            ...car,
+            mileage,
+            currentTireId: target.id,
+            tireChangeEvents,
+            tires,
+          },
+          target,
+        ),
+        "Reifenlaufleistung",
+      );
+    }
     return await saveCar(
       ctx,
       car,
       {
-        mileage: args.mileage,
+        mileage,
         currentTireId: args.tireId,
         tireChangeEvents,
-        tires: car.tires.map((tire) =>
-          tire.id === source?.id && sourceMileage !== null
-            ? { ...tire, currentMileage: sourceMileage }
-            : tire,
-        ),
+        tires,
       },
       [
         event(
@@ -673,10 +769,49 @@ export const changeTires = mutation({
 });
 
 export const saveTuv = mutation({
-  args: { carId: v.id("cars"), date: v.string() },
+  args: {
+    carId: v.id("cars"),
+    date: v.string(),
+    correctLast: v.optional(v.boolean()),
+  },
   handler: async (ctx, args) => {
     const car = await requireCar(ctx, args.carId);
     const date = requireDate(args.date, true);
+    const lastDate = normalizeCalendarDate(car.tuv.lastAppointmentDate);
+    const dates = tuvDates(car);
+    if (
+      args.correctLast &&
+      dates.some(
+        (recordedDate) => recordedDate !== lastDate && recordedDate > date,
+      )
+    ) {
+      throw new ConvexError(
+        "Die Korrektur darf nicht vor einem weiteren gespeicherten TÜV-Termin liegen.",
+      );
+    }
+    const historical =
+      !args.correctLast && lastDate !== null && date < lastDate;
+    if (historical) {
+      const recorded = dates.includes(date);
+      return await saveCar(
+        ctx,
+        car,
+        {},
+        recorded
+          ? []
+          : [
+              event(
+                "tuv_update",
+                `Hauptuntersuchung nachgetragen: ${formatDate(date)}`,
+                {
+                  date,
+                  historical: true,
+                  action: "recorded",
+                },
+              ),
+            ],
+      );
+    }
     const tuv = {
       lastAppointmentDate: date,
       nextAppointmentDate: calculateNextTUVDate(date),
@@ -692,7 +827,19 @@ export const saveTuv = mutation({
       { tuv },
       unchanged
         ? []
-        : [event("tuv_update", "Hauptuntersuchung eingetragen", { date })],
+        : [
+            event(
+              "tuv_update",
+              args.correctLast
+                ? "Hauptuntersuchung korrigiert"
+                : "Hauptuntersuchung eingetragen",
+              {
+                date,
+                action: args.correctLast ? "corrected" : "recorded",
+                previousDate: car.tuv.lastAppointmentDate,
+              },
+            ),
+          ],
     );
   },
 });
@@ -704,6 +851,7 @@ export const saveInspection = mutation({
     mileage: v.number(),
     intervalYears: v.number(),
     intervalKm: v.number(),
+    correctLast: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const car = await requireCar(ctx, args.carId);
@@ -729,13 +877,70 @@ export const saveInspection = mutation({
       );
     }
     if (
+      args.correctLast &&
+      inspectionReadings(car, true).some(
+        (reading) =>
+          reading.date > date ||
+          (reading.date === date && reading.mileage > args.mileage),
+      )
+    ) {
+      throw new ConvexError(
+        "Die Korrektur darf nicht vor einer weiteren gespeicherten Inspektion liegen.",
+      );
+    }
+    if (
       normalizeCalendarDate(car.inspection.lastInspectionDate) !== date ||
       car.inspection.lastInspectionMileage !== args.mileage
     ) {
       validateDatedMileage(
         car,
         { date, mileage: args.mileage },
-        { skipInspection: true },
+        { skipInspection: args.correctLast === true },
+      );
+    }
+    const lastDate = normalizeCalendarDate(car.inspection.lastInspectionDate);
+    const lastMileage = car.inspection.lastInspectionMileage;
+    const historical =
+      !args.correctLast &&
+      lastDate !== null &&
+      (date < lastDate ||
+        (date === lastDate &&
+          lastMileage !== null &&
+          args.mileage < lastMileage));
+    if (historical) {
+      const activeReading = inspectionReadings(car, false).some(
+        (reading) => reading.date === date && reading.mileage === args.mileage,
+      );
+      const recorded =
+        activeReading &&
+        car.eventLog?.some(
+          (entry) =>
+            entry.type === "inspection_update" &&
+            entry.metadata?.date === date &&
+            entry.metadata?.mileage === args.mileage &&
+            entry.metadata?.intervalYears === args.intervalYears &&
+            entry.metadata?.intervalKm === args.intervalKm,
+        );
+      return await saveCar(
+        ctx,
+        car,
+        {},
+        recorded
+          ? []
+          : [
+              event(
+                "inspection_update",
+                `Inspektion nachgetragen: ${formatDate(date)} bei ${formatNumber(args.mileage)} km`,
+                {
+                  date,
+                  mileage: args.mileage,
+                  intervalYears: args.intervalYears,
+                  intervalKm: args.intervalKm,
+                  historical: true,
+                  action: "recorded",
+                },
+              ),
+            ],
       );
     }
     const nextDate = calculateNextInspectionDateByYear(
@@ -772,12 +977,21 @@ export const saveInspection = mutation({
       unchanged
         ? []
         : [
-            event("inspection_update", "Inspektion eingetragen", {
-              date,
-              mileage: args.mileage,
-              intervalYears: args.intervalYears,
-              intervalKm: args.intervalKm,
-            }),
+            event(
+              "inspection_update",
+              args.correctLast
+                ? "Inspektion korrigiert"
+                : "Inspektion eingetragen",
+              {
+                date,
+                mileage: args.mileage,
+                intervalYears: args.intervalYears,
+                intervalKm: args.intervalKm,
+                action: args.correctLast ? "corrected" : "recorded",
+                previousDate: car.inspection.lastInspectionDate,
+                previousMileage: car.inspection.lastInspectionMileage,
+              },
+            ),
           ],
     );
   },

@@ -308,12 +308,12 @@ describe("fuel calculations", () => {
     });
   });
 
-  it("orders same-day fills by mileage and suppresses nonpositive distances", () => {
+  it("orders same-day receipts and closes a shared stop before suppressing a rollback", () => {
     const entries = recalculateFuelEntries([
-      fill("high", "2026-09-01", 1500, 20),
-      fill("low", "2026-09-01", 1000, 40),
-      fill("same", "2026-09-02", 1500, 10),
-      fill("rollback", "2026-09-03", 1400, 10),
+      fill("high", "2026-09-01", 1500, 20, { totalCost: 30 }),
+      fill("low", "2026-09-01", 1000, 40, { totalCost: 60 }),
+      fill("same", "2026-09-02", 1500, 10, { totalCost: 15 }),
+      fill("rollback", "2026-09-03", 1400, 10, { totalCost: 15 }),
     ]);
     expect(entries.map((entry) => entry.id)).toEqual([
       "low",
@@ -321,9 +321,14 @@ describe("fuel calculations", () => {
       "same",
       "rollback",
     ]);
-    expect(entries[1].kmDriven).toBe(500);
-    expect(entries[2].consumption).toBeUndefined();
+    // Both receipts refill 30 liters after 500 km, closing on September 2.
+    expect(entries[1].kmDriven).toBeUndefined();
+    expect(entries[2]).toMatchObject({ kmDriven: 500, consumption: 6 });
     expect(entries[3].consumption).toBeUndefined();
+    expect(entries.filter((entry) => entry.kmDriven !== undefined)).toHaveLength(1);
+    expect(getFuelSummary(entries)).toMatchObject({
+      totalLiters: 80, totalCost: 120, totalKm: 500, averageConsumption: 6,
+    });
   });
 
   it("keeps manual costs, missing price information, and zero-cost fills distinct", () => {
