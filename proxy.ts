@@ -1,6 +1,18 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export default clerkMiddleware();
+const authenticate = clerkMiddleware();
+export default function proxy(
+  request: NextRequest,
+  event: Parameters<typeof authenticate>[1],
+) {
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.CARCHECK_DEMO === "1"
+  )
+    return NextResponse.next();
+  return authenticate(request, event);
+}
 
 export const config = {
   matcher: [

@@ -1,153 +1,31 @@
-# PROJECT KNOWLEDGE BASE
+# CarCheck project guide
 
-**Generated:** 2026-01-31
-**Branch:** main
+Vehicle management app with German UI and informal “du”. Next.js App Router, React, Tailwind v4, shadcn/ui, Clerk authentication and Convex realtime data. Use the scripts and installed versions in `package.json`.
 
-## OVERVIEW
+## Implementation seams
 
-Vehicle management app (German: "Fahrzeugverwaltung") for tracking TUV, inspections, tires, and fuel. Next.js 16 + React 19, Tailwind CSS v4, **Convex** real-time backend, **Clerk** authentication.
+- `app/page.tsx` selects the live workspace or the development-only example garage. `LiveWorkspace.tsx` owns authentication and realtime hooks; `DemoWorkspace.tsx` supplies the same typed actions through an in-memory Convex harness.
+- `Workspace.tsx` owns vehicle selection, global views, dialogs and vehicle deletion. Preserve URL parameters `car`, `tab` and `view` so links, reload and browser history work.
+- `CarDetail.tsx` owns the five vehicle sections; `VehicleDialogs.tsx` owns controlled forms and inline errors.
+- `convex/cars.ts` owns authenticated commands. Use the specific fuel, tire and maintenance mutations rather than replacing arrays read by an earlier client. Read the latest document inside the mutation and check `tokenIdentifier` ownership.
+- `convex/schema.ts` is the persisted contract. `app/lib/types.ts` derives aliases from generated `Doc`; `app/lib/actions.ts` derives action contracts from the generated API. Keep generated files untouched.
 
-## STRUCTURE
+## Domain rules
 
-```
-CarCheck/
-├── .github/              # CI/CD Workflows, Dependabot, Issue Templates (YAML)
-│   ├── ISSUE_TEMPLATE/   # bug-report.yml, feature-request.yml
-│   └── workflows/        # ci.yml, stale-issues.yml
-├── app/
-│   ├── page.tsx          # Single-page app: LandingPage (guest) / Dashboard (auth)
-│   ├── layout.tsx        # Root layout with Clerk + Convex + Theme providers
-│   ├── components/       # React components (flat, no nesting except providers/)
-│   ├── lib/              # types.ts, utils.ts, utils.test.ts
-│   └── styles/           # globals.css (Tailwind v4 + CSS vars + glassmorphism)
-├── convex/               # Backend functions (NOT REST APIs)
-│   ├── cars.ts           # CRUD mutations/queries
-│   ├── cars.test.ts      # Backend tests
-│   ├── schema.ts         # Database schema with validators
-│   ├── auth.config.ts    # Clerk JWT integration
-│   └── _generated/       # Auto-generated (do not edit)
-├── eslint.config.mjs     # ESLint 9 Flat Config
-├── postcss.config.mjs    # Tailwind v4 PostCSS Config
-└── proxy.ts              # Clerk middleware (non-standard name, should be middleware.ts)
-```
+Use the shared helpers in `app/lib/utils.ts` in UI and backend. New calendar fields are strict `YYYY-MM-DD`; legacy timestamps retain their Europe/Berlin calendar day. Malformed legacy dates remain readable and editable without a bulk migration.
 
-## WHERE TO LOOK
+Inspection status follows both time and actual mileage. Mileage-based dates are estimates and are marked accordingly. The legacy interval marker `95` means condition-based service. Seasonal tire dates are advisory; missed changes remain overdue. Tire mileage includes accumulated previous use plus distance since the latest mount, with append order resolving same-day swaps.
 
-| Task                 | Location                                | Notes                                            |
-| -------------------- | --------------------------------------- | ------------------------------------------------ |
-| Add vehicle feature  | `app/components/`                       | Create component, import in `page.tsx`           |
-| Modify backend logic | `convex/cars.ts`                        | Convex mutations/queries, NOT REST               |
-| Change data model    | `convex/schema.ts` + `app/lib/types.ts` | Schema validators + TS interfaces                |
-| Add utility function | `app/lib/utils.ts`                      | Date/calculation helpers with `date-fns`         |
-| Change styling       | `app/styles/globals.css`                | CSS variables for theming                        |
-| Auth configuration   | `convex/auth.config.ts`                 | Clerk JWT provider settings                      |
-| CI/CD Config         | `.github/workflows/`                    | CI/CD (ci.yml) & Stale Issues (stale-issues.yml) |
+Fuel edits and deletions rebuild adjacent distance/consumption. The first filling establishes an odometer baseline and still counts toward liters/cost. Average price uses only priced liters. Consumption assumes comparable full fillings. Preserve historical total-only prices and optional arrays.
 
-## CODE MAP
+## UI conventions
 
-| Symbol                        | Type      | Location                              | Role                                                |
-| ----------------------------- | --------- | ------------------------------------- | --------------------------------------------------- |
-| `Dashboard`                   | Function  | `app/page.tsx`                        | Main authenticated view (Scrollable layout)         |
-| `LandingPage`                 | Function  | `app/page.tsx`                        | Guest landing page                                  |
-| `Car`                         | Interface | `app/lib/types.ts`                    | Core vehicle data model                             |
-| `ConfirmDialog`               | Component | `app/components/ConfirmDialog.tsx`    | Custom confirmation modal (replaces native confirm) |
-| `useConfirmDialog`            | Hook      | `app/components/ConfirmDialog.tsx`    | Hook to invoke confirmation dialog                  |
-| `CircularProgress`            | Component | `app/components/CircularProgress.tsx` | Visual progress indicator                           |
-| `list`                        | Query     | `convex/cars.ts`                      | Fetch all user's cars                               |
-| `create`                      | Mutation  | `convex/cars.ts`                      | Create new vehicle                                  |
-| `update`                      | Mutation  | `convex/cars.ts`                      | Update vehicle (complex nested args)                |
-| `remove`                      | Mutation  | `convex/cars.ts`                      | Delete vehicle                                      |
-| `calculateNextTireChangeDate` | Function  | `app/lib/utils.ts`                    | Easter-based tire change logic                      |
+Use default component exports, absolute `@/` imports, semantic CSS tokens and the shadcn primitives in `app/components/ui/`. Dark mode defaults to true black; both themes must work. Keep layouts dense and copy short. All user-facing strings are German.
 
-## CONVENTIONS
+Use `useConfirmDialog()` for destructive actions and `useToast()` for outcomes. Forms guard pending saves and show inline validation. Keep action wiring in React rather than global browser events. Maintain focus, keyboard operation and responsive table overflow.
 
-### Code Style
+## Verification and local preview
 
-- **Components**: `export default function Name()` (no named exports)
-- **Imports**: Absolute paths via `@/*` alias (maps to project root, NOT src)
-- **German UI**: All user-facing text in German, code in English
-- **Date locale**: `date-fns/locale/de` for German formatting
-- **Dialogs**: Use `useConfirmDialog()` hook, NEVER `window.confirm()` or `window.alert()`
+For isolated browser verification, follow the example-garage command in README. It executes registered Convex handlers without credentials or a remote endpoint. All server entry points must reject production and disabled demo access before initializing the harness. Check the command tests and calculations with the repository's existing Vitest setup. Local demo verification does not verify hosted Clerk integration.
 
-### Backend (Convex)
-
-- **Mutations**: Use `mutation({ args: {...}, handler: async (ctx, args) => {...} })`
-- **Queries**: Use `query({ args: {...}, handler: async (ctx, args) => {...} })`
-- **Auth**: Call `ctx.auth.getUserIdentity()` - throws if not authenticated
-- **Schema**: Validators in `convex/schema.ts`, TS types in `app/lib/types.ts`
-
-### Components
-
-- **State**: Local useState, no global state library
-- **Data fetching**: `useQuery(api.cars.list)`, `useMutation(api.cars.update)`
-- **Forms**: Controlled inputs with inline validation
-- **Communication**: `window.dispatchEvent(new CustomEvent('addCar'))` (fragile - see anti-patterns)
-
-### Styling
-
-- **Tailwind**: Utility-first with custom `.glass` class (glassmorphism)
-- **Theme**: CSS variables in `:root` / `.dark`, toggle via `ThemeProvider`
-- **Colors**: Use semantic vars (`--accent`, `--muted-foreground`, `--background`)
-- **Dark mode**: Class-based (`darkMode: "class"` in tailwind.config.ts)
-
-## ANTI-PATTERNS (THIS PROJECT)
-
-| Pattern                 | Count | Why Bad                  | Alternative                      |
-| ----------------------- | ----- | ------------------------ | -------------------------------- |
-| `window.dispatchEvent`  | 1     | Fragile coupling         | Use React context                |
-| `console.error` in prod | 6     | No proper error handling | Error boundary / logging service |
-
-_Note: Previous `alert()` violations have been resolved by introducing `ToastProvider` and `ConfirmDialog`._
-
-## UNIQUE STYLES
-
-- **Glassmorphism**: `.glass` class with `backdrop-blur-xl` + `color-mix()` transparency
-- **Layout**: Scrollable dashboard with sticky header
-- **Progress bars**: Custom `ProgressBar` component with color variants
-- **Maintenance status**: Color-coded via `getStatusColorClass()` (`overdue`/`upcoming`/`current`)
-- **Grid backgrounds**: Custom `bg-grid-light` / `bg-grid-dark` patterns
-
-## COMMANDS
-
-```bash
-bun dev              # Dev server on :3000
-bun run build        # Production build
-bun run lint         # ESLint check (ESLint 9)
-bun run test         # Run tests (Vitest)
-npx convex dev       # Convex dev server (separate terminal)
-npx convex deploy    # Deploy Convex functions
-```
-
-## DOMAIN CONCEPTS
-
-| German Term    | English            | Description                                     |
-| -------------- | ------------------ | ----------------------------------------------- |
-| TUV            | Vehicle inspection | German mandatory safety check (2-year cycle)    |
-| Inspektion     | Service inspection | Manufacturer maintenance (time + km based)      |
-| Reifenwechsel  | Tire change        | Summer->Winter (Oct 1), Winter->Summer (Easter) |
-| Kilometerstand | Mileage            | Current odometer reading                        |
-| Kennzeichen    | License plate      | Vehicle registration number                     |
-
-## ENVIRONMENT VARIABLES
-
-```bash
-# Required (Clerk auth)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-CLERK_SECRET_KEY
-CLERK_JWT_ISSUER_DOMAIN
-
-# Required (Convex backend)
-NEXT_PUBLIC_CONVEX_URL
-CONVEX_DEPLOY_KEY  # For production deployment
-```
-
-## NOTES
-
-- **Single page app**: `page.tsx` manages car selection via state, NOT route-based navigation
-- **Easter calculation**: `calculateEaster()` in utils.ts for tire change dates (Gaussian algorithm)
-- **Inspection logic**: Uses EARLIER of time-based or km-based next date
-- **Testing**: Vitest is set up for unit testing (`bun run test`)
-- **CI/CD**: GitHub Actions workflows run Lint/Build and manage stale issues
-- **License**: MIT License (see LICENSE file)
-- **Proxy naming**: `proxy.ts` should be `middleware.ts` for Next.js convention
-- **Convex \_generated/**: Auto-generated files with `eslint-disable` - never edit manually
+The Next.js 16 authentication entry point is `proxy.ts`. The example garage bypass applies only when `NODE_ENV` is development and `CARCHECK_DEMO=1`. Configure credentials solely for an explicitly authorized development project; never deploy or connect to production for local verification.
