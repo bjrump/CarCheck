@@ -59,6 +59,8 @@ describe("Clerk production ownership migration", () => {
     );
   });
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
@@ -125,6 +127,45 @@ describe("Clerk production ownership migration", () => {
     expect(await owner.query(api.cars.list)).toEqual([]);
     await owner.action(api.identity.prepare);
     expect(await owner.query(api.cars.getById, { id: carId })).not.toBeNull();
+  });
+
+  it("aborts a stalled Clerk request and offers a safe retry", async () => {
+    const { owner, carId } = await fixture();
+    const controller = new AbortController();
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValue(controller.signal);
+    const fetch = vi.fn().mockImplementationOnce(
+      (_url: string, options: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          options.signal?.addEventListener("abort", () =>
+            reject(new DOMException("Timed out", "TimeoutError")),
+          );
+        }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const pending = owner.action(api.identity.prepare);
+    const rejection = expect(pending).rejects.toThrow("konnte nicht geprüft");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    controller.abort();
+    await rejection;
+    expect(await owner.query(api.cars.list)).toEqual([]);
+    timeout.mockRestore();
+    fetch.mockResolvedValueOnce(Response.json(clerkUser()));
+    await owner.action(api.identity.prepare);
+    expect(await owner.query(api.cars.getById, { id: carId })).not.toBeNull();
+  });
+
+  it("preserves other Clerk network errors", async () => {
+    const { owner } = await fixture();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("Network error")),
+    );
+    await expect(owner.action(api.identity.prepare)).rejects.toThrow(
+      "Network error",
+    );
   });
 
   it("rejects a server response for another subject", async () => {

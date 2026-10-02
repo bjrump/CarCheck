@@ -125,6 +125,11 @@ export default function LandingPage({ isDemo = false }: { isDemo?: boolean }) {
             </section>
           ))}
         </div>
+        <footer className="mt-10 text-sm text-muted-foreground">
+          <Link className="hover:text-foreground" href="/datenschutz">
+            Datenschutz
+          </Link>
+        </footer>
       </main>
     </div>
   );

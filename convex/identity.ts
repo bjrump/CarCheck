@@ -60,13 +60,18 @@ export const prepare = action({
     if (alias) return;
     const secret = process.env.CLERK_SECRET_KEY;
     if (!secret) throw new Error("Clerk server credentials missing");
+    const signal = AbortSignal.timeout(10_000);
     const response = await fetch(
       `https://api.clerk.com/v1/users/${encodeURIComponent(identity.subject)}`,
       {
         headers: { Authorization: `Bearer ${secret}` },
+        signal,
       },
-    );
-    if (!response.ok)
+    ).catch((error: unknown) => {
+      if (signal.aborted) return null;
+      throw error;
+    });
+    if (!response?.ok)
       throw new ConvexError(
         "Dein Konto konnte nicht geprüft werden. Bitte versuche es erneut.",
       );
