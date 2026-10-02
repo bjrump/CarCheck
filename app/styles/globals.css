@@ -43,16 +43,16 @@
   --success: #15803d;
 }
 .dark {
-  --background: #000;
+  --background: #0f1115;
   --foreground: #fafafa;
-  --card: #0b0b0b;
-  --muted: #191919;
+  --card: #15181e;
+  --muted: #20242c;
   --muted-foreground: #949494;
-  --border: #252525;
+  --border: #2b303b;
   --primary: #2563eb;
   --primary-foreground: #fff;
   --brand: #60a5fa;
-  --brand-muted: #111e32;
+  --brand-muted: #172a45;
   --danger: #fb7185;
   --warning: #fbbf24;
   --success: #86b898;
@@ -87,6 +87,7 @@
 }
 .topbar {
   height: 68px;
+  background: var(--card);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
