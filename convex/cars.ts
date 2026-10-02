@@ -1,11 +1,14 @@
 import { ConvexError, v } from "convex/values";
 import {
+  calculateFuelCost,
   calculateNextInspectionDateByYear,
   calculateNextTUVDate,
   getTireMileage,
+  isValidFuelLiters,
   normalizeCalendarDate,
   recalculateFuelEntries,
   roundCurrency,
+  todayDate,
 } from "../app/lib/utils";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
@@ -26,7 +29,7 @@ function requireYear(value: number) {
   if (
     !Number.isInteger(value) ||
     value < 1886 ||
-    value > new Date().getFullYear() + 1
+    value > Number(todayDate().slice(0, 4)) + 1
   ) {
     throw new ConvexError("Bitte gib ein gültiges Baujahr ein.");
   }
@@ -48,9 +51,7 @@ function requireDate(value: string, completed = false) {
     throw new ConvexError("Bitte gib ein gültiges Datum ein (JJJJ-MM-TT).");
   }
   // Completed German vehicle records use the local calendar day, also around midnight.
-  const today = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Berlin",
-  }).format(new Date());
+  const today = todayDate();
   if (completed && date > today) {
     throw new ConvexError("Das Datum darf nicht in der Zukunft liegen.");
   }
@@ -105,6 +106,21 @@ async function saveCar(
   events: CarEvent[],
 ) {
   if (Object.keys(updates).length === 0 && events.length === 0) return car;
+  if (updates.mileage !== undefined && updates.mileage !== car.mileage) {
+    const tire = car.tires.find((item) => item.id === car.currentTireId);
+    if (tire) {
+      const previousMileage = getTireMileage(car, tire);
+      const nextMileage = getTireMileage({ ...car, mileage: updates.mileage }, tire);
+      if (
+        Number.isFinite(previousMileage) &&
+        previousMileage >= 0 &&
+        previousMileage <= Number.MAX_SAFE_INTEGER &&
+        (!Number.isFinite(nextMileage) || nextMileage > Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new ConvexError("Die berechnete Reifenlaufleistung ist zu hoch.");
+      }
+    }
+  }
   await ctx.db.patch(car._id, {
     ...updates,
     ...(events.length
@@ -156,6 +172,44 @@ function validateFuelNeighbors(entries: FuelEntry[], entry: FuelEntry) {
     throw new ConvexError(
       "Der Kilometerstand muss zur zeitlichen Reihenfolge der Tankeinträge passen.",
     );
+  }
+}
+
+/** Different record types share one odometer; dates do not establish order within a day. */
+function validateDatedMileage(
+  car: Car,
+  reading: { date: string; mileage: number },
+  options: { skipFuel?: boolean; skipInspection?: boolean } = {},
+) {
+  const readings = [
+    ...(options.skipFuel ? [] : car.fuelEntries ?? [])
+      .map(({ date, mileage }) => ({ date, mileage })),
+    ...car.tireChangeEvents.map(({ date, carMileage }) => ({
+      date,
+      mileage: carMileage,
+    })),
+    ...(options.skipInspection
+      ? []
+      : [
+          {
+            date: car.inspection.lastInspectionDate,
+            mileage: car.inspection.lastInspectionMileage,
+          },
+        ]),
+  ];
+  for (const previous of readings) {
+    const date = normalizeCalendarDate(previous.date);
+    const mileage = previous.mileage;
+    if (!date || mileage === null || !Number.isFinite(mileage) || mileage < 0)
+      continue;
+    if (
+      (date < reading.date && mileage > reading.mileage) ||
+      (date > reading.date && mileage < reading.mileage)
+    ) {
+      throw new ConvexError(
+        "Der Kilometerstand muss zu den datierten Tank-, Reifen- und Inspektionseinträgen passen.",
+      );
+    }
   }
 }
 
@@ -344,15 +398,17 @@ export const saveFuelEntry = mutation({
     ) {
       requireMileage(args.mileage);
     }
-    if (!Number.isFinite(args.liters) || args.liters <= 0) {
-      throw new ConvexError("Die getankte Menge muss größer als null sein.");
+    if (!isValidFuelLiters(args.liters)) {
+      throw new ConvexError(
+        "Bitte gib eine gültige getankte Menge größer als null ein.",
+      );
     }
     requireMoney(args.pricePerLiter);
     requireMoney(args.totalCost);
     const calculatedCost =
       args.pricePerLiter === undefined
         ? undefined
-        : roundCents(args.liters * args.pricePerLiter);
+        : roundCents(calculateFuelCost(args.liters, args.pricePerLiter));
     const suppliedCost =
       args.totalCost === undefined ? undefined : roundCents(args.totalCost);
     if (
@@ -387,6 +443,7 @@ export const saveFuelEntry = mutation({
       normalizeCalendarDate(previous.date) !== entry.date
     ) {
       validateFuelNeighbors(entries, entry);
+      validateDatedMileage(car, entry, { skipFuel: true });
     }
     const fuelEntries = recalculateFuelEntries(entries);
     const mileage =
@@ -559,6 +616,7 @@ export const changeTires = mutation({
       }
     }
     const tireChangeEvents = [...car.tireChangeEvents];
+    validateDatedMileage(car, { date, mileage: args.mileage });
     const sourceMileage = source
       ? getTireMileage({ ...car, mileage: args.mileage }, source)
       : null;
@@ -668,6 +726,16 @@ export const saveInspection = mutation({
     if (!Number.isSafeInteger(args.intervalKm) || args.intervalKm <= 0) {
       throw new ConvexError(
         "Das Kilometerintervall muss eine positive ganze Zahl sein.",
+      );
+    }
+    if (
+      normalizeCalendarDate(car.inspection.lastInspectionDate) !== date ||
+      car.inspection.lastInspectionMileage !== args.mileage
+    ) {
+      validateDatedMileage(
+        car,
+        { date, mileage: args.mileage },
+        { skipInspection: true },
       );
     }
     const nextDate = calculateNextInspectionDateByYear(

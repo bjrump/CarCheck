@@ -4,6 +4,19 @@ import { getDemoCars, runDemoMutation } from "@/app/demo/actions";
 afterEach(() => vi.unstubAllEnvs());
 
 describe("Local demo server actions", () => {
+  it("returns validation errors as data without changing the demo records", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CARCHECK_DEMO", "1");
+    const before = await getDemoCars();
+    await expect(runDemoMutation("update", {
+      id: before[0]._id,
+      mileage: before[0].mileage - 1,
+    })).resolves.toEqual({
+      ok: false,
+      error: "Der Kilometerstand darf nicht kleiner als der aktuelle Kilometerstand sein.",
+    });
+    expect(await getDemoCars()).toEqual(before);
+  });
   it("runs registered mutations against seeded Convex IDs and returns the new state", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CARCHECK_DEMO", "1");
@@ -21,14 +34,17 @@ describe("Local demo server actions", () => {
       mileage: 50_000,
       insurance: null,
     });
+    if (!created.ok) throw new Error(created.error);
     expect(created.cars).toHaveLength(initialCars.length + 1);
     const id = created.result;
     try {
       const updated = await runDemoMutation("update", { id, mileage: 50_100 });
+      if (!updated.ok) throw new Error(updated.error);
       expect(updated.cars.find((car) => car._id === id)?.mileage).toBe(50_100);
     } finally {
       const removed = await runDemoMutation("remove", { id });
-      expect(removed.cars).toHaveLength(initialCars.length);
+      expect(removed.ok).toBe(true);
+      if (removed.ok) expect(removed.cars).toHaveLength(initialCars.length);
     }
   });
 

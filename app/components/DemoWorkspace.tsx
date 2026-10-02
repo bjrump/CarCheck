@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ConvexError } from "convex/values";
 import Workspace from "@/app/components/Workspace";
 import { runDemoMutation } from "@/app/demo/actions";
 import type { CarActions } from "@/app/lib/actions";
@@ -10,9 +11,12 @@ export default function DemoWorkspace({ initialCars }: { initialCars: Car[] }) {
   const [cars, setCars] = useState(initialCars);
   const actions = useMemo<CarActions>(() => {
     async function applyMutation<Result>(
-      request: Promise<{ result: Result; cars: Car[] }>,
+      request: Promise<
+        { ok: true; result: Result; cars: Car[] } | { ok: false; error: string }
+      >,
     ) {
       const response = await request;
+      if (!response.ok) throw new ConvexError(response.error);
       setCars(response.cars);
       return response.result;
     }
