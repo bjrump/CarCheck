@@ -8,14 +8,19 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "migrate:eventlog": "tsx scripts/migrate-eventlog.ts"
+    "migrate:eventlog": "tsx scripts/migrate-eventlog.ts",
+    "prototype": "WATCHPACK_POLLING=1000 next dev --port 3108 --hostname 127.0.0.1"
   },
   "dependencies": {
     "@clerk/localizations": "^4.16.1",
     "@clerk/nextjs": "^7.9.2",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.4.0",
     "convex": "^1.45.0",
     "date-fns": "^4.4.0",
+    "lucide-react": "^1.49.0",
     "next": "^16.3.4",
+    "radix-ui": "^1.6.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
