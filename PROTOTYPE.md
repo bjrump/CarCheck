@@ -3,7 +3,7 @@
 This is a throwaway branch, not the implementation PR. The question is which
 information hierarchy works best for a private garage with a few vehicles.
 The user's supplied AGENTS.md instructions require a preview and a design pick
-before final UI implementation. The decision is pending.
+before final UI implementation. Decision on 2026-10-02: user approved the recommendation, A as the garage with C as the vehicle detail.
 
 ## Run
 
