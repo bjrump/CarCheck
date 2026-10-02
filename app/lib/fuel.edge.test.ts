@@ -237,3 +237,77 @@ describe("fuel arithmetic edge cases", () => {
     expect(summary.averageConsumption).toBeNull();
   });
 });
+
+describe("one full tank stop paid through multiple receipts", () => {
+  it("counts both receipts' fuel once over the preceding driven interval", () => {
+    const summary = getFuelSummary([
+      fill("baseline", 10_000, 40),
+      fill("receipt-one", 10_500, 20, { totalCost: 30 }),
+      fill("receipt-two", 10_500, 20, { totalCost: 30 }),
+    ]);
+    expect(summary.totalKm).toBe(500);
+    expect(summary.averageConsumption).toBe(8);
+    expect(summary.totalLiters).toBe(80);
+    expect(summary.totalCost).toBe(60);
+    expect(summary.averagePrice).toBe(1.5);
+    expect(summary.entries[1]).not.toHaveProperty("kmDriven");
+    expect(summary.entries[2]).toMatchObject({ kmDriven: 500, consumption: 8 });
+  });
+});
+
+describe("split-stop boundaries and corrections", () => {
+  const baseline = { ...fill("baseline", 10_000, 40), date: "2026-01-01" };
+  const first = { ...fill("first", 10_500, 20, { totalCost: 30 }), date: "2026-01-31" };
+  const last = { ...fill("last", 10_500, 20, { totalCost: 30 }), date: "2026-02-01" };
+
+  it("excludes every baseline receipt and attributes one interval to the closing month", () => {
+    const summary = getFuelSummary([
+      baseline, { ...baseline, id: "baseline-two", liters: 10 }, first, last,
+    ]);
+    expect(summary.totalLiters).toBe(90);
+    expect(summary.totalKm).toBe(500);
+    expect(summary.averageConsumption).toBe(8);
+    expect(summary.stops).toMatchObject([
+      { receiptCount: 2, liters: 50 },
+      { entryId: "last", date: "2026-02-01", receiptCount: 2, liters: 40, kmDriven: 500, consumption: 8 },
+    ]);
+    expect(summary.stops[0]).not.toHaveProperty("kmDriven");
+    expect(summary.entries[2]).not.toHaveProperty("consumption");
+  });
+
+  it("rebuilds stop quantities, interval assignments and costs after edits and deletions", () => {
+    const edited = getFuelSummary([baseline, first, { ...last, liters: 30, totalCost: 45 }]);
+    expect(edited).toMatchObject({ totalLiters: 90, totalCost: 75, totalKm: 500, averageConsumption: 10 });
+    const moved = getFuelSummary([baseline, { ...first, mileage: 10_400 }, last]);
+    expect(moved.entries[1]).toMatchObject({ kmDriven: 400, consumption: 5 });
+    expect(moved.entries[2]).toMatchObject({ kmDriven: 100, consumption: 20 });
+    expect(moved.averageConsumption).toBe(8);
+    expect(getFuelSummary([baseline, first])).toMatchObject({
+      totalLiters: 60, totalCost: 30, totalKm: 500, averageConsumption: 4,
+    });
+    expect(getFuelSummary([first, last])).toMatchObject({
+      totalLiters: 40, totalCost: 60, totalKm: 0, averageConsumption: null,
+    });
+  });
+
+  it("resumes split-stop intervals only after a plausible baseline follows a rollback", () => {
+    const summary = getFuelSummary([
+      baseline,
+      { ...first, date: "2026-01-02", mileage: 9_000 },
+      { ...last, date: "2026-01-03", mileage: 11_000 },
+      { ...first, id: "recovered-one", date: "2026-01-04", mileage: 12_000 },
+      { ...last, id: "recovered-two", date: "2026-01-05", mileage: 12_000 },
+    ]);
+    expect(summary.entries.slice(0, 4).every((entry) => entry.kmDriven === undefined)).toBe(true);
+    expect(summary.entries[4]).toMatchObject({ kmDriven: 1000, consumption: 4 });
+    expect(summary).toMatchObject({ totalKm: 1000, averageConsumption: 4 });
+  });
+
+  it("keeps invalid legacy receipts out of consumption without merging malformed calendar days", () => {
+    const malformed = getFuelSummary([baseline, first, { ...last, date: "invalid" }]);
+    expect(malformed).toMatchObject({ totalKm: 500, averageConsumption: 4, totalLiters: 80 });
+    const invalidQuantity = getFuelSummary([baseline, first, { ...last, liters: Number.MAX_VALUE }]);
+    expect(invalidQuantity.averageConsumption).toBeNull();
+    expect(invalidQuantity.entries.every((entry) => entry.consumption === undefined)).toBe(true);
+  });
+});

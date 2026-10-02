@@ -14,6 +14,12 @@ CarCheck nutzt Next.js, React, TypeScript, Tailwind CSS v4, shadcn/ui, Clerk und
 
 Datumsfelder verwenden `YYYY-MM-DD`. Bestehende ISO-Zeitstempel werden anhand ihres Kalendertags in Europe/Berlin gelesen. Die bestehenden Convex-Dokumente bleiben kompatibel; eine Datenmigration ist für diese Version nicht erforderlich.
 
+Historische TÜV- und Inspektionseinträge bleiben in der Historie sichtbar und ersetzen keine neuere Wartung. „Letzten Eintrag korrigieren“ ersetzt ausdrücklich die aktuelle Wartung; die Korrektur darf nicht hinter einen weiteren gespeicherten Service fallen. Gespeicherte Inspektionskilometer bleiben Teil der Plausibilitätsprüfung für spätere Einträge.
+
+Ein verspätet eingetragener letzter Reifenwechsel verwendet den damaligen Kilometerstand. Der heutige Fahrzeugstand bleibt erhalten; die gefahrene Strecke wird den tatsächlich montierten Reifen zugeordnet. Wechsel vor bereits gespeicherten Reifenwechseln werden weiterhin abgewiesen.
+
+Aufeinanderfolgende Tankbelege mit gleichem Kilometerstand bilden einen Tankstopp. Der letzte Beleg schließt dessen gemeinsames Verbrauchsintervall ab, auch über Monatsgrenzen. Verbrauch und Distanz gehören zum Abschlussmonat; Kosten und getankte Liter zum jeweiligen Belegmonat. Der erste gesamte Tankstopp bildet die Ausgangsbasis und zählt ausschließlich zu Litern und Kosten.
+
 ## Lokal ausprobieren
 
 ```bash

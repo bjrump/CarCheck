@@ -471,8 +471,21 @@ export function getCarStatus(car: Car, now = new Date()): MaintenanceStatus {
   return getMaintenanceTasks([car], now)[0]?.status ?? "none";
 }
 
-/** Fuel intervals are always rebuilt after insert, edit, or delete. */
-export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
+export interface FuelStop {
+  entryId: string;
+  date: string;
+  mileage: number;
+  liters: number;
+  receiptCount: number;
+  kmDriven?: number;
+  consumption?: number;
+}
+
+/** Consecutive receipts at one odometer close one stop on its last receipt's day. */
+function deriveFuelStops(entries: FuelEntry[]): {
+  entries: FuelEntry[];
+  stops: FuelStop[];
+} {
   const sorted = entries
     .map((entry) => {
       const date = normalizeCalendarDate(entry.date);
@@ -510,13 +523,33 @@ export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
         firstDate.localeCompare(secondDate) || first.mileage - second.mileage
       );
     });
+  const groups: FuelEntry[][] = [];
+  for (const entry of sorted) {
+    const group = groups[groups.length - 1];
+    const previous = group?.[group.length - 1];
+    if (
+      previous &&
+      normalizeCalendarDate(previous.date) &&
+      normalizeCalendarDate(entry.date) &&
+      isUsableMileage(entry.mileage) &&
+      previous.mileage === entry.mileage
+    ) {
+      group.push(entry);
+    } else {
+      groups.push([entry]);
+    }
+  }
   let highestMileage = 0;
-  return sorted.map((entry, index) => {
-    const previous = sorted[index - 1];
+  const stops: FuelStop[] = [];
+  const calculated = groups.flatMap((group, index) => {
+    const entry = group[group.length - 1];
+    const previousGroup = groups[index - 1];
+    const previous = previousGroup?.[previousGroup.length - 1];
     const kmDriven = previous ? entry.mileage - previous.mileage : 0;
+    const liters = group.reduce((sum, receipt) => sum + receipt.liters, 0);
+    const consumption = (liters / kmDriven) * 100;
     const usableReading =
       normalizeCalendarDate(entry.date) && isUsableMileage(entry.mileage);
-    const consumption = (entry.liters / kmDriven) * 100;
     const usableInterval =
       usableReading &&
       previous &&
@@ -525,25 +558,43 @@ export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
       previous.mileage >= highestMileage &&
       kmDriven > 0 &&
       Number.isFinite(kmDriven) &&
-      isValidFuelLiters(entry.liters) &&
+      group.every((receipt) => isValidFuelLiters(receipt.liters)) &&
+      Number.isFinite(liters) &&
       Number.isFinite(consumption);
     // A legacy rollback cannot establish the next interval's starting mileage.
     if (usableReading) highestMileage = Math.max(highestMileage, entry.mileage);
-    return usableInterval
-      ? { ...entry, kmDriven, consumption }
-      : entry;
+    stops.push({
+      entryId: entry.id,
+      date: entry.date,
+      mileage: entry.mileage,
+      liters,
+      receiptCount: group.length,
+      ...(usableInterval ? { kmDriven, consumption } : {}),
+    });
+    return group.map((receipt) =>
+      usableInterval && receipt === entry
+        ? { ...receipt, kmDriven, consumption }
+        : receipt,
+    );
   });
+  return { entries: calculated, stops };
+}
+
+/** Fuel intervals are always rebuilt after insert, edit, or delete. */
+export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
+  return deriveFuelStops(entries).entries;
 }
 
 export function getFuelSummary(entries: FuelEntry[]): {
   entries: FuelEntry[];
+  stops: FuelStop[];
   totalLiters: number;
   totalCost: number | null;
   averagePrice: number | null;
   averageConsumption: number | null;
   totalKm: number;
 } {
-  const calculated = recalculateFuelEntries(entries);
+  const { entries: calculated, stops } = deriveFuelStops(entries);
   let totalLiters = 0;
   let pricedLiters = 0;
   let pricedCost = 0;
@@ -565,15 +616,18 @@ export function getFuelSummary(entries: FuelEntry[]): {
         pricedCost += entry.totalCost;
       }
     }
-    if (entry.kmDriven !== undefined && entry.kmDriven > 0) {
-      totalKm += entry.kmDriven;
-      intervalLiters += entry.liters;
+  }
+  for (const stop of stops) {
+    if (stop.kmDriven !== undefined) {
+      totalKm += stop.kmDriven;
+      intervalLiters += stop.liters;
     }
   }
   const averagePrice = pricedCost / pricedLiters;
   const averageConsumption = (intervalLiters / totalKm) * 100;
   return {
     entries: calculated,
+    stops,
     totalLiters,
     totalCost: hasCost && Number.isFinite(totalCost) ? totalCost : null,
     averagePrice:
