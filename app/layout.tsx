@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ColorPrototype from "@/app/components/ColorPrototype";
 import "./styles/globals.css";
 import ThemeProvider from "@/app/components/ThemeProvider";
 import { ToastProvider } from "@/app/components/ToastProvider";
@@ -21,7 +22,7 @@ export default function RootLayout({
   const content = (
     <ThemeProvider>
       <ToastProvider>
-        <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+        <ConfirmDialogProvider>{children}<ColorPrototype /></ConfirmDialogProvider>
       </ToastProvider>
     </ThemeProvider>
   );
