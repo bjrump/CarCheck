@@ -22,8 +22,8 @@ export default function ConvexClientProvider({
       localization={deDE}
       appearance={{
         variables: {
-          colorPrimary: "var(--foreground)",
-          colorPrimaryForeground: "var(--background)",
+          colorPrimary: "var(--primary)",
+          colorPrimaryForeground: "var(--primary-foreground)",
           colorBackground: "var(--background)",
           colorForeground: "var(--foreground)",
           colorNeutral: "var(--foreground)",

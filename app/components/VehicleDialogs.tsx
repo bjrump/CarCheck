@@ -11,6 +11,7 @@ import {
   formatCurrency,
   formatDate,
   formatNumber,
+  roundCurrency,
   todayDate,
   toDateInput,
 } from "@/app/lib/utils";
@@ -896,22 +897,42 @@ function FuelForm({
     entry?.totalCost === undefined ? "" : String(entry.totalCost),
   );
   const [notes, setNotes] = useState(entry?.notes ?? "");
+  const priceMatchesReceipt =
+    entry?.pricePerLiter !== undefined &&
+    entry.totalCost !== undefined &&
+    Math.abs(
+      roundCurrency(entry.totalCost) -
+        roundCurrency(entry.pricePerLiter * entry.liters),
+    ) <= 0.010001;
   const [priceMode, setPriceMode] = useState(
-    entry?.totalCost !== undefined &&
-      (entry.pricePerLiter === undefined ||
-        Math.abs(entry.totalCost - entry.pricePerLiter * entry.liters) > 0.01)
+    entry?.totalCost !== undefined && !priceMatchesReceipt
       ? "total"
       : "per-liter",
   );
   const enteredPrice = priceMode === "total" ? totalCost : pricePerLiter;
+  const retainedReceiptTotal =
+    priceMode === "per-liter" &&
+    priceMatchesReceipt &&
+    entry?.pricePerLiter === numberValue(pricePerLiter) &&
+    entry?.liters === numberValue(liters)
+      ? entry.totalCost
+      : undefined;
   const previewTotal =
     priceMode === "total"
       ? numberValue(totalCost)
-      : numberValue(liters) * numberValue(pricePerLiter);
+      : (retainedReceiptTotal ??
+        numberValue(liters) * numberValue(pricePerLiter));
 
   function validate() {
+    const unchangedLegacyMileage =
+      entry?.mileage === numberValue(mileage) &&
+      Number.isFinite(entry.mileage) &&
+      entry.mileage >= 0;
     const error =
-      completedDateError(date) || integerError(mileage, "Kilometerstand");
+      completedDateError(date) ||
+      (unchangedLegacyMileage
+        ? undefined
+        : integerError(mileage, "Kilometerstand"));
     if (error) return error;
     if (!Number.isFinite(numberValue(liters)) || numberValue(liters) <= 0)
       return "Bitte gib eine Literzahl größer als 0 ein.";
@@ -939,7 +960,12 @@ function FuelForm({
           ...(enteredPrice.trim()
             ? priceMode === "total"
               ? { totalCost: numberValue(totalCost) }
-              : { pricePerLiter: numberValue(pricePerLiter) }
+              : {
+                  pricePerLiter: numberValue(pricePerLiter),
+                  ...(retainedReceiptTotal !== undefined
+                    ? { totalCost: retainedReceiptTotal }
+                    : {}),
+                }
             : {}),
           notes: notes.trim() || undefined,
         });

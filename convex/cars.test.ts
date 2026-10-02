@@ -270,6 +270,143 @@ describe("vehicle updates", () => {
 });
 
 describe("fuel commands", () => {
+  it("keeps legacy order violations from blocking unrelated additions and edits", async () => {
+    const { t, owner, carId } = await fixture(10000);
+    await t.run(async (ctx) =>
+      ctx.db.patch(carId, {
+        fuelEntries: [
+          { id: "earlier", date: "2026-01-01", mileage: 2000, liters: 20 },
+          { id: "later", date: "2026-01-03", mileage: 1000, liters: 10 },
+        ],
+      }),
+    );
+    const saved = await owner.mutation(api.cars.saveFuelEntry, {
+      carId,
+      date: "2026-01-05",
+      mileage: 3000,
+      liters: 30,
+    });
+    expect(saved.fuelEntries?.map((entry) => entry.mileage)).toEqual([
+      2000, 1000, 3000,
+    ]);
+    const edited = await owner.mutation(api.cars.saveFuelEntry, {
+      carId,
+      entryId: "earlier",
+      date: "2026-01-01",
+      mileage: 2000,
+      liters: 20,
+      notes: "Beleg ergänzt",
+    });
+    expect(edited.fuelEntries?.[0]).toMatchObject({
+      mileage: 2000,
+      notes: "Beleg ergänzt",
+    });
+    for (const inputs of [
+      { date: "2025-12-31", mileage: 2500 },
+      { date: "2026-01-02", mileage: 1500 },
+      { date: "2026-01-06", mileage: 2900 },
+      { entryId: "earlier", date: "2026-01-04", mileage: 4000 },
+    ]) {
+      await expect(
+        owner.mutation(api.cars.saveFuelEntry, {
+          carId,
+          liters: 20,
+          ...inputs,
+        }),
+      ).rejects.toThrow("zeitlichen Reihenfolge");
+      expect(await owner.query(api.cars.getById, { id: carId })).toEqual(
+        edited,
+      );
+    }
+  });
+
+  it("preserves unchanged legacy fractional mileage while new mileage remains integral", async () => {
+    const { t, owner, carId } = await fixture(1000);
+    await t.run(async (ctx) =>
+      ctx.db.patch(carId, {
+        fuelEntries: [
+          { id: "fractional", date: "2026-01-01", mileage: 2000.5, liters: 20 },
+        ],
+      }),
+    );
+    const edited = await owner.mutation(api.cars.saveFuelEntry, {
+      carId,
+      entryId: "fractional",
+      date: "2026-01-01",
+      mileage: 2000.5,
+      liters: 20,
+      notes: "Alter Beleg",
+    });
+    expect(edited.fuelEntries?.[0]).toMatchObject({
+      mileage: 2000.5,
+      notes: "Alter Beleg",
+    });
+    expect(edited.mileage).toBe(1000);
+    const saved = await owner.mutation(api.cars.saveFuelEntry, {
+      carId,
+      date: "2026-01-02",
+      mileage: 3000,
+      liters: 30,
+    });
+    expect(saved.fuelEntries?.map((entry) => entry.mileage)).toEqual([
+      2000.5, 3000,
+    ]);
+    expect(saved.mileage).toBe(3000);
+    await expect(
+      owner.mutation(api.cars.saveFuelEntry, {
+        carId,
+        entryId: "fractional",
+        date: "2026-01-01",
+        mileage: 2000.6,
+        liters: 20,
+      }),
+    ).rejects.toThrow("Kilometerstand");
+    await expect(
+      owner.mutation(api.cars.saveFuelEntry, {
+        carId,
+        date: "2026-01-03",
+        mileage: 3500.5,
+        liters: 30,
+      }),
+    ).rejects.toThrow("Kilometerstand");
+    expect(await owner.query(api.cars.getById, { id: carId })).toEqual(saved);
+  });
+
+  it("lets owners delete entries while other legacy mileage violations remain", async () => {
+    const { t, owner, carId } = await fixture(10000);
+    await t.run(async (ctx) =>
+      ctx.db.patch(carId, {
+        fuelEntries: [
+          { id: "earlier", date: "2026-01-01", mileage: 2000, liters: 20 },
+          { id: "later", date: "2026-01-02", mileage: 1000, liters: 10 },
+          { id: "fractional", date: "2026-01-03", mileage: 2500.5, liters: 25 },
+          { id: "target", date: "2026-01-04", mileage: 3000, liters: 30 },
+        ],
+      }),
+    );
+    const removed = await owner.mutation(api.cars.removeFuelEntry, {
+      carId,
+      entryId: "target",
+    });
+    expect(removed.fuelEntries?.map((entry) => entry.id)).toEqual([
+      "earlier",
+      "later",
+      "fractional",
+    ]);
+    const removedLegacy = await owner.mutation(api.cars.removeFuelEntry, {
+      carId,
+      entryId: "fractional",
+    });
+    expect(removedLegacy.fuelEntries?.map((entry) => entry.id)).toEqual([
+      "earlier",
+      "later",
+    ]);
+    expect(removedLegacy.mileage).toBe(10000);
+    expect(removedLegacy.eventLog?.at(-1)).toMatchObject({
+      metadata: { action: "deleted", entryId: "fractional" },
+    });
+  });
+
   it("preserves malformed legacy dates while allowing new records and corrections", async () => {
     const { t, owner, carId } = await fixture(10000);
     await t.run(async (ctx) =>

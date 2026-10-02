@@ -13,6 +13,7 @@ import { insuranceValidator, tireTypeValidator } from "./schema";
 
 type Car = Doc<"cars">;
 type CarEvent = NonNullable<Car["eventLog"]>[number];
+type FuelEntry = NonNullable<Car["fuelEntries"]>[number];
 type CarUpdates = Partial<Omit<Car, "_id" | "_creationTime" | "userId">>;
 
 function requireMileage(value: number, label = "Kilometerstand") {
@@ -132,27 +133,30 @@ function roundCents(value: number) {
   return rounded;
 }
 
-function validateFuelSequence(entries: NonNullable<Car["fuelEntries"]>) {
-  const normalized = entries.map((entry) => {
-    const date = normalizeCalendarDate(entry.date);
-    requireMileage(entry.mileage);
-    return date ? { ...entry, date } : entry;
-  });
-  // Unknown legacy dates remain editable; they cannot establish chronological order.
-  const chronological = normalized
-    .filter((entry) => normalizeCalendarDate(entry.date) !== null)
+function validateFuelNeighbors(entries: FuelEntry[], entry: FuelEntry) {
+  // Retained legacy violations do not block a new or repositioned entry.
+  const chronological = entries
+    .flatMap((current) => {
+      const date = normalizeCalendarDate(current.date);
+      return date && Number.isFinite(current.mileage) && current.mileage >= 0
+        ? [{ ...current, date }]
+        : [];
+    })
     .sort(
       (first, second) =>
         first.date.localeCompare(second.date) || first.mileage - second.mileage,
     );
-  for (let index = 1; index < chronological.length; index++) {
-    if (chronological[index].mileage < chronological[index - 1].mileage) {
-      throw new ConvexError(
-        "Der Kilometerstand muss zur zeitlichen Reihenfolge der Tankeinträge passen.",
-      );
-    }
+  const index = chronological.findIndex((current) => current.id === entry.id);
+  const previous = chronological[index - 1];
+  const next = chronological[index + 1];
+  if (
+    (previous && entry.mileage < previous.mileage) ||
+    (next && entry.mileage > next.mileage)
+  ) {
+    throw new ConvexError(
+      "Der Kilometerstand muss zur zeitlichen Reihenfolge der Tankeinträge passen.",
+    );
   }
-  return normalized;
 }
 
 export const list = query({
@@ -324,8 +328,22 @@ export const saveFuelEntry = mutation({
   },
   handler: async (ctx, args) => {
     const car = await requireCar(ctx, args.carId);
+    const existing = car.fuelEntries ?? [];
+    const previous =
+      args.entryId === undefined
+        ? undefined
+        : existing.find((entry) => entry.id === args.entryId);
+    if (args.entryId !== undefined && !previous)
+      throw new ConvexError("Tankeintrag nicht gefunden.");
     const date = requireDate(args.date, true);
-    requireMileage(args.mileage);
+    // Existing finite fractional mileage can be kept while editing other fields.
+    if (
+      args.mileage !== previous?.mileage ||
+      !Number.isFinite(args.mileage) ||
+      args.mileage < 0
+    ) {
+      requireMileage(args.mileage);
+    }
     if (!Number.isFinite(args.liters) || args.liters <= 0) {
       throw new ConvexError("Die getankte Menge muss größer als null sein.");
     }
@@ -346,13 +364,6 @@ export const saveFuelEntry = mutation({
         "Gesamtkosten und Literpreis stimmen nicht überein.",
       );
     }
-    const existing = car.fuelEntries ?? [];
-    const previous =
-      args.entryId === undefined
-        ? undefined
-        : existing.find((entry) => entry.id === args.entryId);
-    if (args.entryId !== undefined && !previous)
-      throw new ConvexError("Tankeintrag nicht gefunden.");
     const totalCost = suppliedCost ?? calculatedCost;
     const notes = optionalText(args.notes);
     const entry = {
@@ -371,11 +382,17 @@ export const saveFuelEntry = mutation({
           current.id === previous.id ? entry : current,
         )
       : [...existing, entry];
-    const fuelEntries = recalculateFuelEntries(validateFuelSequence(entries));
-    const mileage = Math.max(
-      car.mileage,
-      ...fuelEntries.map((current) => current.mileage),
-    );
+    if (
+      previous?.mileage !== entry.mileage ||
+      normalizeCalendarDate(previous.date) !== entry.date
+    ) {
+      validateFuelNeighbors(entries, entry);
+    }
+    const fuelEntries = recalculateFuelEntries(entries);
+    const mileage =
+      previous?.mileage === entry.mileage
+        ? car.mileage
+        : Math.max(car.mileage, entry.mileage);
     const unchanged =
       previous &&
       normalizeCalendarDate(previous.date) === entry.date &&
@@ -414,9 +431,7 @@ export const removeFuelEntry = mutation({
     const previous = existing.find((entry) => entry.id === args.entryId);
     if (!previous) throw new ConvexError("Tankeintrag nicht gefunden.");
     const fuelEntries = recalculateFuelEntries(
-      validateFuelSequence(
-        existing.filter((entry) => entry.id !== args.entryId),
-      ),
+      existing.filter((entry) => entry.id !== args.entryId),
     );
     return await saveCar(ctx, car, { fuelEntries }, [
       event("fuel_entry", "Tankeintrag gelöscht", {
