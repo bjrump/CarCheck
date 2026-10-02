@@ -1,10 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const tireTypeValidator = v.union(
+export const tireTypeValidator = v.union(
   v.literal("summer"),
   v.literal("winter"),
-  v.literal("all-season")
+  v.literal("all-season"),
 );
 
 const tireValidator = v.object({
@@ -42,7 +42,7 @@ const inspectionValidator = v.object({
   completed: v.boolean(),
 });
 
-const insuranceValidator = v.object({
+export const insuranceValidator = v.object({
   provider: v.string(),
   policyNumber: v.string(),
   expiryDate: v.string(),
@@ -68,7 +68,7 @@ const eventTypeValidator = v.union(
   v.literal("car_created"),
   v.literal("car_updated"),
   v.literal("insurance_update"),
-  v.literal("fuel_entry")
+  v.literal("fuel_entry"),
 );
 
 const carEventValidator = v.object({

@@ -1,410 +1,293 @@
-import {
-  addDays,
-  addYears,
-  differenceInDays,
-  differenceInMonths,
-  format,
-  parseISO,
-} from "date-fns";
-import { de } from "date-fns/locale";
+import { differenceInMonths, isValid, parseISO } from "date-fns";
+import type { Id } from "@/convex/_generated/dataModel";
+import type { Car, FuelEntry, Tire, TireType } from "./types";
 
-// Constants
-const UPCOMING_THRESHOLD_DAYS = 30; // Days before an appointment is considered "upcoming"
-// Sentinel value for the "AB Ziele 95" emission-compliance inspection regime.
-// When intervalKm equals this value the km-based date cannot be calculated
-// (the inspection is triggered by condition, not distance).
+const UPCOMING_THRESHOLD_DAYS = 30;
+const UPCOMING_THRESHOLD_KM = 1000;
+const DAY_MS = 86_400_000;
+const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ZONED_TIMESTAMP =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
+const berlinCalendar = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Berlin",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+// Legacy marker: this inspection is triggered by condition, not a 95 km interval.
 export const AB_ZIELE_INTERVAL_KM = 95;
+export type MaintenanceStatus = "overdue" | "upcoming" | "current" | "none";
+export interface MaintenanceTask {
+  id: string;
+  carId: Id<"cars">;
+  kind: "tuv" | "inspection" | "tires" | "insurance";
+  title: string;
+  date: string | null;
+  status: MaintenanceStatus;
+  detail: string;
+}
 
-// Helper function to parse date (handles both YYYY-MM-DD and ISO formats)
-export function parseDate(date: string | null): Date | null {
+function calendarParts(value: string): [number, number, number] | null {
+  const match = CALENDAR_DATE.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
+  date.setUTCHours(0, 0, 0, 0);
+  if (
+    year < 1 ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  )
+    return null;
+  return [year, month, day];
+}
+
+function dateString(year: number, month: number, day: number): string {
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function berlinDay(date: Date): string {
+  const parts = berlinCalendar.formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  return `${year}-${month}-${day}`;
+}
+
+/** Calendar fields stay timezone-free; old timestamps retain their German calendar day. */
+export function normalizeCalendarDate(value: string | null): string | null {
+  if (!value) return null;
+  if (CALENDAR_DATE.test(value)) return calendarParts(value) ? value : null;
+  if (!ZONED_TIMESTAMP.test(value)) return null;
+  const date = parseISO(value);
+  if (!isValid(date)) return null;
+  const calendarDate = berlinDay(date);
+  return calendarParts(calendarDate) ? calendarDate : null;
+}
+
+export function toDateInput(value: string | null): string {
+  return normalizeCalendarDate(value) ?? "";
+}
+
+export function todayDate(now = new Date()): string {
+  return berlinDay(now);
+}
+
+function dayNumber(date: string): number {
+  const [year, month, day] = calendarParts(date)!;
+  const value = new Date(0);
+  value.setUTCFullYear(year, month - 1, day);
+  value.setUTCHours(0, 0, 0, 0);
+  return value.getTime() / DAY_MS;
+}
+
+function daysUntil(date: string, now: Date): number {
+  return dayNumber(date) - dayNumber(todayDate(now));
+}
+
+function addCalendarDays(date: string, days: number): string | null {
+  const shifted = new Date((dayNumber(date) + days) * DAY_MS);
+  if (!isValid(shifted) || shifted.getUTCFullYear() > 9999) return null;
+  return dateString(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth() + 1,
+    shifted.getUTCDate(),
+  );
+}
+
+function addCalendarYears(value: string | null, years: number): string | null {
+  const date = normalizeCalendarDate(value);
+  if (!date || !Number.isInteger(years) || years <= 0) return null;
+  const [year, month, day] = calendarParts(date)!;
+  const targetYear = year + years;
+  if (targetYear > 9999) return null;
+  const lastDay = new Date(Date.UTC(targetYear, month, 0)).getUTCDate();
+  return dateString(targetYear, month, Math.min(day, lastDay));
+}
+
+export function parseDate(value: string | null): Date | null {
+  const date = normalizeCalendarDate(value);
   if (!date) return null;
-  try {
-    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Parse YYYY-MM-DD manually to avoid timezone issues
-      const dateParts = date.split("-");
-      const year = parseInt(dateParts[0], 10);
-      const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
-      const day = parseInt(dateParts[2], 10);
-      return new Date(year, month, day, 0, 0, 0, 0);
-    }
-    return parseISO(date);
-  } catch {
-    return null;
-  }
+  const [year, month, day] = calendarParts(date)!;
+  const result = new Date(0);
+  result.setFullYear(year, month - 1, day);
+  result.setHours(0, 0, 0, 0);
+  return result;
 }
 
-// Format date to German format (DD.MM.YYYY)
-export function formatDate(date: string | null): string {
+export function formatDate(value: string | null): string {
+  const date = normalizeCalendarDate(value);
   if (!date) return "-";
-  const dateObj = parseDate(date);
-  if (!dateObj) return "-";
-  try {
-    return format(dateObj, "dd.MM.yyyy", { locale: de });
-  } catch {
-    return "-";
-  }
+  const [year, month, day] = date.split("-");
+  return `${day}.${month}.${year}`;
 }
 
-// Format number with German formatting (1.234)
-export function formatNumber(num: number | null | undefined): string {
-  if (num === null || num === undefined) return "-";
-  return new Intl.NumberFormat("de-DE").format(num);
+export function formatNumber(value: number | null | undefined): string {
+  return value == null || !Number.isFinite(value)
+    ? "-"
+    : new Intl.NumberFormat("de-DE").format(value);
 }
 
-// Calculate next TÜV date - always 2 years after last appointment
+export function formatCurrency(value: number | null): string {
+  return value === null || !Number.isFinite(value)
+    ? "-"
+    : new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR",
+      }).format(value);
+}
+
+// Account for binary floating-point error at the half-cent boundary.
+export function roundCurrency(value: number): number {
+  const cents = value * 100;
+  return Math.round(cents + Number.EPSILON * Math.abs(cents)) / 100;
+}
+
 export function calculateNextTUVDate(lastDate: string | null): string | null {
-  if (!lastDate) return null;
-
-  try {
-    const lastDateObj = parseDate(lastDate);
-    if (!lastDateObj) return null;
-
-    const nextDate = addYears(lastDateObj, 2);
-    return nextDate.toISOString();
-  } catch (error) {
-    console.error("Error calculating next TÜV date:", error);
-    return null;
-  }
+  return addCalendarYears(lastDate, 2);
 }
 
-// Calculate next inspection date by year
 export function calculateNextInspectionDateByYear(
   lastDate: string | null,
-  intervalYears: number
+  intervalYears: number,
 ): string | null {
-  if (!lastDate) return null;
-
-  try {
-    const lastDateObj = parseDate(lastDate);
-    if (!lastDateObj) return null;
-
-    // Ensure intervalYears is a valid number and at least 1
-    const yearsToAdd =
-      typeof intervalYears === "number" && intervalYears > 0
-        ? intervalYears
-        : 1;
-
-    const nextDate = addYears(lastDateObj, yearsToAdd);
-    return nextDate.toISOString();
-  } catch (error) {
-    console.error("Error calculating next inspection date by year:", error);
-    return null;
-  }
+  return addCalendarYears(lastDate, intervalYears);
 }
 
-// Calculate next inspection date by KM
-// Uses actual driving behavior (average km/day) based on:
-// - Last inspection date and mileage
-// - Current date and mileage
+export function calculateRemainingKm(
+  lastMileage: number | null,
+  currentMileage: number,
+  intervalKm: number,
+): number | null {
+  if (
+    lastMileage === null ||
+    !Number.isFinite(lastMileage) ||
+    !Number.isFinite(currentMileage) ||
+    !Number.isFinite(intervalKm) ||
+    intervalKm <= 0 ||
+    intervalKm === AB_ZIELE_INTERVAL_KM
+  )
+    return null;
+  return lastMileage + intervalKm - currentMileage;
+}
+
 export function calculateNextInspectionDateByKm(
   lastDate: string | null,
   lastMileage: number | null,
   currentMileage: number,
-  intervalKm: number
+  intervalKm: number,
+  now = new Date(),
 ): string | null {
-  if (!lastDate || lastMileage === null) return null;
-
-  // For AB Ziele 95, don't calculate expected time
-  if (intervalKm === AB_ZIELE_INTERVAL_KM) {
-    return null;
-  }
-
-  try {
-    const lastDateObj = parseDate(lastDate);
-    if (!lastDateObj) return null;
-
-    const today = new Date();
-
-    // Calculate days since last inspection
-    const daysSinceLastInspection = differenceInDays(today, lastDateObj);
-
-    // If less than 1 day passed, we can't calculate average yet
-    if (daysSinceLastInspection < 1) {
-      return null;
-    }
-
-    // Calculate km driven since last inspection
-    const kmDriven = currentMileage - lastMileage;
-
-    // If no km driven, we can't calculate
-    if (kmDriven <= 0) {
-      return null;
-    }
-
-    // Calculate average km per day based on actual driving behavior
-    const avgKmPerDay = kmDriven / daysSinceLastInspection;
-
-    // Calculate remaining km until next inspection
-    const remainingKm = intervalKm - kmDriven;
-
-    // If already exceeded the interval
-    if (remainingKm <= 0) {
-      // Return today (or a date in the past would be more accurate)
-      return today.toISOString();
-    }
-
-    // Calculate remaining days based on average km/day
-    const remainingDays = Math.ceil(remainingKm / avgKmPerDay);
-
-    // Calculate expected inspection date
-    const expectedDate = addDays(today, remainingDays);
-
-    return expectedDate.toISOString();
-  } catch (error) {
-    console.error("Error calculating next inspection date by KM:", error);
-    return null;
-  }
-}
-
-// Get the earlier date (next inspection date - whichever comes first)
-export function getEarliestDate(
-  date1: string | null,
-  date2: string | null
-): string | null {
-  if (!date1 && !date2) return null;
-  if (!date1) return date2;
-  if (!date2) return date1;
-
-  try {
-    const d1 = parseISO(date1);
-    const d2 = parseISO(date2);
-    return d1 < d2 ? date1 : date2;
-  } catch {
-    return date1 || date2;
-  }
-}
-
-// Get maintenance status (overdue, upcoming, current)
-export type MaintenanceStatus = "overdue" | "upcoming" | "current" | "none";
-
-export function getMaintenanceStatus(date: string | null): MaintenanceStatus {
-  if (!date) return "none";
-
-  try {
-    const targetDate = parseISO(date);
-    const today = new Date();
-    const daysUntil = differenceInDays(targetDate, today);
-
-    if (daysUntil < 0) return "overdue";
-    if (daysUntil <= UPCOMING_THRESHOLD_DAYS) return "upcoming";
-    return "current";
-  } catch {
-    return "none";
-  }
-}
-
-// Get status color class
-export function getStatusColorClass(status: MaintenanceStatus): string {
-  switch (status) {
-    case "overdue":
-      return "bg-red-100 text-red-800 border-red-300";
-    case "upcoming":
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    case "current":
-      return "bg-green-100 text-green-800 border-green-300";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-300";
-  }
-}
-
-export function getStatusBadgeClass(status: MaintenanceStatus | "none"): string {
-  switch (status) {
-    case "overdue":
-      return "badge-danger";
-    case "upcoming":
-      return "badge-warning";
-    case "current":
-      return "badge-success";
-    default:
-      return "badge-neutral";
-  }
-}
-
-// Get status text in German
-export function getStatusText(status: MaintenanceStatus): string {
-  switch (status) {
-    case "overdue":
-      return "Überfällig";
-    case "upcoming":
-      return "Bald fällig";
-    case "current":
-      return "Aktuell";
-    default:
-      return "Keine Daten";
-  }
-}
-
-// Calculate time progress percentage (0-100) between two dates
-export function calculateTimeProgress(
-  lastDate: string | null,
-  nextDate: string | null
-): number | null {
-  if (!lastDate || !nextDate) return null;
-
-  const last = parseDate(lastDate);
-  const next = parseDate(nextDate);
-  if (!last || !next) return null;
-
-  const today = new Date();
-  const totalDays = differenceInDays(next, last);
-  const daysPassed = differenceInDays(today, last);
-
-  if (totalDays <= 0) return null;
-
-  const progress = Math.max(0, Math.min(100, (daysPassed / totalDays) * 100));
-  return Math.round(progress * 10) / 10; // Round to 1 decimal place
-}
-
-// Calculate time elapsed since last date (returns months and days)
-export function calculateTimeElapsed(
-  lastDate: string | null,
-  nextDate: string | null
-): { months: number; days: number; totalDays: number } | null {
-  if (!lastDate || !nextDate) return null;
-
-  const last = parseDate(lastDate);
-  const next = parseDate(nextDate);
-  if (!last || !next) return null;
-
-  const today = new Date();
-  const totalDays = differenceInDays(next, last);
-  const daysPassed = differenceInDays(today, last);
-
-  if (totalDays <= 0) return null;
-
-  // Calculate months and remaining days
-  const months = differenceInMonths(today, last);
-  const lastDatePlusMonths = new Date(last);
-  lastDatePlusMonths.setMonth(lastDatePlusMonths.getMonth() + months);
-  const remainingDays = differenceInDays(today, lastDatePlusMonths);
-
-  return {
-    months: Math.max(0, months),
-    days: Math.max(0, remainingDays),
-    totalDays: Math.max(0, daysPassed),
-  };
-}
-
-// Format time elapsed as string (e.g., "12 Monate, 5 Tage" or "365 Tage")
-export function formatTimeElapsed(
-  lastDate: string | null,
-  nextDate: string | null
-): string {
-  const elapsed = calculateTimeElapsed(lastDate, nextDate);
-  if (!elapsed) {
-    // If no last date, calculate days until next date
-    if (!lastDate && nextDate) {
-      const next = parseDate(nextDate);
-      if (next) {
-        const today = new Date();
-        const daysUntil = differenceInDays(next, today);
-        if (daysUntil >= 0) {
-          return `in ${daysUntil} Tag${daysUntil !== 1 ? "en" : ""}`;
-        }
-      }
-    }
-    return "-";
-  }
-
-  if (elapsed.months === 0 && elapsed.days === 0) {
-    // If both are 0, show "Heute" or calculate days until next
-    if (nextDate) {
-      const next = parseDate(nextDate);
-      if (next) {
-        const today = new Date();
-        const daysUntil = differenceInDays(next, today);
-        if (daysUntil > 0) {
-          return `in ${daysUntil} Tag${daysUntil !== 1 ? "en" : ""}`;
-        } else if (daysUntil === 0) {
-          return "Heute";
-        }
-      }
-    }
-    return "0 Tage";
-  }
-
-  if (elapsed.months === 0) {
-    return `${elapsed.days} Tag${elapsed.days !== 1 ? "e" : ""}`;
-  }
-
-  if (elapsed.days === 0) {
-    return `${elapsed.months} Monat${elapsed.months !== 1 ? "e" : ""}`;
-  }
-
-  return `${elapsed.months} Monat${elapsed.months !== 1 ? "e" : ""}, ${
-    elapsed.days
-  } Tag${elapsed.days !== 1 ? "e" : ""}`;
-}
-
-// Calculate kilometer progress percentage (0-100) for inspection
-export function calculateKmProgress(
-  lastMileage: number | null,
-  currentMileage: number,
-  intervalKm: number
-): number | null {
-  if (lastMileage === null || intervalKm <= 0) return null;
-
-  const kmDriven = currentMileage - lastMileage;
-  const progress = Math.max(0, Math.min(100, (kmDriven / intervalKm) * 100));
-  return Math.round(progress * 10) / 10; // Round to 1 decimal place
-}
-
-// Calculate kilometers driven since last inspection
-export function calculateKmDriven(
-  lastMileage: number | null,
-  currentMileage: number
-): number | null {
-  if (lastMileage === null) return null;
-  return Math.max(0, currentMileage - lastMileage);
-}
-
-// Format kilometers driven as string
-export function formatKmDriven(
-  lastMileage: number | null,
-  currentMileage: number
-): string {
-  const kmDriven = calculateKmDriven(lastMileage, currentMileage);
-  if (kmDriven === null) return "-";
-  return `${formatNumber(kmDriven)} km`;
-}
-
-// Calculate remaining kilometers until next inspection
-export function calculateRemainingKm(
-  lastMileage: number | null,
-  currentMileage: number,
-  intervalKm: number
-): number | null {
-  if (lastMileage === null || intervalKm <= 0) return null;
-
-  const kmSinceLastInspection = currentMileage - lastMileage;
-  const kmUntilNextInspection = intervalKm - kmSinceLastInspection;
-
-  // Return remaining km (can be negative if exceeded)
-  return kmUntilNextInspection;
-}
-
-// Format remaining kilometers as string
-export function formatRemainingKm(
-  lastMileage: number | null,
-  currentMileage: number,
-  intervalKm: number
-): string {
+  const date = normalizeCalendarDate(lastDate);
   const remainingKm = calculateRemainingKm(
     lastMileage,
     currentMileage,
-    intervalKm
+    intervalKm,
   );
-  if (remainingKm === null) return "-";
-
-  if (remainingKm <= 0) {
-    return `0 km (${formatNumber(Math.abs(remainingKm))} km überschritten)`;
-  }
-
-  return `${formatNumber(remainingKm)} km`;
+  if (!date || lastMileage === null || remainingKm === null) return null;
+  if (remainingKm <= 0) return todayDate(now);
+  const elapsedDays = -daysUntil(date, now);
+  const distance = currentMileage - lastMileage;
+  if (elapsedDays <= 0 || distance <= 0) return null;
+  return addCalendarDays(
+    todayDate(now),
+    Math.ceil(remainingKm / (distance / elapsedDays)),
+  );
 }
 
-// Calculate Easter date for a given year (using algorithm by Gauss)
-function calculateEaster(year: number): Date {
+export function getEarliestDate(
+  first: string | null,
+  second: string | null,
+): string | null {
+  const dates = [normalizeCalendarDate(first), normalizeCalendarDate(second)]
+    .filter((date) => date !== null)
+    .sort();
+  return dates[0] ?? null;
+}
+
+export function getMaintenanceStatus(
+  value: string | null,
+  now = new Date(),
+): MaintenanceStatus {
+  const date = normalizeCalendarDate(value);
+  if (!date) return "none";
+  const days = daysUntil(date, now);
+  return days < 0
+    ? "overdue"
+    : days <= UPCOMING_THRESHOLD_DAYS
+      ? "upcoming"
+      : "current";
+}
+
+/** Re-derive inspection state whenever the odometer changes; persisted projections are ignored. */
+export function getInspectionState(
+  car: Pick<Car, "inspection" | "mileage">,
+  now = new Date(),
+): {
+  status: MaintenanceStatus;
+  date: string | null;
+  remainingKm: number | null;
+  isEstimate: boolean;
+} {
+  const inspection = car.inspection;
+  const lastDate = normalizeCalendarDate(inspection.lastInspectionDate);
+  const yearDate = lastDate
+    ? calculateNextInspectionDateByYear(lastDate, inspection.intervalYears)
+    : normalizeCalendarDate(inspection.nextInspectionDateByYear);
+  const remainingKm = calculateRemainingKm(
+    inspection.lastInspectionMileage,
+    car.mileage,
+    inspection.intervalKm,
+  );
+  const mileageDate = calculateNextInspectionDateByKm(
+    lastDate,
+    inspection.lastInspectionMileage,
+    car.mileage,
+    inspection.intervalKm,
+    now,
+  );
+  const date = getEarliestDate(yearDate, mileageDate);
+  const isEstimate =
+    mileageDate !== null &&
+    date === mileageDate &&
+    mileageDate !== yearDate &&
+    (remainingKm ?? 0) > 0;
+  if (remainingKm !== null && remainingKm <= 0)
+    return { status: "overdue", date, remainingKm, isEstimate: false };
+  const dateStatus = getMaintenanceStatus(date, now);
+  const conditionBased =
+    inspection.intervalKm === AB_ZIELE_INTERVAL_KM &&
+    (lastDate !== null || inspection.lastInspectionMileage !== null);
+  const status =
+    dateStatus === "overdue"
+      ? "overdue"
+      : dateStatus === "upcoming" ||
+          (remainingKm !== null && remainingKm <= UPCOMING_THRESHOLD_KM)
+        ? "upcoming"
+        : dateStatus === "current" || remainingKm !== null || conditionBased
+          ? "current"
+          : "none";
+  return { status, date, remainingKm, isEstimate };
+}
+
+/** Array append order resolves repeated mounts on the same day. */
+export function getTireMileage(car: Car, tire: Tire): number {
+  if (car.currentTireId !== tire.id) return tire.currentMileage;
+  const mount = [...car.tireChangeEvents]
+    .reverse()
+    .find((event) => event.tireId === tire.id && event.changeType === "mount");
+  return (
+    tire.currentMileage +
+    (mount ? Math.max(0, car.mileage - mount.carMileage) : 0)
+  );
+}
+
+function easterDate(year: number): string {
   const a = year % 19;
   const b = Math.floor(year / 100);
   const c = year % 100;
@@ -419,52 +302,372 @@ function calculateEaster(year: number): Date {
   const m = Math.floor((a + 11 * h + 22 * l) / 451);
   const month = Math.floor((h + l - 7 * m + 114) / 31);
   const day = ((h + l - 7 * m + 114) % 31) + 1;
-  return new Date(year, month - 1, day);
+  return dateString(year, month, day);
 }
 
-// Calculate next tire change date based on current tire type
-// Winter -> Summer: Easter
-// Summer -> Winter: October 1st
+/** Keep a missed seasonal change overdue until the mounted tires suit the season again. */
 export function calculateNextTireChangeDate(
-  currentTireType: "summer" | "winter" | "all-season" | null
+  type: TireType | null,
+  now = new Date(),
 ): { date: string; type: "winter-to-summer" | "summer-to-winter" } | null {
-  if (!currentTireType || currentTireType === "all-season") return null;
+  if (type === null || type === "all-season") return null;
+  const today = todayDate(now);
+  const year = Number(today.slice(0, 4));
+  const easter = easterDate(year);
+  const october = dateString(year, 10, 1);
+  return type === "winter"
+    ? {
+        date: today >= october ? easterDate(year + 1) : easter,
+        type: "winter-to-summer",
+      }
+    : {
+        date: today < easter ? dateString(year - 1, 10, 1) : october,
+        type: "summer-to-winter",
+      };
+}
 
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const easter = calculateEaster(currentYear);
-  const october1 = new Date(currentYear, 9, 1); // October is month 9 (0-indexed)
+const statusOrder: Record<MaintenanceStatus, number> = {
+  overdue: 0,
+  upcoming: 1,
+  current: 2,
+  none: 3,
+};
 
-  if (currentTireType === "winter") {
-    // Next change: Winter -> Summer (Easter)
-    if (today < easter) {
-      // Easter this year hasn't passed yet
-      return { date: easter.toISOString(), type: "winter-to-summer" };
-    } else {
-      // Easter this year has passed, use next year's Easter
-      const nextEaster = calculateEaster(currentYear + 1);
-      return { date: nextEaster.toISOString(), type: "winter-to-summer" };
+export function getMaintenanceTasks(
+  cars: Car[],
+  now = new Date(),
+): MaintenanceTask[] {
+  const tasks: MaintenanceTask[] = [];
+  for (const car of cars) {
+    const addTask = (
+      kind: MaintenanceTask["kind"],
+      title: string,
+      date: string | null,
+      detail: string,
+      status = getMaintenanceStatus(date, now),
+    ) => {
+      if (status !== "none")
+        tasks.push({
+          id: `${car._id}:${kind}`,
+          carId: car._id,
+          kind,
+          title,
+          date,
+          status,
+          detail,
+        });
+    };
+    const tuvDate =
+      normalizeCalendarDate(car.tuv.nextAppointmentDate) ??
+      calculateNextTUVDate(car.tuv.lastAppointmentDate);
+    addTask("tuv", "TÜV", tuvDate, formatDate(tuvDate));
+    const inspection = getInspectionState(car, now);
+    const mileageDetail =
+      inspection.remainingKm === null
+        ? ""
+        : inspection.remainingKm <= 0
+          ? `${formatNumber(Math.abs(inspection.remainingKm))} km über dem Intervall`
+          : `In ${formatNumber(inspection.remainingKm)} km`;
+    const conditionDetail =
+      car.inspection.intervalKm === AB_ZIELE_INTERVAL_KM ? "Nach Zustand" : "";
+    const inspectionDetail = [
+      inspection.date
+        ? `${inspection.isEstimate ? "Geschätzt: " : ""}${formatDate(inspection.date)}`
+        : "",
+      mileageDetail,
+      conditionDetail,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    addTask(
+      "inspection",
+      "Inspektion",
+      inspection.date,
+      inspectionDetail,
+      inspection.status,
+    );
+    const tire = car.tires.find(
+      (item) => item.id === car.currentTireId && !item.archived,
+    );
+    const tireChange = calculateNextTireChangeDate(tire?.type ?? null, now);
+    if (tireChange)
+      addTask(
+        "tires",
+        "Reifenwechsel",
+        tireChange.date,
+        tireChange.type === "winter-to-summer"
+          ? "Sommerreifen montieren"
+          : "Winterreifen montieren",
+      );
+    const insuranceDate = normalizeCalendarDate(
+      car.insurance?.expiryDate ?? null,
+    );
+    addTask(
+      "insurance",
+      "Versicherung",
+      insuranceDate,
+      car.insurance?.provider ?? "",
+    );
+  }
+  return tasks.sort(
+    (first, second) =>
+      statusOrder[first.status] - statusOrder[second.status] ||
+      (first.date ?? "9999-12-31").localeCompare(second.date ?? "9999-12-31") ||
+      first.id.localeCompare(second.id),
+  );
+}
+
+export function getCarStatus(car: Car, now = new Date()): MaintenanceStatus {
+  return getMaintenanceTasks([car], now)[0]?.status ?? "none";
+}
+
+/** Fuel intervals are always rebuilt after insert, edit, or delete. */
+export function recalculateFuelEntries(entries: FuelEntry[]): FuelEntry[] {
+  const sorted = entries
+    .map((entry) => {
+      const date = normalizeCalendarDate(entry.date);
+      const result = { ...entry, date: date ?? entry.date };
+      delete result.kmDriven;
+      delete result.consumption;
+      // Legacy forms rounded the liter price; keep the receipt's known total.
+      if (
+        result.totalCost === undefined ||
+        !Number.isFinite(result.totalCost) ||
+        result.totalCost < 0
+      ) {
+        delete result.totalCost;
+        if (
+          result.pricePerLiter !== undefined &&
+          Number.isFinite(result.pricePerLiter) &&
+          result.pricePerLiter >= 0 &&
+          Number.isFinite(result.liters)
+        ) {
+          result.totalCost = roundCurrency(
+            result.pricePerLiter * result.liters,
+          );
+        }
+      }
+      return result;
+    })
+    .sort((first, second) => {
+      const firstDate = normalizeCalendarDate(first.date);
+      const secondDate = normalizeCalendarDate(second.date);
+      if (!firstDate || !secondDate) return firstDate ? -1 : secondDate ? 1 : 0;
+      return (
+        firstDate.localeCompare(secondDate) || first.mileage - second.mileage
+      );
+    });
+  return sorted.map((entry, index) => {
+    const previous = sorted[index - 1];
+    const kmDriven = previous ? entry.mileage - previous.mileage : 0;
+    return normalizeCalendarDate(entry.date) &&
+      kmDriven > 0 &&
+      Number.isFinite(kmDriven) &&
+      Number.isFinite(entry.liters) &&
+      entry.liters > 0
+      ? { ...entry, kmDriven, consumption: (entry.liters / kmDriven) * 100 }
+      : entry;
+  });
+}
+
+export function getFuelSummary(entries: FuelEntry[]): {
+  entries: FuelEntry[];
+  totalLiters: number;
+  totalCost: number | null;
+  averagePrice: number | null;
+  averageConsumption: number | null;
+  totalKm: number;
+} {
+  const calculated = recalculateFuelEntries(entries);
+  let totalLiters = 0;
+  let pricedLiters = 0;
+  let totalCost = 0;
+  let hasCost = false;
+  let intervalLiters = 0;
+  let totalKm = 0;
+  for (const entry of calculated) {
+    if (Number.isFinite(entry.liters) && entry.liters > 0)
+      totalLiters += entry.liters;
+    if (
+      entry.totalCost !== undefined &&
+      Number.isFinite(entry.totalCost) &&
+      entry.totalCost >= 0
+    ) {
+      totalCost += entry.totalCost;
+      hasCost = true;
+      if (entry.liters > 0 && Number.isFinite(entry.liters))
+        pricedLiters += entry.liters;
     }
-  } else if (currentTireType === "summer") {
-    // Next change: Summer -> Winter (October 1st)
-    if (today < october1) {
-      // October 1st this year hasn't passed yet
-      return { date: october1.toISOString(), type: "summer-to-winter" };
-    } else {
-      // October 1st this year has passed, use next year's October 1st
-      const nextOctober1 = new Date(currentYear + 1, 9, 1);
-      return { date: nextOctober1.toISOString(), type: "summer-to-winter" };
+    if (entry.kmDriven !== undefined && entry.kmDriven > 0) {
+      totalKm += entry.kmDriven;
+      intervalLiters += entry.liters;
     }
   }
-
-  return null;
+  return {
+    entries: calculated,
+    totalLiters,
+    totalCost: hasCost ? totalCost : null,
+    averagePrice: pricedLiters > 0 ? totalCost / pricedLiters : null,
+    averageConsumption: totalKm > 0 ? (intervalLiters / totalKm) * 100 : null,
+    totalKm,
+  };
 }
 
-// Calculate tire change progress (time-based)
-export function calculateTireChangeProgress(
-  lastChangeDate: string | null,
-  nextChangeDate: string | null
+export function getStatusText(status: MaintenanceStatus): string {
+  return {
+    overdue: "Überfällig",
+    upcoming: "Bald fällig",
+    current: "Aktuell",
+    none: "Keine Daten",
+  }[status];
+}
+
+export function getStatusColorClass(status: MaintenanceStatus): string {
+  return {
+    overdue: "bg-red-100 text-red-800 border-red-300",
+    upcoming: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    current: "bg-green-100 text-green-800 border-green-300",
+    none: "bg-gray-100 text-gray-800 border-gray-300",
+  }[status];
+}
+
+export function getStatusBadgeClass(status: MaintenanceStatus): string {
+  return {
+    overdue: "badge-danger",
+    upcoming: "badge-warning",
+    current: "badge-success",
+    none: "badge-neutral",
+  }[status];
+}
+
+export function calculateTimeProgress(
+  lastDate: string | null,
+  nextDate: string | null,
+  now = new Date(),
 ): number | null {
-  if (!lastChangeDate || !nextChangeDate) return null;
-  return calculateTimeProgress(lastChangeDate, nextChangeDate);
+  const last = normalizeCalendarDate(lastDate);
+  const next = normalizeCalendarDate(nextDate);
+  if (!last || !next) return null;
+  const totalDays = dayNumber(next) - dayNumber(last);
+  if (totalDays <= 0) return null;
+  return (
+    Math.round(
+      Math.max(0, Math.min(100, (-daysUntil(last, now) / totalDays) * 100)) *
+        10,
+    ) / 10
+  );
+}
+
+export function calculateTimeElapsed(
+  lastDate: string | null,
+  nextDate: string | null,
+  now = new Date(),
+): { months: number; days: number; totalDays: number } | null {
+  const last = parseDate(lastDate);
+  const next = normalizeCalendarDate(nextDate);
+  const normalizedLast = normalizeCalendarDate(lastDate);
+  if (
+    !last ||
+    !next ||
+    !normalizedLast ||
+    dayNumber(next) <= dayNumber(normalizedLast)
+  )
+    return null;
+  const today = parseDate(todayDate(now))!;
+  const months = Math.max(0, differenceInMonths(today, last));
+  const afterMonths = new Date(last);
+  afterMonths.setMonth(afterMonths.getMonth() + months);
+  const afterDate = dateString(
+    afterMonths.getFullYear(),
+    afterMonths.getMonth() + 1,
+    afterMonths.getDate(),
+  );
+  return {
+    months,
+    days: Math.max(0, dayNumber(todayDate(now)) - dayNumber(afterDate)),
+    totalDays: Math.max(0, -daysUntil(normalizedLast, now)),
+  };
+}
+
+export function formatTimeElapsed(
+  lastDate: string | null,
+  nextDate: string | null,
+): string {
+  const elapsed = calculateTimeElapsed(lastDate, nextDate);
+  if (!elapsed) {
+    const next = normalizeCalendarDate(nextDate);
+    const remaining = next ? daysUntil(next, new Date()) : -1;
+    return remaining === 0
+      ? "Heute"
+      : remaining > 0
+        ? `in ${remaining} Tagen`
+        : "-";
+  }
+  const values = [
+    elapsed.months > 0
+      ? `${elapsed.months} Monat${elapsed.months === 1 ? "" : "e"}`
+      : "",
+    elapsed.days > 0
+      ? `${elapsed.days} Tag${elapsed.days === 1 ? "" : "e"}`
+      : "",
+  ].filter(Boolean);
+  return values.join(", ") || "Heute";
+}
+
+export function calculateKmProgress(
+  lastMileage: number | null,
+  currentMileage: number,
+  intervalKm: number,
+): number | null {
+  const remaining = calculateRemainingKm(
+    lastMileage,
+    currentMileage,
+    intervalKm,
+  );
+  return remaining === null
+    ? null
+    : Math.round(
+        Math.max(0, Math.min(100, (1 - remaining / intervalKm) * 100)) * 10,
+      ) / 10;
+}
+
+export function calculateKmDriven(
+  lastMileage: number | null,
+  currentMileage: number,
+): number | null {
+  return lastMileage === null
+    ? null
+    : Math.max(0, currentMileage - lastMileage);
+}
+
+export function formatKmDriven(
+  lastMileage: number | null,
+  currentMileage: number,
+): string {
+  const distance = calculateKmDriven(lastMileage, currentMileage);
+  return distance === null ? "-" : `${formatNumber(distance)} km`;
+}
+
+export function formatRemainingKm(
+  lastMileage: number | null,
+  currentMileage: number,
+  intervalKm: number,
+): string {
+  const remaining = calculateRemainingKm(
+    lastMileage,
+    currentMileage,
+    intervalKm,
+  );
+  return remaining === null
+    ? "-"
+    : remaining <= 0
+      ? `0 km (${formatNumber(Math.abs(remaining))} km überschritten)`
+      : `${formatNumber(remaining)} km`;
+}
+
+export function calculateTireChangeProgress(
+  lastDate: string | null,
+  nextDate: string | null,
+): number | null {
+  return calculateTimeProgress(lastDate, nextDate);
 }

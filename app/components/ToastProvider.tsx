@@ -1,111 +1,103 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { Check, CircleAlert, Info, X } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
 
 type ToastType = "success" | "error" | "warning" | "info";
-
-interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-  duration?: number;
-}
-
-interface ToastContextType {
-  toasts: Toast[];
-  addToast: (message: string, type?: ToastType, duration?: number) => void;
-  removeToast: (id: string) => void;
-  success: (message: string) => void;
-  error: (message: string) => void;
-  warning: (message: string) => void;
-  info: (message: string) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+type Toast = { id: string; message: string; type: ToastType };
+type ToastApi = Record<ToastType, (message: string) => void>;
+const ToastContext = createContext<ToastApi | null>(null);
 
 export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
+  const toast = useContext(ToastContext);
+  if (!toast) throw new Error("ToastProvider fehlt");
+  return toast;
 }
 
-const toastIcons: Record<ToastType, string> = {
-  success: "✓",
-  error: "✕",
-  warning: "⚠",
-  info: "ℹ",
-};
-
-const toastStyles: Record<ToastType, string> = {
-  success: "bg-success text-success-foreground border-success/30",
-  error: "bg-danger text-danger-foreground border-danger/30",
-  warning: "bg-warning text-warning-foreground border-warning/30",
-  info: "bg-info text-info-foreground border-info/30",
-};
-
-function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
-  const [isExiting, setIsExiting] = useState(false);
-
-  const handleRemove = useCallback(() => {
-    setIsExiting(true);
-    setTimeout(onRemove, 200);
-  }, [onRemove]);
-
+function ToastItem({
+  toast,
+  remove,
+}: {
+  toast: Toast;
+  remove: (id: string) => void;
+}) {
   useEffect(() => {
-    const duration = toast.duration ?? 4000;
-    const timer = setTimeout(handleRemove, duration);
-    return () => clearTimeout(timer);
-  }, [handleRemove, toast.duration]);
-
+    const timer = window.setTimeout(
+      () => remove(toast.id),
+      toast.type === "error" ? 7000 : 4000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [remove, toast.id, toast.type]);
+  const Icon =
+    toast.type === "success"
+      ? Check
+      : toast.type === "info"
+        ? Info
+        : CircleAlert;
   return (
     <div
-      className={`
-        flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm
-        ${toastStyles[toast.type]}
-        ${isExiting ? "toast-exit" : "toast-enter"}
-      `}
-      role="alert"
+      className="toast-item"
+      role={toast.type === "error" ? "alert" : "status"}
     >
-      <span className="text-lg font-bold">{toastIcons[toast.type]}</span>
-      <p className="text-sm font-medium flex-1">{toast.message}</p>
-      <button
-        onClick={handleRemove}
-        className="p-1 rounded-lg hover:bg-white/20 transition-colors"
-        aria-label="Schließen"
+      <Icon
+        size={16}
+        className={
+          toast.type === "error"
+            ? "text-overdue"
+            : toast.type === "success"
+              ? "text-current"
+              : "text-muted-foreground"
+        }
+      />
+      <p className="flex-1">{toast.message}</p>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label="Meldung schließen"
+        onClick={() => remove(toast.id)}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M1 1l12 12M13 1L1 13" />
-        </svg>
-      </button>
+        <X />
+      </Button>
     </div>
   );
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((message: string, type: ToastType = "info", duration?: number) => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+  const add = useCallback((message: string, type: ToastType) => {
+    setToasts((current) => [
+      ...current.slice(-2),
+      { id: crypto.randomUUID(), message, type },
+    ]);
   }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const success = useCallback((message: string) => addToast(message, "success"), [addToast]);
-  const error = useCallback((message: string) => addToast(message, "error"), [addToast]);
-  const warning = useCallback((message: string) => addToast(message, "warning"), [addToast]);
-  const info = useCallback((message: string) => addToast(message, "info"), [addToast]);
-
+  const remove = useCallback(
+    (id: string) =>
+      setToasts((current) => current.filter((toast) => toast.id !== id)),
+    [],
+  );
+  const api = useMemo(
+    () => ({
+      success: (message: string) => add(message, "success"),
+      error: (message: string) => add(message, "error"),
+      warning: (message: string) => add(message, "warning"),
+      info: (message: string) => add(message, "info"),
+    }),
+    [add],
+  );
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, warning, info }}>
+    <ToastContext.Provider value={api}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+      <div className="toast-stack">
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
+          <ToastItem key={toast.id} toast={toast} remove={remove} />
         ))}
       </div>
     </ToastContext.Provider>

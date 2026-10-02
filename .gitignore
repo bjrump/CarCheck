@@ -41,3 +41,7 @@ next-env.d.ts
 /data/cars.json
 
 dev-server.log
+
+# Isolated task workspaces and browser evidence
+/.worktrees/
+/.evidence/

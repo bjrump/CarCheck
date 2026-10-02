@@ -30,6 +30,9 @@ jobs:
       - name: Type Check
         run: bun x tsc --noEmit
 
+      - name: Convex Type Check
+        run: bun x tsc --noEmit --project convex/tsconfig.json
+
       - name: Build
         run: bun run build
         env:
