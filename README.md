@@ -65,4 +65,19 @@ Für den Build werden die öffentlichen Clerk- und Convex-Variablen benötigt; d
 
 Beim Rollout müssen die neuen Convex-Funktionen zusammen mit dem Frontend verfügbar sein. Deployment erfolgt getrennt von lokaler Entwicklung.
 
+## Clerk-Instanz wechseln
+
+Fahrzeuge gehören zur vollständigen Clerk-Identität einschließlich des Issuers. Nur die Schlüssel zu wechseln würde bestehende Fahrzeuge ausblenden.
+
+Vor dem Wechsel auf der Convex-Produktionsinstanz konfigurieren:
+
+- `CLERK_JWT_ISSUER_DOMAIN`: neuer Produktions-Issuer.
+- `CLERK_LEGACY_ISSUER_DOMAIN`: bisheriger Issuer während des Rollouts; anschließend auf den leeren String setzen. Die Variable muss für die Auswertung der Convex-Auth-Konfiguration vorhanden sein.
+- `CLERK_SECRET_KEY`: ausschließlich der geheime Schlüssel der neuen Instanz.
+- `CLERK_LEGACY_GOOGLE_OWNERS`: privates JSON-Objekt mit bestätigter Google-Konto-ID als Schlüssel und bisherigem vollständigem `cars.userId` als Wert. Die IDs über die Clerk-Backend-API prüfen, niemals per E-Mail oder Client-Metadaten zuordnen. Diese Zuordnung gehört nicht ins Repository.
+
+Die neue Clerk-Instanz braucht ein `convex`-JWT-Template mit Audience `convex`. Zuerst Backend und Konfiguration bereitstellen, danach die neuen Frontend-Schlüssel ausrollen. Die Garage wartet vor ihren Abfragen auf die Kontoprüfung. Convex bestätigt die Google-Konto-ID über Clerks Server-API und speichert eine eindeutige Besitzerzuordnung. Bestehende Fahrzeug-IDs und Inhalte bleiben erhalten; andere Nutzer können sie nicht übernehmen. Bei einem Prüfungsfehler erscheint eine Wiederholen-Aktion statt einer leeren Garage.
+
+DNS, Zertifikate, Google OAuth und die bestehende Garage mit der neuen Anmeldung prüfen, bevor der alte Issuer entfernt wird. Für einen Rollback Frontend-Schlüssel und primären Issuer zurückstellen; Besitzerzuordnungen und Fahrzeuge bleiben bestehen.
+
 [MIT-Lizenz](LICENSE).

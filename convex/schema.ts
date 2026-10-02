@@ -80,6 +80,12 @@ const carEventValidator = v.object({
 });
 
 export default defineSchema({
+  ownerAliases: defineTable({
+    identity: v.string(),
+    owner: v.string(),
+  })
+    .index("by_identity", ["identity"])
+    .index("by_owner", ["owner"]),
   cars: defineTable({
     userId: v.string(),
     make: v.string(),
